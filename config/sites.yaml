@@ -1,0 +1,19 @@
+# Ejemplo de configuración de sitios.
+# Cada entrada debe incluir:
+#  - url: la página del producto
+#  - price_selector: selector CSS que apunta al elemento que contiene el precio
+#  - name_selector: (opcional) selector CSS para el nombre del producto
+#  - product: nombre amigable del producto (fallback)
+#  - currency: (opcional)
+
+sites:
+  - url: "https://ejemplo.tld/producto-1"
+    price_selector: ".price"            # <-- reemplaza con el selector real del sitio
+    name_selector: ".product-title"
+    product: "Notebook Modelo X"
+    currency: "ARS"
+
+  - url: "https://otro-ecommerce.tld/item/456"
+    price_selector: "#price"            # <-- reemplaza con el selector real
+    product: "Zapatillas Marca Y"
+    currency: "ARS"
