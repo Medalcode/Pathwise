@@ -67,15 +67,73 @@ except ImportError:
         return _SimpleSoup(html, parser)
 
 import yaml
+from urllib.parse import urlparse
+
+# Importar módulos de las mejoras
+from .logger import setup_logger, get_logger
+from .robots import RobotsChecker
+from .ratelimit import RateLimiter
+from .retry import RetryHandler
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
+# Configurar logger global
+logger = setup_logger('buyscraper')
 
-def fetch_html(url: str, timeout: int = 10) -> str:
-    headers = {"User-Agent": USER_AGENT}
-    resp = requests.get(url, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    return resp.text
+# Inicializar componentes globales
+robots_checker = RobotsChecker(user_agent=USER_AGENT)
+rate_limiter = RateLimiter(requests_per_minute=10, global_delay=1.0)
+retry_handler = RetryHandler(max_retries=3, backoff_factor=2.0)
+
+
+def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True) -> str:
+    """
+    Obtiene HTML de una URL con todas las protecciones implementadas.
+    
+    Args:
+        url: URL a scrapear
+        timeout: Timeout en segundos
+        respect_robots: Si True, verifica robots.txt antes de scrapear
+    
+    Returns:
+        HTML content
+    
+    Raises:
+        ValueError: Si robots.txt no permite scrapear
+        requests.HTTPError: Si el request falla después de reintentos
+    """
+    # 1. Verificar robots.txt
+    if respect_robots:
+        if not robots_checker.can_fetch(url, USER_AGENT):
+            error_msg = f"robots.txt disallows scraping {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        # Obtener y respetar Crawl-Delay si existe
+        crawl_delay = robots_checker.get_crawl_delay(url, USER_AGENT)
+    else:
+        crawl_delay = None
+    
+    # 2. Aplicar rate limiting
+    domain = urlparse(url).netloc
+    custom_delay = crawl_delay if crawl_delay else None
+    rate_limiter.wait_if_needed(domain, custom_delay=custom_delay)
+    
+    # 3. Realizar request con retry logic
+    def _do_request():
+        logger.info(f"Fetching {url}")
+        headers = {"User-Agent": USER_AGENT}
+        resp = requests.get(url, headers=headers, timeout=timeout)
+        resp.raise_for_status()
+        logger.debug(f"Successfully fetched {url} ({len(resp.text)} bytes)")
+        return resp.text
+    
+    try:
+        return retry_handler.execute_with_retry(_do_request)
+    except Exception as e:
+        logger.error(f"Failed to fetch {url} after all retries: {e}")
+        raise
+
 
 
 def parse_price(text: str) -> Optional[float]:
@@ -160,7 +218,7 @@ def run_from_config(sites_file: str, output: str):
         currency = site.get('currency', '')
         name_selector = site.get('name_selector')
         if not url or not selector:
-            print(f"Skipping site missing url/selector: {site}")
+            logger.warning(f"Skipping site missing url/selector: {site}")
             continue
         try:
             html = fetch_html(url)
@@ -175,9 +233,9 @@ def run_from_config(sites_file: str, output: str):
                 'url': url,
             }
             save_row(output, row)
-            print(f"Saved: {url} -> {row['price']}")
+            logger.info(f"Saved: {url} -> {row['price']} {row['currency']}")
         except Exception as e:
-            print(f"Error scraping {url}: {e}")
+            logger.error(f"Error scraping {url}: {e}")
 
 
 def run_single(url: str, selector: str, product: str, output: str, name_selector: Optional[str], currency: str):
@@ -193,7 +251,7 @@ def run_single(url: str, selector: str, product: str, output: str, name_selector
         'url': url,
     }
     save_row(output, row)
-    print(f"Saved: {url} -> {row['price']}")
+    logger.info(f"Saved: {url} -> {row['price']} {row['currency']}")
 
 
 def main(argv=None):
