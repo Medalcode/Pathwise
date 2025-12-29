@@ -74,8 +74,10 @@ from .logger import setup_logger, get_logger
 from .robots import RobotsChecker
 from .ratelimit import RateLimiter
 from .retry import RetryHandler
-from .database import init_db, save_price
+from .database import init_db, save_price, get_price_history
 from .ua import ua_rotator
+from .browser import fetch_html_dynamic
+from src.notification.notifier import notification_manager
 
 # Configurar logger global
 logger = setup_logger('buyscraper')
@@ -85,53 +87,49 @@ robots_checker = RobotsChecker(user_agent="*") # Default genérico
 rate_limiter = RateLimiter(requests_per_minute=10, global_delay=1.0)
 retry_handler = RetryHandler(max_retries=3, backoff_factor=2.0)
 
-# Inicializar DB (silent fail si hay error para no romper import, pero logger avisa)
+# Inicializar DB
 try:
     init_db()
 except Exception as e:
     logger.warning(f"No se pudo inicializar la base de datos: {e}")
 
 
-def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True) -> str:
+def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True, use_dynamic: bool = False, wait_selector: str = None) -> str:
     """
     Obtiene HTML de una URL con todas las protecciones implementadas.
-    
-    Args:
-        url: URL a scrapear
-        timeout: Timeout en segundos
-        respect_robots: Si True, verifica robots.txt antes de scrapear
-    
-    Returns:
-        HTML content
-    
-    Raises:
-        ValueError: Si robots.txt no permite scrapear
-        requests.HTTPError: Si el request falla después de reintentos
+    Soporta modo estático (requests) y dinámico (playwright).
     """
-    # Obtener un User-Agent rotativo para esta sesión
+    # Obtener UA (compartido para validación y request)
     current_ua = ua_rotator.get_random_ua()
     
-    # 1. Verificar robots.txt con el UA actual
+    # 1. Verificar robots.txt
     if respect_robots:
-        # Se envía current_ua, aunque muchos robots.txt aplican a *
         if not robots_checker.can_fetch(url, current_ua):
             error_msg = f"robots.txt disallows scraping {url}"
             logger.error(error_msg)
             raise ValueError(error_msg)
-        
-        # Obtener y respetar Crawl-Delay si existe
         crawl_delay = robots_checker.get_crawl_delay(url, current_ua)
     else:
         crawl_delay = None
     
-    # 2. Aplicar rate limiting
+    # 2. Rate limiting
     domain = urlparse(url).netloc
     custom_delay = crawl_delay if crawl_delay else None
     rate_limiter.wait_if_needed(domain, custom_delay=custom_delay)
     
-    # 3. Realizar request con retry logic
+    # 3. Request (Dinámico o Estático)
+    if use_dynamic:
+        try:
+            return retry_handler.execute_with_retry(
+                lambda: fetch_html_dynamic(url, wait_selector, timeout=timeout*1000)
+            )
+        except Exception as e:
+            logger.error(f"Failed dynamic fetch {url}: {e}")
+            raise
+
+    # Modo Estático Standard
     def _do_request():
-        logger.info(f"Fetching {url} (UA: {current_ua[:30]}...)")
+        logger.info(f"Fetching {url} (Static, UA: {current_ua[:30]}...)")
         headers = {"User-Agent": current_ua}
         resp = requests.get(url, headers=headers, timeout=timeout)
         resp.raise_for_status()
@@ -141,7 +139,7 @@ def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True) -> str:
     try:
         return retry_handler.execute_with_retry(_do_request)
     except Exception as e:
-        logger.error(f"Failed to fetch {url} after all retries: {e}")
+        logger.error(f"Failed static fetch {url}: {e}")
         raise
 
 
@@ -204,6 +202,31 @@ def extract_price_and_name(html: str, price_selector: str, name_selector: Option
 
 
 
+def check_and_notify(product: str, current_price: float, url: str):
+    """Verifica si el precio bajó comparado con el historial y notifica."""
+    if current_price is None:
+        return
+
+    try:
+        # Obtener último precio (limit 1)
+        history = get_price_history(product=product, limit=1)
+        if not history:
+            return # Primer registro
+            
+        last_record = history[0]
+        last_price = last_record['price']
+        
+        if last_price and current_price < last_price:
+            # Calcular % caída
+            drop_pct = ((last_price - current_price) / last_price) * 100
+            if drop_pct >= 1.0: # Notificar si baja 1% o más
+                logger.info(f"Price drop detected for {product}: {last_price} -> {current_price} (-{drop_pct:.1f}%)")
+                notification_manager.notify_price_drop(product, last_price, current_price, url)
+                
+    except Exception as e:
+        logger.warning(f"Error checking price drop: {e}")
+
+
 def save_row(path: str, row: dict):
     """Guarda registro en CSV y Base de Datos (SQLite)."""
     # 1. Guardar en CSV
@@ -228,6 +251,10 @@ def save_row(path: str, row: dict):
         if isinstance(db_row['price'], str) and not db_row['price']:
             db_row['price'] = None
         
+        # Verificar alertas ANTES de guardar el nuevo registro
+        if db_row['price'] is not None:
+             check_and_notify(db_row['product'], db_row['price'], db_row['url'])
+
         save_price(db_row)
         logger.debug(f"Saved to DB: {db_row['url']}")
     except Exception as e:
@@ -244,13 +271,19 @@ def run_from_config(sites_file: str, output: str):
         product = site.get('product', '')
         currency = site.get('currency', '')
         name_selector = site.get('name_selector')
+        use_dynamic = site.get('dynamic', False)
+        wait_selector = site.get('wait_selector', selector) # Default: esperar el precio
+
         if not url or not selector:
             logger.warning(f"Skipping site missing url/selector: {site}")
             continue
         try:
-            html = fetch_html(url)
+            html = fetch_html(url, use_dynamic=use_dynamic, wait_selector=wait_selector)
             price, name = extract_price_and_name(html, selector, name_selector)
-            now = datetime.datetime.utcnow().isoformat()
+            
+            # Usar timezone-aware datetime para evitar warning
+            now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            
             row = {
                 'timestamp': now,
                 'site': url,
@@ -265,10 +298,12 @@ def run_from_config(sites_file: str, output: str):
             logger.error(f"Error scraping {url}: {e}")
 
 
-def run_single(url: str, selector: str, product: str, output: str, name_selector: Optional[str], currency: str):
-    html = fetch_html(url)
+def run_single(url: str, selector: str, product: str, output: str, name_selector: Optional[str], currency: str, use_dynamic: bool = False):
+    html = fetch_html(url, use_dynamic=use_dynamic, wait_selector=selector)
     price, name = extract_price_and_name(html, selector, name_selector)
-    now = datetime.datetime.utcnow().isoformat()
+    
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    
     row = {
         'timestamp': now,
         'site': url,
@@ -290,12 +325,21 @@ def main(argv=None):
     parser.add_argument('--product', help='Nombre de producto (fallback)')
     parser.add_argument('--currency', help='Moneda (opcional)')
     parser.add_argument('--output', default='data/prices.csv', help='Archivo CSV de salida')
+    parser.add_argument('--dynamic', action='store_true', help='Usar navegador real (Playwright) para renderizado JS')
     args = parser.parse_args(argv)
 
     if args.sites:
         run_from_config(args.sites, args.output)
     elif args.url and args.selector:
-        run_single(args.url, args.selector, args.product or '', args.output, args.name_selector, args.currency or '')
+        run_single(
+            args.url, 
+            args.selector, 
+            args.product or '', 
+            args.output, 
+            args.name_selector, 
+            args.currency or '',
+            use_dynamic=args.dynamic
+        )
     else:
         parser.print_help()
         sys.exit(1)

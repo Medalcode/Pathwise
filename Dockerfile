@@ -1,5 +1,5 @@
-# Usar imagen base ligera de Python
-FROM python:3.10-slim
+# Usar imagen oficial de Playwright (incluye Python y navegadores)
+FROM mcr.microsoft.com/playwright/python:v1.35.0-jammy
 
 # Variables de entorno para Python
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -8,14 +8,10 @@ ENV PYTHONUNBUFFERED=1
 # Directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema necesarias
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiar requirements e instalar
+# Copiar requirements e instalar dependencias Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
 
 # Copiar código fuente
 COPY . .
