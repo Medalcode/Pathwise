@@ -87,18 +87,34 @@ def execute_scraping_task(req: ScrapeRequest):
 def health_check():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
+from src.worker.tasks import scrape_task
+
+# ...
+
 @app.post("/scrape", response_model=ScrapeResponse, tags=["Actions"])
-async def trigger_scrape(request: ScrapeRequest, background_tasks: BackgroundTasks):
+async def trigger_scrape(request: ScrapeRequest):
     """
-    Inicia un proceso de scraping en segundo plano.
-    Retorna inmediatamente mientras el servidor trabaja.
+    Encola una tarea de scraping al cluster de Celery workers.
     """
-    background_tasks.add_task(execute_scraping_task, request)
-    return {
-        "status": "accepted",
-        "message": f"Scraping iniciado para {request.product}",
-        "job_id": f"job_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    }
+    try:
+        # Encolar tarea asíncrona en Redis/Celery
+        task = scrape_task.delay(
+            url=str(request.url),
+            selector=request.selector,
+            name_selector=request.name_selector,
+            dynamic=False, # TODO: Agregar esto al modelo de request
+            product_fallback=request.product
+        )
+        
+        return {
+            "status": "queued",
+            "message": f"Tarea encolada en Celery",
+            "job_id": str(task.id)
+        }
+    except Exception as e:
+        logger.error(f"Error encolando tarea: {e}")
+        # Fallback local si no hay Redis (opcional, por simplicidad fallamos)
+        raise HTTPException(status_code=500, detail=f"Error conectando con colas de trabajo: {str(e)}")
 
 @app.get("/prices", response_model=List[PriceRecord], tags=["Data"])
 def get_prices(
