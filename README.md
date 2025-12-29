@@ -174,6 +174,16 @@ retry_handler = RetryHandler(
 )
 ```
 
+### Dashboard (Streamlit)
+
+Visualiza los datos y gestiona el scraper desde una interfaz web moderna.
+
+```bash
+streamlit run src/dashboard/app.py
+```
+
+Accede a `http://localhost:8501` en tu navegador.
+
 ## 🗄️ Base de Datos y API
 
 BuyScraper v2.1 incluye soporte para SQLite y una API REST completa.
