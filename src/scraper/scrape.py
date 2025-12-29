@@ -75,14 +75,13 @@ from .robots import RobotsChecker
 from .ratelimit import RateLimiter
 from .retry import RetryHandler
 from .database import init_db, save_price
-
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+from .ua import ua_rotator
 
 # Configurar logger global
 logger = setup_logger('buyscraper')
 
 # Inicializar componentes globales
-robots_checker = RobotsChecker(user_agent=USER_AGENT)
+robots_checker = RobotsChecker(user_agent="*") # Default genérico
 rate_limiter = RateLimiter(requests_per_minute=10, global_delay=1.0)
 retry_handler = RetryHandler(max_retries=3, backoff_factor=2.0)
 
@@ -109,15 +108,19 @@ def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True) -> str:
         ValueError: Si robots.txt no permite scrapear
         requests.HTTPError: Si el request falla después de reintentos
     """
-    # 1. Verificar robots.txt
+    # Obtener un User-Agent rotativo para esta sesión
+    current_ua = ua_rotator.get_random_ua()
+    
+    # 1. Verificar robots.txt con el UA actual
     if respect_robots:
-        if not robots_checker.can_fetch(url, USER_AGENT):
+        # Se envía current_ua, aunque muchos robots.txt aplican a *
+        if not robots_checker.can_fetch(url, current_ua):
             error_msg = f"robots.txt disallows scraping {url}"
             logger.error(error_msg)
             raise ValueError(error_msg)
         
         # Obtener y respetar Crawl-Delay si existe
-        crawl_delay = robots_checker.get_crawl_delay(url, USER_AGENT)
+        crawl_delay = robots_checker.get_crawl_delay(url, current_ua)
     else:
         crawl_delay = None
     
@@ -128,8 +131,8 @@ def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True) -> str:
     
     # 3. Realizar request con retry logic
     def _do_request():
-        logger.info(f"Fetching {url}")
-        headers = {"User-Agent": USER_AGENT}
+        logger.info(f"Fetching {url} (UA: {current_ua[:30]}...)")
+        headers = {"User-Agent": current_ua}
         resp = requests.get(url, headers=headers, timeout=timeout)
         resp.raise_for_status()
         logger.debug(f"Successfully fetched {url} ({len(resp.text)} bytes)")

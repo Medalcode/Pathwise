@@ -105,6 +105,38 @@ pytest tests/test_parse_price.py -v
 
 ## 🔧 Configuración Avanzada
 
+### 🏭 Sistema de Recetas (Nuevo en v3.0)
+
+BuyScraper ahora soporta "Recetas" YAML para desacoplar la configuración del código.
+
+Ejemplo (`config/tienda.yaml`):
+
+```yaml
+domain: "tienda.com"
+selectors:
+  price:
+    value: ".price-tag"
+  product_title:
+    value: "h1"
+```
+
+Cargar recetas en código:
+
+```python
+from src.scraper.recipes import load_recipes_from_dir
+recipes = load_recipes_from_dir('config/')
+```
+
+### 🎭 Rotación de User-Agents
+
+El scraper rota automáticamente el User-Agent en cada petición para evadir bloqueos.
+Utiliza `fake-useragent` si está disponible, o una lista interna robusta como fallback.
+
+```python
+from src.scraper.ua import ua_rotator
+ua = ua_rotator.get_random_ua()
+```
+
 ### Logging
 
 Los logs se guardan automáticamente en `logs/scraper_YYYYMMDD.log`:

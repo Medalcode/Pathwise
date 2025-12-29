@@ -1,0 +1,19 @@
+# Receta de scraping compatible con v3
+domain: "example.com"
+meta:
+  version: "1.0"
+  description: "Receta de ejemplo para scraping genérico"
+
+selectors:
+  price:
+    type: "css"
+    value: ".price-display"
+
+  product_title:
+    type: "css"
+    value: "h1.title"
+
+  image:
+    type: "css"
+    value: "img.product-hero"
+    attribute: "src"
