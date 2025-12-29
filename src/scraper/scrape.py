@@ -74,6 +74,7 @@ from .logger import setup_logger, get_logger
 from .robots import RobotsChecker
 from .ratelimit import RateLimiter
 from .retry import RetryHandler
+from .database import init_db, save_price
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
@@ -84,6 +85,12 @@ logger = setup_logger('buyscraper')
 robots_checker = RobotsChecker(user_agent=USER_AGENT)
 rate_limiter = RateLimiter(requests_per_minute=10, global_delay=1.0)
 retry_handler = RetryHandler(max_retries=3, backoff_factor=2.0)
+
+# Inicializar DB (silent fail si hay error para no romper import, pero logger avisa)
+try:
+    init_db()
+except Exception as e:
+    logger.warning(f"No se pudo inicializar la base de datos: {e}")
 
 
 def fetch_html(url: str, timeout: int = 10, respect_robots: bool = True) -> str:
@@ -193,7 +200,10 @@ def extract_price_and_name(html: str, price_selector: str, name_selector: Option
     return price, name
 
 
+
 def save_row(path: str, row: dict):
+    """Guarda registro en CSV y Base de Datos (SQLite)."""
+    # 1. Guardar en CSV
     header = ["timestamp", "site", "product", "price", "currency", "url"]
     write_header = False
     try:
@@ -201,11 +211,25 @@ def save_row(path: str, row: dict):
             pass
     except FileNotFoundError:
         write_header = True
+    
     with open(path, 'a', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=header)
         if write_header:
             writer.writeheader()
         writer.writerow(row)
+        
+    # 2. Guardar en DB
+    try:
+        # Normalizar precio para DB (que espera float o None)
+        db_row = row.copy()
+        if isinstance(db_row['price'], str) and not db_row['price']:
+            db_row['price'] = None
+        
+        save_price(db_row)
+        logger.debug(f"Saved to DB: {db_row['url']}")
+    except Exception as e:
+        # No bloquear si falla DB, logger ya registró error en save_price
+        logger.warning(f"Failed to save to DB (CSV saved ok): {e}")
 
 
 def run_from_config(sites_file: str, output: str):

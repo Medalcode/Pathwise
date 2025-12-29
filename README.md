@@ -142,32 +142,59 @@ retry_handler = RetryHandler(
 )
 ```
 
+## 🗄️ Base de Datos y API
+
+BuyScraper v2.1 incluye soporte para SQLite y una API REST completa.
+
+### Base de Datos
+
+Los datos se guardan automáticamente en `data/prices.db` (SQLite) además del CSV.
+
+Comando para migrar datos históricos CSV a SQLite:
+
+```bash
+python src/scripts/migrate_csv.py data/prices.csv
+```
+
+### API REST
+
+Inicia el servidor para consultar datos o scrapear remotamente:
+
+```bash
+# Iniciar servidor
+uvicorn src.api.main:app --reload
+
+# Swagger UI (Documentación interactiva)
+# Abrir: http://localhost:8000/docs
+```
+
+#### Endpoints Principales:
+
+- `GET /prices`: Historial de precios (filtros disponibles)
+- `GET /stats`: Estadísticas de la base de datos
+- `POST /scrape`: Iniciar scraping en segundo plano
+
+Ejemplo de request:
+
+```bash
+curl -X POST "http://localhost:8000/scrape" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://example.com", "selector": ".price", "product": "Test"}'
+```
+
 ## 🏗️ Estructura del Proyecto
 
 ```
 BuyScraper/
 ├── src/
-│   └── scraper/
-│       ├── __init__.py       # Módulo principal
-│       ├── scrape.py         # Script de scraping
-│       ├── logger.py         # Sistema de logging
-│       ├── robots.py         # Verificador de robots.txt
-│       ├── ratelimit.py      # Rate limiter
-│       └── retry.py          # Retry logic
-├── config/
-│   └── sites.yaml            # Configuración de sitios
-├── data/
-│   └── sample_prices.csv     # Datos de ejemplo
-├── notebooks/
-│   └── analysis.ipynb        # Análisis y visualizaciones
-├── tests/
-│   ├── test_parse_price.py   # Tests de parsing
-│   ├── test_logger.py        # Tests de logging
-│   └── test_ratelimit.py     # Tests de rate limiting
-├── logs/                     # Logs (auto-generado)
-├── requirements.txt          # Dependencias
-├── .gitignore               # Git ignore
-└── README.md                # Este archivo
+│   ├── api/                  # ⭐ API REST
+│   │   └── main.py
+│   ├── scraper/
+│       ├── database.py       # ⭐ Módulo DB
+│       ├── ...
+│   └── scripts/
+│       └── migrate_csv.py    # ⭐ Script Migración
+├── ...
 ```
 
 ## 📚 Documentación Adicional
