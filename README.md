@@ -46,6 +46,17 @@ pip install -r requirements.txt
 python src/scraper/scrape.py --sites config/sites.yaml --output data/prices.csv
 ```
 
+## 🐳 Docker Rapid Start
+
+Ejecuta todo el stack (API + Dashboard) sin instalar Python localmente:
+
+```bash
+docker-compose up --build
+```
+
+- **Dashboard:** http://localhost:8501
+- **API Docs:** http://localhost:8000/docs
+
 ## 🎮 Uso
 
 ### Modo 1: Múltiples Sitios (Configuración YAML)
