@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 """
-BuyScraper CLI (Compatibility Layer).
-Punto de entrada para la línea de comandos. 
-Traduce argumentos a Recetas V3 y usa el nuevo ScraperEngine.
+Panoptes CLI v3.
+Herramienta de Inteligencia Competitiva y Scraping.
+Traduce argumentos a Recetas y orquesta la extracción.
 """
 
 import sys
 import yaml
 import argparse
 import logging
-from typing import Optional
+from typing import Optional, List
 
-# Importar Motor V3 y Modelos
+# Importar Motor y Componentes
 from .engine import engine
 from .models import ScrapeRecipe, SelectorConfig, SelectorType
 from .recipes import load_recipe
 from .logger import setup_logger
+from src.reporting.exporter import save_to_excel
 
-# Configurar logger (necesario para ver output en CLI)
-logger = setup_logger('buyscraper')
+# Configurar logger
+logger = setup_logger('panoptes')
 
 def create_ad_hoc_recipe(domain: str, selector: str, name_selector: Optional[str] = None, dynamic: bool = False) -> ScrapeRecipe:
     """Crea una receta temporal para ejecuciones de una sola vez."""
@@ -35,7 +36,7 @@ def create_ad_hoc_recipe(domain: str, selector: str, name_selector: Optional[str
         meta={"dynamic": dynamic, "ad_hoc": True}
     )
 
-def run_single(url: str, selector: str, product_name: str, name_selector: Optional[str] = None, currency: str = "USD", dynamic: bool = False):
+def run_single(url: str, selector: str, product_name: str, name_selector: Optional[str] = None, currency: str = "USD", dynamic: bool = False, export_excel: bool = False):
     """Ejecuta scraping para una URL única usando el Engine V3."""
     try:
         # 1. Crear Receta al vuelo
@@ -57,11 +58,23 @@ def run_single(url: str, selector: str, product_name: str, name_selector: Option
         # 3. Output
         logger.info(f"✅ ÉXITO: {result.product_title} -> {result.price} {result.currency}")
         
+        # 4. Exportar a Excel (Reporte Data-as-a-Service)
+        if export_excel:
+            data_dict = {
+                'timestamp': result.timestamp,
+                'site': result.site,
+                'product': result.product_title,
+                'price': float(result.price) if result.price else None,
+                'currency': result.currency,
+                'url': str(result.url)
+            }
+            save_to_excel([data_dict])
+        
     except Exception as e:
         logger.error(f"❌ FALLO: {e}")
         sys.exit(1)
 
-def run_from_config(config_path: str):
+def run_from_config(config_path: str, export_excel: bool = False):
     """Ejecuta scraping basado en archivo YAML legacy de sitios."""
     # Nota: Esto mantiene soporte para el formato viejo de 'sites.yaml'
     try:
@@ -72,6 +85,8 @@ def run_from_config(config_path: str):
         logger.info(f"Procesando {len(sites)} sitios desde configuración legacy...")
         
         success_count = 0
+        collected_data = [] # Para reporte Excel
+        
         for site in sites:
             try:
                 url = site['url']
@@ -89,25 +104,38 @@ def run_from_config(config_path: str):
                 res = engine.process(recipe, override_url=url)
                 
                 # Fallback de nombre si es necesario
-                # Nota: engine.process ya guarda en DB, así que esto es solo para log
                 if res.product_title == 'Unknown Product':
                      logger.warning(f"  Nombre no encontrado, usando fallback: {product_fallback}")
+                     res.product_title = product_fallback
 
                 logger.info(f"  Saved: {res.url} -> {res.price}")
                 success_count += 1
+                
+                if export_excel:
+                    collected_data.append({
+                        'timestamp': res.timestamp,
+                        'site': res.site,
+                        'product': res.product_title,
+                        'price': float(res.price) if res.price else None,
+                        'currency': res.currency,
+                        'url': str(res.url)
+                    })
                 
             except Exception as e:
                 logger.error(f"  Error en {site.get('url')}: {e}")
                 
         logger.info(f"Lote completado. Éxitos: {success_count}/{len(sites)}")
 
+        if export_excel and collected_data:
+            save_to_excel(collected_data)
+
     except Exception as e:
         logger.error(f"Error procesando archivo config: {e}")
         sys.exit(1)
 
 def main():
-    """CLI Entrypoint compatible V3."""
-    parser = argparse.ArgumentParser(description="BuyScraper V3 CLI")
+    """CLI Entrypoint compatible V3 via Panoptes."""
+    parser = argparse.ArgumentParser(description="Panoptes V3 CLI - Intelligent Scraping")
     
     # Modos de operación (mutuamente exclusivos)
     group = parser.add_mutually_exclusive_group(required=True)
@@ -120,6 +148,10 @@ def main():
     parser.add_argument('--name-selector', help='Selector CSS del nombre')
     parser.add_argument('--product', help='Nombre manual del producto (fallback)')
     parser.add_argument('--dynamic', action='store_true', help='Usar navegador real (Playwright)')
+    
+    # Argumentos de reporte
+    parser.add_argument('--excel', action='store_true', help='Generar reporte Excel (.xlsx) automáticamente')
+
     
     # Argumentos legacy ignorados o adaptados
     parser.add_argument('--currency', help='Moneda (Default: USD)')
@@ -135,18 +167,18 @@ def main():
             args.selector, 
             args.product or "Unknown", 
             args.name_selector,
-            dynamic=args.dynamic
+            dynamic=args.dynamic,
+            export_excel=args.excel
         )
         
     elif args.sites:
-        run_from_config(args.sites)
+        run_from_config(args.sites, export_excel=args.excel)
         
     elif args.recipe:
         # Modo nativo V3
         logger.info(f"Cargando receta V3: {args.recipe}")
         recipe = load_recipe(args.recipe)
         logger.warning("El modo --recipe directo requiere integración con orquestador. Usando CLI como prueba.")
-        # Aquí podríamos pedir una URL para probar la receta
         logger.info("Por favor usa --url con una Receta en la version V3.1 del CLI.")
 
 if __name__ == '__main__':

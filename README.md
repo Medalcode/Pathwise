@@ -1,10 +1,21 @@
-# 🛒 BuyScraper - Economía en tiempo real
+# 👁️ Panoptes (v3.0)
+
+> _Antes conocido como BuyScraper_
 
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 
-Scraper genérico y ético de precios de productos en línea con análisis temporal. Versión 2.0 con mejoras profesionales de robustez y compliance.
+**Panoptes** es una plataforma de "Data-as-a-Service" (DaaS) diseñada para la inteligencia competitiva y el scraping de alta precisión a escala empresarial.
+
+Capaz de ver lo que otros scrapers no ven (sitios dinámicos con Playwright) e integrarse en flujos de trabajo profesionales (Excel Reports, API, Webhooks).
+
+## 🚀 Características Enterprise (V3)
+
+- **Motor Híbrido:** Requests (Velocidad) + Playwright (Visión Dinámica/JS).
+- **Reportes DaaS:** Generación automática de Excel (.xlsx) listo para clientes.
+- **Evasión:** Rotación inteligente de User-Agents y manejo de Cookies.
+- **Arquitectura Distribuida:** Backend capaz de escalar con Celery & Redis.
 
 ## ✨ Características
 
@@ -42,8 +53,9 @@ source .venv/bin/activate  # En Windows: .venv\Scripts\activate
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Ejecutar
-python src/scraper/scrape.py --sites config/sites.yaml --output data/prices.csv
+# 4. Ejecutar (Generando Reporte Excel)
+python src/scraper/scrape.py --sites config/sites.yaml --excel
+# El reporte se guarda en reports/Panoptes_Report_YYYY-MM-DD.xlsx
 ```
 
 ## 🐳 Docker Rapid Start
