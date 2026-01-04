@@ -51,51 +51,57 @@ def run_mobile_tracker():
     xml_path = bot.dump_hierarchy()
     inspector = UIInspector(xml_path)
     
-    # 3. Buscar Precio (Estrategia Mejorada)
-    # Regex para formatos: 1.250.000 / 1,250,000 / 1250000
-    # Evita fechas (2025) y specs simples (128) pidiendo longitud mínima o puntos
-    regex_price = r"[\d]{1,3}(?:[.,]\d{3})+"
+    # DEBUG: Imprimir todo lo que ve para entender la estructura
+    logger.info("--- DUMP DE VISTA (Primeros 50 nodos de texto) ---")
+    count = 0
+    for node in inspector.root.iter('node'):
+        txt = node.attrib.get('text', '') or node.attrib.get('content-desc', '')
+        if txt and len(txt) > 2: # Ignorar cositas chicas
+            logger.info(f"[{count}] Text: '{txt}' | ID: {node.attrib.get('resource-id', 'N/A')}")
+            count += 1
+            if count > 50: break
+    logger.info("------------------------------------------------")
+
+    # 3. Buscar Precio (Estrategia Accesibilidad: "X pesos con Y centavos")
+    # Capturamos "658424 pesos"
+    regex_accessible = r"(\d+)\s+pesos"
     
-    candidates = inspector.find_all_nodes_by_regex(regex_price)
+    candidates = inspector.find_all_nodes_by_regex(regex_accessible)
     
     price_val = 0.0
     found_text = ""
     
     if candidates:
-        logger.info(f"🔎 Encontrados {len(candidates)} candidatos de precio.")
-        best_candidate = None
-        max_price = 0.0
+        logger.info(f"🔎 Encontrados {len(candidates)} nodos de accesibilidad 'pesos'.")
         
+        # Tomamos el primer candidato válido (usualmente el precio principal aparece primero o cerca del botón comprar)
         for cand in candidates:
             txt = cand['text'] or cand['content_desc']
-            val = clean_price(txt)
-            logger.info(f"   - Candidato: '{txt}' -> {val}")
-            
-            # Heurística: El precio de un iPhone 15 debe ser alto (> 100000 ARS)
-            # y queremos el valor más alto visible (a menos que haya descuentos mostrando precio anterior)
-            # Pero cuidado con precios tachados.
-            # Por ahora, tomamos el valor válido más alto encontrado como 'Precio Detectado'
-            if val > 100000 and val > max_price:
-                max_price = val
-                best_candidate = cand
-        
-        if best_candidate:
-            price_val = max_price
-            found_text = best_candidate['text'] or best_candidate['content_desc']
-            logger.info(f"🎯 Ganador: '{found_text}'")
+            match = re.search(regex_accessible, txt, re.IGNORECASE)
+            if match:
+                val_str = match.group(1)
+                val = float(val_str)
+                logger.info(f"   - Candidato: '{txt}' -> {val}")
+                
+                # Descartar precios ridículamente bajos (ej: "0 pesos")
+                if val > 1000: 
+                    price_val = val
+                    found_text = txt
+                    break # Encontramos el precio principal
     
     if price_val == 0.0:
-        logger.warning("Ampliando búsqueda a números simples...")
-        # Fallback: buscar cualquier número grande sin puntos
-        candidates_simple = inspector.find_all_nodes_by_regex(r"\d{4,}")
-        for cand in candidates_simple:
-             val = clean_price(cand['text'] or cand['content_desc'])
-             if val > 100000: # Filtro de ruido
-                 price_val = val
-                 found_text = cand['text'] or cand['content_desc']
-                 break
+        logger.warning("⚠️ Falló patrón 'pesos'. Probando métodos antiguos...")
+        # Fallback 1: Regex numérico clásico ($ 1.250.000)
+        regex_price = r"\$\s?[\d]{1,3}(?:[.,]\d{3})+"
+        candidates_v2 = inspector.find_all_nodes_by_regex(regex_price)
+        # (Lógica simplificada para fallback)
+        for cand in candidates_v2: 
+            val = clean_price(cand['text'])
+            if val > 100000: 
+                price_val = val 
+                break
 
-    logger.info(f"🏷️ Precio extraído: {price_val}")
+    logger.info(f"🏷️ Precio FINAL extraído: {price_val}")
     
     # 4. Guardar Reporte
     data = [{
