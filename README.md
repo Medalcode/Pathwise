@@ -1,397 +1,133 @@
-# 👁️ Panoptes (v3.0)
+# 👁️ Panoptes
 
-> _Antes conocido como BuyScraper_
+## Data Intelligence & Extraction Suite (formerly BuyScraper)
 
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
+> **"Data is the new oil, but only if you can refine it."**
 
-**Panoptes** es una plataforma de "Data-as-a-Service" (DaaS) diseñada para la inteligencia competitiva y el scraping de alta precisión a escala empresarial.
+**Panoptes** is a professional-grade web scraping and data intelligence suite designed not just to extract code, but to build viable **Data-as-a-Service (DaaS)** businesses. It moves beyond simple "mining" scripts to providing high-value, clean, and actionable business intelligence.
 
-Capaz de ver lo que otros scrapers no ven (sitios dinámicos con Playwright) e integrarse en flujos de trabajo profesionales (Excel Reports, API, Webhooks).
+---
 
-## 🚀 Características Enterprise (V3)
+## 🚀 The Business of Data: Creating & Selling Specialized Scrapers
 
-- **Motor Híbrido:** Requests (Velocidad) + Playwright (Visión Dinámica/JS).
-- **Reportes DaaS:** Generación automática de Excel (.xlsx) listo para clientes.
-- **Evasión:** Rotación inteligente de User-Agents y manejo de Cookies.
-- **Arquitectura Distribuida:** Backend capaz de escalar con Celery & Redis.
+In the digital economy, companies pay a premium for fresh, competitive data. Panoptes is built around three core business models designed to turn code into revenue.
 
-## ✨ Características
+### 1. What Data is "Pure Gold"?
 
-### 🔐 Scraping Ético y Robusto
+Not all data is created equal. Panoptes focuses on high-value targets:
 
-- ✅ **Respeto a robots.txt**: Verificación automática antes de cada scraping
-- ✅ **Rate limiting**: Control de requests por dominio para evitar sobrecargar servidores
-- ✅ **Retry logic**: Reintentos automáticos con backoff exponencial
-- ✅ **Logging profesional**: Sistema de logs con rotación automática
+- **Real-Time Price Comparison**: Electronic stores needing to adjust prices hourly against competitors.
+- **Sentiment Analysis**: Marketing agencies scraping reviews from Amazon/Google Maps to gauge product reception.
+- **Lead Generation**: Real estate agencies looking for property owners the moment an ad goes live.
+- **Stock Monitoring**: Resellers tracking limited edition product availability.
 
-### 🎯 Funcionalidad Core
+### 2. Revenue Models
 
-- ✅ **Scraping genérico**: Configuración vía selectores CSS
-- ✅ **Multi-sitio**: Procesa múltiples sitios desde archivo YAML
-- ✅ **Parsing robusto**: Maneja formatos de precio US y EU
-- ✅ **Análisis temporal**: Notebook Jupyter con visualizaciones
+#### A. Data-as-a-Service (DaaS) - Selling Reports
 
-## 📦 Requisitos
+You don't sell the code; you sell the **insight**.
+
+- **Example**: A weekly report of hotel prices in a tourist zone.
+- **Delivery**: Clean Excel/CSV files via email or cloud.
+- **Model**: Monthly subscription for the "Data Bulletin".
+
+#### B. Custom Scraper Development
+
+Building tailored solutions for clients on platforms like Upwork/Fiverr.
+
+- **The Panoptes Edge**: Unlike basic scrapers, Panoptes uses **Playwright** and advanced proxy handling to bypass security blocks that stop novice developers.
+- **Model**: One-time high-ticket payment ($50 - $500+).
+
+#### C. Proprietary APIs
+
+Wrapping your scraper in an API for other developers to consume.
+
+- **Model**: Usage-based billing.
+
+---
+
+## 🛠️ Technical Architecture
+
+Panoptes creates a professional "Web to Money" pipeline:
+
+1.  **Extraction (Playwright)**: Navigates complex JS-heavy sites, handles infinite scrolls, and interacts with UI elements.
+2.  **Refinement (Pandas/Python)**: Cleans "dirty" web data (weird symbols, bad formatting) into pristine datasets.
+3.  **Delivery**: Exports to business-ready formats like **Excel (.xlsx)**, CSV, or direct database injection.
+
+### ⚡ "Hefesto" Component (Mobile Hybrid - _Coming Soon_)
+
+Leverages physical devices (like Android via ADB) to scrape mobile-only applications, bypassing desktop-grade anti-scraping protections entirely.
+
+---
+
+## 💻 Quick Start
+
+### Prerequisites
+
+- Python 3.8+
+- Playwright
+
+### Installation
 
 ```bash
-Python 3.8+
-```
+# 1. Clone the repository
+git clone https://github.com/Medalcode/BuyScraper.git Panoptes
+cd Panoptes
 
-## 🚀 Instalación Rápida
-
-```bash
-# 1. Clonar repositorio
-git clone https://github.com/Medalcode/BuyScraper.git
-cd BuyScraper
-
-# 2. Crear entorno virtual
+# 2. Create virtual environment
 python3 -m venv .venv
-source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# 3. Instalar dependencias
+# 3. Install dependencies
 pip install -r requirements.txt
-
-# 4. Ejecutar (Generando Reporte Excel)
-python src/scraper/scrape.py --sites config/sites.yaml --excel
-# El reporte se guarda en reports/Panoptes_Report_YYYY-MM-DD.xlsx
+playwright install
 ```
 
-## 🐳 Docker Rapid Start
+### Usage
 
-Ejecuta todo el stack (API + Dashboard) sin instalar Python localmente:
+**Generate a Market Report (Excel Export):**
+
+```bash
+python src/scraper/scrape.py --sites config/sites.yaml --excel
+```
+
+_Output: `reports/Panoptes_Report_YYYY-MM-DD.xlsx`_
+
+**Docker Quick Start:**
 
 ```bash
 docker-compose up --build
 ```
 
 - **Dashboard:** http://localhost:8501
-- **API Docs:** http://localhost:8000/docs
-
-## 🎮 Uso
-
-### Modo 1: Múltiples Sitios (Configuración YAML)
-
-```bash
-python src/scraper/scrape.py --sites config/sites.yaml --output data/prices.csv
-```
-
-**Configuración (`config/sites.yaml`):**
-
-```yaml
-sites:
-  - url: "https://ejemplo.com/producto"
-    price_selector: ".price"
-    name_selector: ".product-title"
-    product: "Nombre del Producto"
-    currency: "ARS"
-```
-
-### Modo 2: URL Única (Ad-hoc)
-
-```bash
-python src/scraper/scrape.py \
-  --url "https://ejemplo.com/producto" \
-  --selector ".price" \
-  --product "Mi Producto" \
-  --output data/prices.csv
-```
-
-### Modo 3: Análisis de Datos
-
-```bash
-jupyter notebook notebooks/analysis.ipynb
-```
-
-## 📊 Formato de Datos
-
-Los datos se guardan en CSV con el siguiente esquema:
-
-```csv
-timestamp,site,product,price,currency,url
-2025-12-25T14:00:00,https://ejemplo.com,Producto X,1999.99,ARS,https://ejemplo.com/producto
-```
-
-## 🧪 Testing
-
-```bash
-# Ejecutar todos los tests
-pytest
-
-# Con coverage
-pytest --cov=src --cov-report=html
-
-# Test específico
-pytest tests/test_parse_price.py -v
-```
-
-## 🔧 Configuración Avanzada
-
-### 🏭 Sistema de Recetas (Nuevo en v3.0)
-
-BuyScraper ahora soporta "Recetas" YAML para desacoplar la configuración del código.
-
-Ejemplo (`config/tienda.yaml`):
-
-```yaml
-domain: "tienda.com"
-selectors:
-  price:
-    value: ".price-tag"
-  product_title:
-    value: "h1"
-```
-
-Cargar recetas en código:
-
-```python
-from src.scraper.recipes import load_recipes_from_dir
-recipes = load_recipes_from_dir('config/')
-```
-
-### 🎭 Rotación de User-Agents
-
-El scraper rota automáticamente el User-Agent en cada petición para evadir bloqueos.
-Utiliza `fake-useragent` si está disponible, o una lista interna robusta como fallback.
-
-```python
-from src.scraper.ua import ua_rotator
-ua = ua_rotator.get_random_ua()
-```
-
-### Logging
-
-Los logs se guardan automáticamente en `logs/scraper_YYYYMMDD.log`:
-
-```python
-from src.scraper import setup_logger
-
-logger = setup_logger(
-    name='buyscraper',
-    console_level=logging.INFO,
-    file_level=logging.DEBUG
-)
-```
-
-### Rate Limiting
-
-Configuración global en `scrape.py`:
-
-```python
-rate_limiter = RateLimiter(
-    requests_per_minute=10,  # 10 requests por minuto
-    global_delay=1.0          # 1 segundo entre requests
-)
-```
-
-### Retry Logic
-
-Configuración de reintentos:
-
-```python
-retry_handler = RetryHandler(
-    max_retries=3,         # 3 reintentos
-    backoff_factor=2.0,    # Backoff exponencial (1s, 2s, 4s)
-    initial_delay=1.0      # Delay inicial
-)
-```
-
-### Dashboard (Streamlit)
-
-Visualiza los datos y gestiona el scraper desde una interfaz web moderna.
-
-```bash
-streamlit run src/dashboard/app.py
-```
-
-Accede a `http://localhost:8501` en tu navegador.
-
-## 🗄️ Base de Datos y API
-
-BuyScraper v2.1 incluye soporte para SQLite y una API REST completa.
-
-### Base de Datos
-
-Los datos se guardan automáticamente en `data/prices.db` (SQLite) además del CSV.
-
-Comando para migrar datos históricos CSV a SQLite:
-
-```bash
-python src/scripts/migrate_csv.py data/prices.csv
-```
-
-### API REST
-
-Inicia el servidor para consultar datos o scrapear remotamente:
-
-```bash
-# Iniciar servidor
-uvicorn src.api.main:app --reload
-
-# Swagger UI (Documentación interactiva)
-# Abrir: http://localhost:8000/docs
-```
-
-#### Endpoints Principales:
-
-- `GET /prices`: Historial de precios (filtros disponibles)
-- `GET /stats`: Estadísticas de la base de datos
-- `POST /scrape`: Iniciar scraping en segundo plano
-
-Ejemplo de request:
-
-```bash
-curl -X POST "http://localhost:8000/scrape" \
-     -H "Content-Type: application/json" \
-     -d '{"url": "https://example.com", "selector": ".price", "product": "Test"}'
-```
-
-## 🏗️ Estructura del Proyecto
-
-```
-BuyScraper/
-├── src/
-│   ├── api/                  # ⭐ API REST
-│   │   └── main.py
-│   ├── scraper/
-│       ├── database.py       # ⭐ Módulo DB
-│       ├── ...
-│   └── scripts/
-│       └── migrate_csv.py    # ⭐ Script Migración
-├── ...
-```
-
-## 📚 Documentación Adicional
-
-- **[Reporte de Estado](REPORTE_DESARROLLO.md)**: Estado completo del desarrollo
-- **[Mejoras Priorizadas](MEJORAS_PRIORIZADAS.md)**: Roadmap de mejoras futuras
-- **[Notebook de Análisis](notebooks/analysis.ipynb)**: Ejemplos de visualización
-
-## 🎯 Casos de Uso
-
-### 1. Monitoreo de Competencia
-
-```bash
-# Configurar sitios competidores en sites.yaml
-# Programar con cron para ejecución diaria
-0 2 * * * cd /path/to/BuyScraper && python src/scraper/scrape.py --sites config/sites.yaml
-```
-
-### 2. Detección de Ofertas
-
-```python
-# Analizar histórico y comprar cuando precio < promedio
-import pandas as pd
-
-df = pd.read_csv('data/prices.csv')
-df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-product_df = df[df['product'] == 'Mi Producto']
-avg_price = product_df['price'].mean()
-current_price = product_df.iloc[-1]['price']
-
-if current_price < avg_price * 0.9:
-    print("¡Buen momento para comprar!")
-```
-
-### 3. Análisis de Mercado
-
-```bash
-# Recolectar datos por semanas/meses
-# Analizar tendencias en notebook
-jupyter notebook notebooks/analysis.ipynb
-```
-
-## ⚠️ Consideraciones Legales
-
-### ⚖️ Uso Responsable
-
-Este scraper incluye protecciones éticas:
-
-1. **robots.txt**: Verifica automáticamente permisos antes de scrapear
-2. **Rate limiting**: Evita sobrecargar servidores
-3. **User-Agent honesto**: Identifica como navegador estándar
-4. **Delays configurables**: Respeta políticas de los sitios
-
-### 📜 Responsabilidad del Usuario
-
-- ✅ Verifica que el scraping está permitido por términos de servicio
-- ✅ Usa delays razonables entre requests
-- ✅ No uses para fines comerciales sin permiso
-- ✅ Respeta la privacidad y propiedad intelectual
-
-## 🐛 Troubleshooting
-
-### Error: `ImportError: No module named 'bs4'`
-
-```bash
-pip install beautifulsoup4
-```
-
-### Error: `robots.txt disallows scraping`
-
-```python
-# Usar respect_robots=False solo si estás seguro
-python src/scraper/scrape.py --url "..." --selector "..." # Usa robots.txt por defecto
-```
-
-### Error: Selector CSS no encuentra precio
-
-```bash
-# 1. Inspeccionar página con DevTools (F12)
-# 2. Usar Inspector para encontrar elemento
-# 3. Copiar selector CSS correcto
-# 4. Actualizar sites.yaml
-```
-
-## 📈 Changelog
-
-### v2.0.0 (2025-12-25) - Sprint 1 Complete
-
-- ✅ Sistema de logging profesional con rotación
-- ✅ Verificación automática de robots.txt
-- ✅ Rate limiting por dominio y global
-- ✅ Retry logic con backoff exponencial
-- ✅ Tests unitarios expandidos
-- ✅ Documentación mejorada
-
-### v1.0.0 (2025-10-01) - Initial Release
-
-- ✅ Scraper genérico con selectores CSS
-- ✅ Configuración multi-sitio vía YAML
-- ✅ Parsing robusto de precios
-- ✅ Notebook de análisis
-- ✅ Tests unitarios básicos
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas:
-
-1. Fork el repositorio
-2. Crear feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
-4. Push a branch (`git push origin feature/AmazingFeature`)
-5. Abrir Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo licencia MIT. Ver `LICENSE` para más detalles.
-
-## 👤 Autor
-
-**Medalcode**
-
-- GitHub: [@Medalcode](https://github.com/Medalcode)
-- Proyecto: [BuyScraper](https://github.com/Medalcode/BuyScraper)
-
-## 🙏 Agradecimientos
-
-- BeautifulSoup4 por el excelente HTML parsing
-- Plotly y Matplotlib por visualizaciones
-- Pandas por manipulación de datos
-- Comunidad Python por las mejores prácticas
+- **API:** http://localhost:8000/docs
 
 ---
 
-**⭐ Si este proyecto te resultó útil, considera darle una estrella en GitHub!**
+## 📊 Features
+
+- **Advanced Anti-Detection**: User-Agent rotation and heuristic delays.
+- **Excel/CSV Exports**: Native support for business-readable formats.
+- **Configurable "Recipes"**: YAML-based configuration for target sites.
+- **Robots.txt Compliance**: Ethical scraping by default (configurable).
+
+## 📂 Project Structure
+
+```
+Panoptes/
+├── config/                 # YAML Recipes
+├── data/                   # Raw Data (CSV/DB)
+├── reports/                # Business Reports (Excel)
+├── src/
+│   ├── api/                # REST API
+│   ├── dashboard/          # Streamlit UI
+│   ├── scraper/            # Core Logic (Playwright)
+│   └── scripts/            # Utilities
+├── docker-compose.yml
+└── requirements.txt
+```
+
+---
+
+**Author**: Medalcode
+**License**: MIT
