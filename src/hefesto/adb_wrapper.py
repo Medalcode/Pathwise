@@ -62,18 +62,45 @@ class ADBWrapper:
             logger.error(f"Fallo en comando ADB '{command}': {e}")
             return ""
 
-    # --- Acciones de Interacción ---
+    # --- Acciones de Interacción (Humanizadas) ---
 
-    def tap(self, x: int, y: int):
-        """Simula un toque en la pantalla."""
+    def _add_noise(self, val: int, variance: int = 5) -> int:
+        """Añade ruido aleatorio gaussiano a una coordenada."""
+        import random
+        return int(val + random.gauss(0, variance))
+
+    def tap(self, x: int, y: int, human: bool = True):
+        """
+        Simula un toque en la pantalla.
+        Args:
+            human: Si es True, añade micro-variaciones a las coordenadas perfectas.
+        """
+        if human:
+            x = self._add_noise(x, 10) # +/- 10px de error humano
+            y = self._add_noise(y, 10)
+            
         self._run(f"shell input tap {x} {y}")
 
-    def swipe(self, x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300):
-        """Simula un deslizamiento (scroll)."""
+    def swipe(self, x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300, human: bool = True):
+        """
+        Simula un deslizamiento (scroll).
+        Args:
+            human: Si es True, varia ligeramente el punto de inicio/fin y la duración.
+        """
+        import random
+        
+        if human:
+            x1 = self._add_noise(x1, 15)
+            y1 = self._add_noise(y1, 15)
+            x2 = self._add_noise(x2, 15)
+            y2 = self._add_noise(y2, 15)
+            duration_ms = int(duration_ms + random.uniform(-50, 100)) # Duración imperfecta
+            
         self._run(f"shell input swipe {x1} {y1} {x2} {y2} {duration_ms}")
 
     def text(self, text: str):
         """Escribe texto (escapa espacios automáticamente)."""
+        # TODO: En el futuro, implementar 'typo' humano o delay entre caracteres
         escaped_text = text.replace(" ", "%s")
         self._run(f"shell input text '{escaped_text}'")
 

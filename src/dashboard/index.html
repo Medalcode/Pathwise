@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panoptes Intelligence</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --bg-dark: #0f172a;
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --accent: #3b82f6;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+      }
+
+      body {
+        font-family: "Outfit", sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        margin: 0;
+        padding: 2rem;
+        min-height: 100vh;
+        background-image: radial-gradient(
+            circle at 10% 20%,
+            rgba(59, 130, 246, 0.1) 0%,
+            transparent 20%
+          ),
+          radial-gradient(
+            circle at 90% 80%,
+            rgba(147, 51, 234, 0.1) 0%,
+            transparent 20%
+          );
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0;
+        background: linear-gradient(90deg, #60a5fa, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .status-badge {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        font-size: 0.875rem;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+      }
+
+      .card h3 {
+        margin-top: 0;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .metric {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0.5rem 0;
+      }
+
+      .chart-container {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        padding: 2rem;
+        height: 400px;
+        position: relative;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      th {
+        color: var(--text-secondary);
+        font-weight: 400;
+      }
+
+      td {
+        font-weight: 300;
+      }
+
+      .price-tag {
+        color: #60a5fa;
+        font-weight: 600;
+      }
+
+      .refresh-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 600;
+        transition: opacity 0.2s;
+      }
+
+      .refresh-btn:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div>
+          <h1>PANOPTES</h1>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem">
+            Intelligence Dashboard
+          </p>
+        </div>
+        <button class="refresh-btn" onclick="fetchData()">
+          🔄 Actualizar Datos
+        </button>
+      </header>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Productos Rastreados</h3>
+          <div class="metric" id="totalProductCount">-</div>
+        </div>
+        <div class="card">
+          <h3>Valor Total Detectado</h3>
+          <div class="metric" id="totalValue">$0</div>
+        </div>
+        <div class="card">
+          <h3>Última Actualización</h3>
+          <div class="metric" style="font-size: 1.25rem" id="lastUpdate">-</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="priceChart"></canvas>
+      </div>
+
+      <div class="card" style="margin-top: 2rem">
+        <h3>Últimos Hallazgos</h3>
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio</th>
+              <th>Tienda</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- JS fills this -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let myChart = null;
+
+      async function fetchData() {
+        try {
+          const response = await fetch("http://localhost:8000/reports/latest");
+          const result = await response.json();
+
+          if (result.error) {
+            alert("No hay datos disponibles.");
+            return;
+          }
+
+          updateDashboard(result);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("es-AR", {
+          style: "currency",
+          currency: "ARS",
+        }).format(value);
+      }
+
+      function updateDashboard(data) {
+        const records = data.data;
+        const generatedAt = new Date(data.generated_at * 1000);
+
+        // Metrics
+        document.getElementById("totalProductCount").textContent =
+          records.length;
+        const totalVal = records.reduce(
+          (sum, item) => sum + (item.price || 0),
+          0
+        );
+        document.getElementById("totalValue").textContent =
+          formatCurrency(totalVal);
+        document.getElementById("lastUpdate").textContent =
+          generatedAt.toLocaleTimeString();
+
+        // Table
+        const tbody = document.querySelector("#dataTable tbody");
+        tbody.innerHTML = "";
+        records.forEach((item) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                    <td>${item.product}</td>
+                    <td class="price-tag">${formatCurrency(item.price)}</td>
+                    <td>${item.site}</td>
+                    <td style="color: var(--text-secondary)">${new Date(
+                      item.timestamp
+                    ).toLocaleTimeString()}</td>
+                `;
+          tbody.appendChild(tr);
+        });
+
+        // Chart
+        const ctx = document.getElementById("priceChart").getContext("2d");
+
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: records.map((r) => r.product.substring(0, 15) + "..."),
+            datasets: [
+              {
+                label: "Precio (ARS)",
+                data: records.map((r) => r.price),
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+                borderColor: "#3b82f6",
+                borderWidth: 1,
+                borderRadius: 5,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: "#94a3b8" },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: "rgba(255, 255, 255, 0.1)" },
+                ticks: { color: "#94a3b8" },
+              },
+              x: {
+                grid: { display: false },
+                ticks: { color: "#94a3b8" },
+              },
+            },
+          },
+        });
+      }
+
+      // Init
+      fetchData();
+      // Auto refresh every 30s
+      setInterval(fetchData, 30000);
+    </script>
+  </body>
+</html>

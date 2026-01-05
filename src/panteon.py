@@ -4,8 +4,8 @@ import requests
 import json
 import sys
 
-# Dirección por defecto del servidor Hestia (ajustar según tu red)
-HESTIA_SERVER_URL = "http://127.0.0.1:5000" 
+# Dirección del servidor Hestia (IP del Motorola en tu red Wi-Fi)
+HESTIA_SERVER_URL = "http://192.168.1.83:5000" 
 HESTIA_DB_PATH = "hestia.db"
 
 class Panteon:
@@ -61,6 +61,24 @@ class Panteon:
                 requests.post(f"{self.url}/api/report", json=payload, timeout=5)
             except Exception as e:
                 print(f"❌ Error API Report: {e}")
+
+    def reportar_hallazgo(self, producto, precio, tienda):
+        """Reporta un producto encontrado (para Dashboard Panoptes)."""
+        # Nota: Asumimos que Hestia Dashboard tiene un endpoint /api/hallazgo
+        # Si no existe, al menos quedará en el log general.
+        if self.modo == "LOCAL":
+            # Si existiera tabla 'hallazgos_panoptes' local
+            pass 
+        else:
+            try:
+                payload = {"producto": producto, "precio": precio, "tienda": tienda}
+                # Intentamos endpoint especifico, sino fallback a log
+                resp = requests.post(f"{self.url}/api/hallazgo", json=payload, timeout=2)
+                if resp.status_code != 200:
+                    self.log(f"Hallazgo: {producto} (${precio}) - {tienda}", "SUCCESS")
+            except:
+                # Fallback silencioso a log normal si falla el endpoint dedicado
+                self.log(f"Hallazgo: {producto} (${precio}) - {tienda}", "SUCCESS")
 
     def get_config(self, clave):
         """Obtiene una configuración (JSON) del cerebro central."""

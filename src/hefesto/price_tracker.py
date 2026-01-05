@@ -28,21 +28,29 @@ def clean_price(price_text: str) -> float:
 
 def run_batch_tracker():
     """
-    Recorre la lista de objetivos configurada en mobile_targets.yaml
+    Recorre la lista de objetivos configurada en mobile_targets.yaml (o remota de Hestia).
     """
     import yaml
     
-    # Cargar Config
-    try:
-        with open("config/mobile_targets.yaml", "r") as f:
-            config = yaml.safe_load(f)
-            targets = config.get('targets', [])
-    except FileNotFoundError:
-        logger.error("No se encontró config/mobile_targets.yaml. Creando demo.")
-        targets = []
+    targets = []
     
+    # 1. Intentar Cargar Config Remota (Hestia Brain)
+    remote_config = zeus.get_config("mobile_targets")
+    if remote_config:
+        logger.info("🧠 Configuración descargada desde Hestia!")
+        targets = remote_config
+    else:
+        # Fallback local
+        logger.info("⚠️ Hestia offline o sin config. Usando respaldo local.")
+        try:
+            with open("config/mobile_targets.yaml", "r") as f:
+                config = yaml.safe_load(f)
+                targets = config.get('targets', [])
+        except FileNotFoundError:
+            targets = []
+
     if not targets:
-        logger.warning("Lista de objetivos vacía.")
+        zeus.log("Hefesto: Lista de objetivos vacía.", "WARNING")
         return
 
     bot = ADBWrapper()
@@ -52,7 +60,7 @@ def run_batch_tracker():
 
     collected_data = []
 
-    logger.info(f"🚀 Iniciando Misión Hefesto: {len(targets)} objetivos.")
+    zeus.log(f"🚀 Hefesto Lanzado: {len(targets)} objetivos en cola.", "INFO")
     
     for item in targets:
         product_name = item['name']
@@ -62,15 +70,13 @@ def run_batch_tracker():
         
         # 1. Navegar
         bot.open_url(url)
-        # Random sleep para parecer humano (8-12 seg)
-        wait_time = 10
-        time.sleep(wait_time)
+        time.sleep(10) # Wait for load
         
         # 2. Dump UI
         xml_path = bot.dump_hierarchy()
         inspector = UIInspector(xml_path)
         
-        # 3. Buscar Precio (Lógica Accesibilidad)
+        # 3. Buscar Precio
         regex_accessible = r"(\d+)\s+pesos"
         candidates = inspector.find_all_nodes_by_regex(regex_accessible)
         
@@ -78,7 +84,6 @@ def run_batch_tracker():
         found_text = ""
         
         if candidates:
-            # Tomamos el primer candidato válido > 1000
             for cand in candidates:
                 txt = cand['text'] or cand['content_desc']
                 match = re.search(regex_accessible, txt, re.IGNORECASE)
@@ -89,21 +94,17 @@ def run_batch_tracker():
                         found_text = txt
                         break 
         
-        # Fallback simple para listados (donde a veces el precio está visible sin la palabra 'pesos' pero con $)
         if price_val == 0.0:
             regex_price = r"\$\s?[\d]{1,3}(?:[.,]\d{3})+"
             cands_v2 = inspector.find_all_nodes_by_regex(regex_price)
             for cand in cands_v2:
                  val = clean_price(cand['text'])
-                 if val > 10000: # Umbral más bajo para fallback
+                 if val > 10000: 
                      price_val = val 
                      found_text = cand['text']
                      break
 
-        result_status = "SUCCESS" if price_val > 0 else "FAILED"
-        logger.info(f"   Resultado: {result_status} -> {price_val}")
-        
-        # Guardar en memoria
+        # Guardar en memoria local
         collected_data.append({
             'timestamp': datetime.now().isoformat(),
             'site': 'MercadoLibre Mobile',
@@ -114,18 +115,18 @@ def run_batch_tracker():
             'raw_text': found_text
         })
         
-        # Reportar unitariamente a Hestia
+        # Reportar a Hestia (Dashboard)
         if price_val > 0:
-            zeus.log(f"Hefesto extrajo: {product_name} -> ${price_val:,.2f}", "SUCCESS")
+            zeus.reportar_hallazgo(product_name, price_val, "MercadoLibre Mobile")
+            logger.info(f"✅ Reportado: {product_name} -> ${price_val:,.2f}")
         else:
-            zeus.log(f"Hefesto falló en: {product_name}", "WARNING")
+            zeus.log(f"Hefesto falló en obtener precio de: {product_name}", "WARNING")
 
-        # Pequeña pausa entre productos
-        time.sleep(3)
+        time.sleep(2)
 
-    # 4. Guardar Reporte Final
+    # 4. Guardar Reporte Final Local
     report_path = save_to_excel(collected_data, sheet_name="Mobile Batch")
-    logger.info(f"✅ Lote completado. Reporte guardado en: {report_path}")
+    zeus.log(f"Hefesto: Ronda finalizada. Reporte Excel guardado.", "INFO")
 
 if __name__ == "__main__":
     run_batch_tracker()
