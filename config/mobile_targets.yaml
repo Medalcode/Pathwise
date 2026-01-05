@@ -1,0 +1,21 @@
+targets:
+  - name: "Neumático Pirelli 195/55 R16"
+    url: "https://listado.mercadolibre.com.ar/neumaticos-pirelli-195-55-r16"
+    # Nota: Usamos búsqueda porque el link directo puede expirar
+    type: "search"
+
+  - name: "Neumático Bridgestone 205/55 R16"
+    url: "https://listado.mercadolibre.com.ar/neumatico-bridgestone-205-55-r16"
+    type: "search"
+
+  - name: "Cafetera Nespresso Essenza"
+    url: "https://listado.mercadolibre.com.ar/cafetera-nespresso-essenza"
+    type: "search"
+
+  - name: "Taladro Percutor Makita"
+    url: "https://listado.mercadolibre.com.ar/taladro-percutor-makita-hp1630"
+    type: "search"
+
+  - name: "Zapatillas Adidas Ultraboost"
+    url: "https://listado.mercadolibre.com.ar/zapatillas-adidas-ultraboost"
+    type: "search"

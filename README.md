@@ -54,9 +54,12 @@ Panoptes creates a professional "Web to Money" pipeline:
 2.  **Refinement (Pandas/Python)**: Cleans "dirty" web data (weird symbols, bad formatting) into pristine datasets.
 3.  **Delivery**: Exports to business-ready formats like **Excel (.xlsx)**, CSV, or direct database injection.
 
-### ⚡ "Hefesto" Component (Mobile Hybrid - _Coming Soon_)
+### ⚡ "Hefesto" Component (Mobile Hybrid - _Active_)
 
 Leverages physical devices (like Android via ADB) to scrape mobile-only applications, bypassing desktop-grade anti-scraping protections entirely.
+
+- **Hefesto** controls your Android device to browse apps naturally.
+- **Panteon SDK** connects mobile agents to the central Panoptes brain for logging and data aggregation.
 
 ---
 
@@ -66,6 +69,7 @@ Leverages physical devices (like Android via ADB) to scrape mobile-only applicat
 
 - Python 3.8+
 - Playwright
+- Android Device (Optional, for Hefesto module) with USB Debugging enabled.
 
 ### Installation
 
@@ -85,7 +89,7 @@ playwright install
 
 ### Usage
 
-**Generate a Market Report (Excel Export):**
+**1. Desktop Scraping (Market Report):**
 
 ```bash
 python src/scraper/scrape.py --sites config/sites.yaml --excel
@@ -93,23 +97,24 @@ python src/scraper/scrape.py --sites config/sites.yaml --excel
 
 _Output: `reports/Panoptes_Report_YYYY-MM-DD.xlsx`_
 
-**Docker Quick Start:**
+**2. Mobile Scraping (Hefesto):**
+Connect your Android phone via USB and run:
 
 ```bash
-docker-compose up --build
+python -m src.hefesto.price_tracker
 ```
 
-- **Dashboard:** http://localhost:8501
-- **API:** http://localhost:8000/docs
+This will launch the mobile agent to track prices defined in `config/mobile_targets.yaml`.
 
 ---
 
 ## 📊 Features
 
 - **Advanced Anti-Detection**: User-Agent rotation and heuristic delays.
+- **Mobile Phone Control (ADB)**: Physical device scraping integration.
 - **Excel/CSV Exports**: Native support for business-readable formats.
 - **Configurable "Recipes"**: YAML-based configuration for target sites.
-- **Robots.txt Compliance**: Ethical scraping by default (configurable).
+- **Panteon SDK**: Universal communication bridge between PC and Mobile bots.
 
 ## 📂 Project Structure
 
@@ -121,7 +126,9 @@ Panoptes/
 ├── src/
 │   ├── api/                # REST API
 │   ├── dashboard/          # Streamlit UI
-│   ├── scraper/            # Core Logic (Playwright)
+│   ├── scraper/            # Core Desktop Logic (Playwright)
+│   ├── hefesto/            # ⭐ Mobile Logic (ADB Wrapper + Inspector)
+│   ├── panteon.py          # ⭐ Universal SDK
 │   └── scripts/            # Utilities
 ├── docker-compose.yml
 └── requirements.txt
