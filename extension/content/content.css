@@ -1,0 +1,9 @@
+/* Content Script Styles - Minimal impact on host pages */
+
+/* Ensure our notification stays on top */
+#autoapply-notification {
+  all: initial;
+  * {
+    all: unset;
+  }
+}

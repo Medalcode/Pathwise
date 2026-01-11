@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoApply - Dashboard</title>
+  <meta name="description" content="Gestiona tu CV y aplica a trabajos automáticamente con AutoApply">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <h1>AutoApply</h1>
+        </div>
+        
+        <nav class="nav">
+          <a href="#dashboard" class="nav-link active">Dashboard</a>
+          <a href="#profile" class="nav-link">Mi Perfil</a>
+          <a href="#upload" class="nav-link">Subir CV</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="installExtension">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2"/>
+              <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 15V3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Instalar Extensión
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="container">
+      <!-- Welcome Section -->
+      <section id="dashboard" class="section">
+        <div class="welcome-banner">
+          <div class="welcome-content">
+            <h2>Bienvenido a AutoApply 👋</h2>
+            <p>Automatiza tus aplicaciones a trabajos y ahorra tiempo valioso. Completa tu perfil para comenzar.</p>
+          </div>
+          <div class="welcome-stats">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="8.5" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M20 8V14M23 11H17" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="profileCompleteness">0%</span>
+                <span class="stat-label">Perfil Completado</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-value" id="fieldsCount">0</span>
+                <span class="stat-label">Campos Listos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <h3>Acciones Rápidas</h3>
+          <div class="actions-grid">
+            <a href="#upload" class="action-card">
+              <div class="action-icon">📄</div>
+              <div class="action-content">
+                <h4>Subir CV PDF</h4>
+                <p>Extrae automáticamente tu información</p>
+              </div>
+              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </a>
+            
+            <a href="#profile" class="action-card">
+              <div class="action-icon">✏️</div>
+              <div class="action-content">
+                <h4>Editar Manualmente</h4>
+                <p>Completa o actualiza tu información</p>
+              </div>
+              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </a>
+            
+            <button class="action-card" id="testExtension">
+              <div class="action-icon">🚀</div>
+              <div class="action-content">
+                <h4>Probar Extensión</h4>
+                <p>Abre un formulario de prueba</p>
+              </div>
+              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Upload Section -->
+      <section id="upload" class="section hidden">
+        <div class="section-header">
+          <h2>📄 Subir CV en PDF</h2>
+          <p>Sube tu CV y extraeremos automáticamente tu información</p>
+        </div>
+
+        <div class="upload-container">
+          <div class="upload-area" id="uploadArea">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2"/>
+              <path d="M17 8L12 3L7 8" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 3V15" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h3>Arrastra tu CV aquí</h3>
+            <p>o haz click para seleccionar</p>
+            <span class="file-types">PDF • Máximo 10MB</span>
+            <input type="file" id="cvFile" accept=".pdf" hidden>
+          </div>
+
+          <div id="uploadProgress" class="upload-progress hidden">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="uploadStatus">Procesando...</p>
+          </div>
+
+          <div id="uploadResults" class="upload-results hidden">
+            <div class="results-header">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#22c55e" stroke-width="2"/>
+                <path d="M9 12L11 14L15 10" stroke="#22c55e" stroke-width="2"/>
+              </svg>
+              <h3>¡CV Procesado Exitosamente!</h3>
+              <p id="extractedInfo">Se extrajeron <strong>0</strong> campos de información</p>
+            </div>
+            <button class="btn btn-primary" onclick="navigateTo('profile')">
+              Ver y Editar Perfil
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Profile Section -->
+      <section id="profile" class="section hidden">
+        <div class="section-header">
+          <h2>👤 Mi Perfil</h2>
+          <p>Completa tu información para autocompletar formularios</p>
+        </div>
+
+        <form id="profileForm" class="profile-form">
+          <!-- Personal Information -->
+          <div class="form-section">
+            <h3>Información Personal</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">Nombre *</label>
+                <input type="text" id="firstName" name="firstName" required>
+              </div>
+              <div class="form-group">
+                <label for="lastName">Apellido *</label>
+                <input type="text" id="lastName" name="lastName" required>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" required>
+              </div>
+              <div class="form-group">
+                <label for="phone">Teléfono</label>
+                <input type="tel" id="phone" name="phone">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="currentTitle">Título Profesional</label>
+              <input type="text" id="currentTitle" name="currentTitle" placeholder="ej: Full Stack Developer">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">Ciudad</label>
+                <input type="text" id="city" name="city">
+              </div>
+              <div class="form-group">
+                <label for="country">País</label>
+                <input type="text" id="country" name="country">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="address">Dirección</label>
+              <input type="text" id="address" name="address">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="linkedin">LinkedIn</label>
+                <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/tu-perfil">
+              </div>
+              <div class="form-group">
+                <label for="portfolio">Portfolio/Website</label>
+                <input type="url" id="portfolio" name="portfolio" placeholder="https://tu-sitio.com">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="summary">Resumen Profesional</label>
+              <textarea id="summary" name="summary" rows="4" placeholder="Describe brevemente tu experiencia y objetivos profesionales..."></textarea>
+            </div>
+          </div>
+
+          <!-- Skills -->
+          <div class="form-section">
+            <h3>Habilidades</h3>
+            <div class="skills-input">
+              <input type="text" id="skillInput" placeholder="Agrega una habilidad y presiona Enter">
+              <div id="skillsList" class="skills-list"></div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="resetForm">Limpiar</button>
+            <button type="submit" class="btn btn-primary">Guardar Perfil</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+</body>
+</html>
