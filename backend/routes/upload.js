@@ -54,6 +54,17 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
     const userId = 1;
     await db.saveProfile(userId, parsedData);
     
+    // Forzar respaldo inmediato a la nube si está habilitado
+    if (process.env.GCS_BUCKET_NAME) {
+      try {
+        const storageService = require('../services/storageService');
+        // No esperamos (await) para no retrasar la respuesta al usuario
+        storageService.uploadDatabase().catch(err => console.error('Error en backup automático:', err));
+      } catch (e) {
+        console.error('No se pudo iniciar el backup:', e);
+      }
+    }
+    
     // Eliminar archivo temporal (opcional)
     fs.unlinkSync(filePath);
     

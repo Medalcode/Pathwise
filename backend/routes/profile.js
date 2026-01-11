@@ -30,6 +30,16 @@ router.post('/', async (req, res) => {
     const success = await db.saveProfile(userId, profileData);
     
     if (success) {
+      // Backup automático inmediato
+      if (process.env.GCS_BUCKET_NAME) {
+        try {
+          const storageService = require('../services/storageService');
+          storageService.uploadDatabase().catch(err => console.error('Error en backup post-guardado:', err));
+        } catch (e) {
+          console.error('No se pudo iniciar el backup:', e);
+        }
+      }
+
       res.json({ 
         success: true, 
         message: 'Perfil guardado exitosamente' 
