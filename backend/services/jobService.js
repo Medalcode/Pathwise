@@ -74,22 +74,31 @@ function isLocationValid(job, userCountry, remoteOnly) {
     ];
 
     // Verificar si contiene algún término remoto explícito
+    // OJO: ArbeitNow a veces trae la flag en 'remote' (bool) dentro del objeto original si lo mapeamos, 
+    // pero aquí 'job' es nuestro objeto normalizado. 
+    // Asumiremos que si la fuente lo sabe, lo puso en location o title.
     const isExplicitlyRemote = REMOTE_TERMS.some(term => loc.includes(term));
     
+    // DEBUG LOG para entender descartes (solo en desarrollo o si hay pocos jobs)
+    // console.log(`[GeoCheck] Job: ${job.company} | Loc: ${loc} | User: ${country} | RemoteOnly: ${remoteOnly} -> IsRemote: ${isExplicitlyRemote}`);
+
     // CASO 1: USUARIO PIDE "SOLO REMOTO"
     if (remoteOnly) {
-        // Solo aceptamos si es explícitamente remoto.
-        // Incluso si es en Chile, si es presencial, se descarta.
         return isExplicitlyRemote;
     }
 
-    // CASO 2: USUARIO FLEXIBLE (REMOTO O PRESENCIAL EN SU PAÍS)
+    // CASO 2: USUARIO FLEXIBLE
+    
+    // Si es remoto, pasa siempre (es accesible desde tu país teóricamente)
     if (isExplicitlyRemote) return true;
     
-    // Si no es remoto, debe estar en su país
+    // Si NO es remoto, OBLIGATORIAMENTE debe ser en tu país.
+    // Aquí es donde "Berlin, Germany" debe fallar si userCountry es "Chile".
     if (loc.includes(country)) return true;
 
-    // Caso contrario (Presencial en otro país) -> Descartar
+    // Si llegamos aquí, es una oferta PRESENCIAL en OTRO PAÍS.
+    // Ej: Location: "Munich", Country: "Chile" -> False.
+    // console.log(`[GeoDrop] Descartada por ubicación: ${loc} (Usuario en: ${country})`);
     return false;
 }
 
@@ -137,7 +146,7 @@ async function fetchArbeitNowJobs(search) {
             id: j.slug,
             title: j.title,
             company: j.company_name,
-            location: j.location,
+            location: (j.remote ? 'Remote, ' : '') + j.location, // Asegurar palabra clave si flag activo
             url: j.url,
             description: j.description, // HTML content
             date: j.created_at,
