@@ -495,6 +495,8 @@ function showExtractedDataPreview(data) {
   // Setup buttons
   document.getElementById('saveExtractedData').addEventListener('click', saveExtractedData);
   document.getElementById('discardExtraction').addEventListener('click', discardExtraction);
+  document.getElementById('addExperience').addEventListener('click', addNewExperience);
+  document.getElementById('addEducation').addEventListener('click', addNewEducation);
 }
 
 function renderExtractedExperience() {
@@ -711,6 +713,59 @@ function discardExtraction() {
     editedFields.clear();
     showToast('Datos descartados', 'warning');
   }
+}
+
+// Add new experience
+function addNewExperience() {
+  if (!extractedData.experience) {
+    extractedData.experience = [];
+  }
+  
+  extractedData.experience.push({
+    title: '',
+    company: '',
+    startDate: '',
+    endDate: '',
+    current: false,
+    description: ''
+  });
+  
+  renderExtractedExperience();
+  showToast('Nueva experiencia agregada', 'success');
+  
+  // Scroll to the new item
+  setTimeout(() => {
+    const items = document.querySelectorAll('.experience-item-editable');
+    if (items.length > 0) {
+      items[items.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 100);
+}
+
+// Add new education
+function addNewEducation() {
+  if (!extractedData.education) {
+    extractedData.education = [];
+  }
+  
+  extractedData.education.push({
+    degree: '',
+    school: '',
+    startDate: '',
+    endDate: '',
+    current: false
+  });
+  
+  renderExtractedEducation();
+  showToast('Nueva educación agregada', 'success');
+  
+  // Scroll to the new item
+  setTimeout(() => {
+    const items = document.querySelectorAll('.education-item-editable');
+    if (items.length > 0) {
+      items[items.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 100);
 }
 
 // Make new functions global
