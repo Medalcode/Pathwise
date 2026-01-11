@@ -1,15 +1,26 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
+// Variable para la conexión
+let db;
+
 const dbPath = path.join(__dirname, 'autoapply.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('❌ Error conectando a la base de datos:', err);
-  } else {
-    console.log('✅ Conexión a SQLite establecida');
-    initializeTables();
-  }
-});
+
+// Inicializar base de datos
+function initDB() {
+  return new Promise((resolve, reject) => {
+    db = new sqlite3.Database(dbPath, (err) => {
+      if (err) {
+        console.error('❌ Error conectando a la base de datos:', err);
+        reject(err);
+      } else {
+        console.log('✅ Conexión a SQLite establecida');
+        initializeTables();
+        resolve(db);
+      }
+    });
+  });
+}
 
 // Inicializar tablas
 function initializeTables() {
@@ -265,6 +276,7 @@ function deleteProfile(userId) {
 
 module.exports = {
   db,
+  initDB,
   getProfile,
   saveProfile,
   updateProfileSection,

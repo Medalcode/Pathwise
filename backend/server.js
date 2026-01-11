@@ -4,8 +4,12 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Configuración de base de datos y almacenamiento
+const { initDB } = require('./database/db');
+const storageService = require('./services/storageService');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
@@ -50,15 +54,58 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🚀 AutoApply Backend Server');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📡 API running on: http://localhost:${PORT}/api`);
-  console.log(`🌐 Dashboard: http://localhost:${PORT}`);
-  console.log(`✅ Health check: http://localhost:${PORT}/api/health`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-});
+// Función de inicio asíncrona
+async function startServer() {
+  try {
+    console.log('🔄 Iniciando secuencia de arranque...');
+    
+    // 1. Descargar base de datos desde GCS si existe
+    await storageService.downloadDatabase();
+    
+    // 2. Inicializar conexión a SQLite
+    await initDB();
+    
+    // 3. Iniciar servidor Express
+    const server = app.listen(PORT, () => {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🚀 Panoptes (AutoApply) Server');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`📡 Port: ${PORT}`);
+      console.log(`💾 Persistencia: ${process.env.GCS_BUCKET_NAME ? 'ACTIVADA (GCS)' : 'LOCAL ONLY'}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    });
+
+    // Configurar backup automático periódico (cada 10 minutos)
+    if (process.env.GCS_BUCKET_NAME) {
+      setInterval(() => {
+        storageService.uploadDatabase().catch(err => console.error('❌ Error en backup automático:', err));
+      }, 10 * 60 * 1000);
+    }
+
+    // Manejo de cierre graceful
+    const shutdown = async () => {
+      console.log('\n🛑 Cerrando servidor...');
+      server.close();
+      
+      // Subir base de datos antes de salir
+      if (process.env.GCS_BUCKET_NAME) {
+        console.log('💾 Guardando estado final en GCS...');
+        await storageService.uploadDatabase();
+      }
+      
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+
+  } catch (error) {
+    console.error('❌ Error fatal iniciando servidor:', error);
+    process.exit(1);
+  }
+}
+
+// Iniciar
+startServer();
 
 module.exports = app;

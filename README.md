@@ -293,6 +293,17 @@ Para más detalles, ver [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
 - ✅ Validación de inputs en backend
 - ✅ Sanitización de datos del PDF
 
+## 💾 Persistencia de Datos "Zero Cost"
+
+Panoptes implementa una arquitectura de persistencia innovadora y 100% gratuita para Cloud Run:
+
+- **SQLite Local**: Base de datos de alta velocidad en el contenedor.
+- **Google Cloud Storage (GCS) Sync**:
+  - Al iniciar: Descarga automática de `autoapply.db` desde tu bucket privado.
+  - Backup automático: Sincronización cada 10 minutos hacia GCS.
+  - Graceful Shutdown: Respaldo final garantizado al detener/actualizar el servicio.
+- **Ventaja**: Datos persistentes sin pagar por bases de datos gestionadas (Cloud SQL).
+
 ## 🚀 Roadmap Futuro
 
 - [ ] Soporte para más formatos de CV (DOCX, TXT)
