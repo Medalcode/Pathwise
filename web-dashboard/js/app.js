@@ -1186,6 +1186,23 @@ console.log('✅ Sistema de configuración de API Key listo');
 // WIZARD LOGIC ADDITIONS
 // ==========================================
 
+function attemptNavigation(step) {
+  // Siempre permitir ir al paso 1
+  if (step === 1) {
+    goToStep(1);
+    return;
+  }
+  
+  // Para avanzar, necesitamos datos
+  if (!currentProfile) {
+    showToast('⚠️ Primero debes subir un CV para continuar', 'error');
+    return;
+  }
+  
+  // Si quiere ir al paso 3 pero no hemos validado (opcional, por ahora permitimos saltar)
+  goToStep(step);
+}
+
 function goToStep(step) {
   // Ocultar todos los contenidos de paso
   document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
