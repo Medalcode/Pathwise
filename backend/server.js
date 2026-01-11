@@ -70,7 +70,7 @@ async function startServer() {
     // 3. Iniciar servidor Express
     const server = app.listen(PORT, () => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🚀 Panoptes (AutoApply) Server');
+      console.log('🚀 Panoptes (AutoApply) Server v4.5 [CLEAN REBUILD]');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log(`📡 Port: ${PORT}`);
       console.log(`💾 Persistencia: ${process.env.GCS_BUCKET_NAME ? 'ACTIVADA (GCS)' : 'LOCAL ONLY'}`);
