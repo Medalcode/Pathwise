@@ -1340,8 +1340,14 @@ async function initJobSearch() {
     if (loader) loader.classList.remove('hidden');
     if (results) results.innerHTML = ''; // Limpiar
 
-    // Obtener ubicación del usuario
-    const userCountry = currentProfile?.personalInfo?.country || 'Chile';
+    // Obtener ubicación y preferencias del usuario desde el formulario del Paso 2
+    // Leemos directo del DOM por si el usuario lo editó y no guardamos explícitamente en el objeto
+    const countryInput = document.getElementById('country');
+    const remoteInput = document.getElementById('remoteOnlyPref');
+    
+    // Fallback al objeto currentProfile si el input no existe (raro)
+    const userCountry = countryInput ? countryInput.value : (currentProfile?.personalInfo?.country || 'Chile');
+    const isRemoteOnly = remoteInput ? remoteInput.checked : false;
     
     try {
         const response = await fetch(`${API_URL}/jobs/search`, {
@@ -1349,7 +1355,10 @@ async function initJobSearch() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 profile,
-                preferences: { location: userCountry }
+                preferences: { 
+                    location: userCountry,
+                    remoteOnly: isRemoteOnly
+                }
             })
         });
 

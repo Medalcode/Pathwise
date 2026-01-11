@@ -14,10 +14,11 @@ router.post('/search', async (req, res) => {
     
     // location del usuario (fallback a Chile si no se especifica)
     const userLocation = preferences?.location || 'Chile';
+    const remoteOnly = preferences?.remoteOnly === true;
     
-    console.log(`📡 Buscando empleos para perfil: ${profile.title}, en: ${userLocation}`);
+    console.log(`📡 Buscando empleos para perfil: ${profile.title}, en: ${userLocation}, remotoOnly: ${remoteOnly}`);
     
-    const jobs = await jobService.searchJobsForProfile(profile, userLocation);
+    const jobs = await jobService.searchJobsForProfile(profile, userLocation, remoteOnly);
     
     res.json({
       success: true,
