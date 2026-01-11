@@ -22,9 +22,11 @@ app.use(express.static(path.join(__dirname, '../web-dashboard')));
 // Rutas de la API
 const profileRoutes = require('./routes/profile');
 const uploadRoutes = require('./routes/upload');
+const jobsRoutes = require('./routes/jobs');
 
 app.use('/api/profile', profileRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

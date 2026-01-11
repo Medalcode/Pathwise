@@ -1318,7 +1318,119 @@ async function saveGroqApiKey() {
 console.log('✅ Sistema de configuración de API Key listo');
 
 // ==========================================
-// WIZARD LOGIC ADDITIONS
+// JOB SEARCH & MATCHING LOGIC
+// ==========================================
+
+async function initJobSearch() {
+    // 1. Validar que tengamos un perfil seleccionado del paso 3
+    if (selectedProfileIndex === null || !generatedProfiles[selectedProfileIndex]) {
+        showToast('Por favor selecciona un Perfil IA primero', 'warning');
+        return;
+    }
+
+    const profile = generatedProfiles[selectedProfileIndex];
+    console.log('🔍 Iniciando búsqueda para perfil:', profile.title);
+
+    // 2. Ir al paso 4
+    goToStep(4);
+    
+    // 3. UI Loading
+    const loader = document.getElementById('jobSearchLoader');
+    const results = document.getElementById('jobResultsList');
+    if (loader) loader.classList.remove('hidden');
+    if (results) results.innerHTML = ''; // Limpiar
+
+    try {
+        const response = await fetch(`${API_URL}/jobs/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile })
+        });
+
+        if (!response.ok) throw new Error('Error buscando empleos');
+
+        const { data } = await response.json();
+        
+        // 4. Renderizar
+        if (loader) loader.classList.add('hidden');
+        renderJobResults(data);
+
+    } catch (error) {
+        console.error(error);
+        if (loader) loader.classList.add('hidden');
+        showToast('Error buscando empleos', 'error');
+        if (results) results.innerHTML = `<div class="empty-state-search"><p class="text-danger">Error: ${error.message}</p></div>`;
+    }
+}
+
+function renderJobResults(jobs) {
+    const container = document.getElementById('jobResultsList');
+    if (!container) return;
+
+    if (!jobs || jobs.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-search">
+                <h3>😕 No encontramos ofertas exactas</h3>
+                <p>Intenta ajustar las palabras clave de tu perfil o intenta más tarde.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = jobs.map(job => {
+        // Determinar clase de badge según score
+        let badgeClass = 'low';
+        let matchText = 'Match Bajo';
+        
+        if (job.matchScore >= 70) { 
+            badgeClass = 'high'; 
+            matchText = '🔥 Super Match';
+        } else if (job.matchScore >= 40) { 
+            badgeClass = 'medium'; 
+            matchText = '✨ Buen Match';
+        }
+
+        return `
+            <div class="job-card" onclick="window.open('${job.url}', '_blank')">
+                <div class="job-header">
+                    <div>
+                        <div class="job-title">${job.title}</div>
+                        <div class="job-company">🏢 ${job.company} • 📍 ${job.location || 'Remoto'}</div>
+                    </div>
+                    <div class="match-badge ${badgeClass}">
+                        ${matchText} ${job.matchScore}%
+                    </div>
+                </div>
+                
+                <div class="job-details">
+                    <div class="job-detail-item">📅 ${new Date(job.date).toLocaleDateString()}</div>
+                    <div class="job-detail-item">💰 ${job.salary || 'N/A'}</div>
+                    <div class="job-detail-item">🌐 ${job.source}</div>
+                </div>
+
+                <p class="text-sm text-gray-600 mb-3">
+                    ${job.description ? stripHtml(job.description).substring(0, 150) + '...' : 'Ver detalles...'}
+                </p>
+
+                <div class="job-tags">
+                   ${(job.tags || []).slice(0, 5).map(tag => `<span class="job-tag">${tag}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function stripHtml(html) {
+   let tmp = document.createElement("DIV");
+   tmp.innerHTML = html;
+   return tmp.textContent || tmp.innerText || "";
+}
+
+// Exponer globalmente
+window.initJobSearch = initJobSearch;
+
+// ==========================================
+// WIZARD LOGIC ADDITIONS (Continuación)
 // ==========================================
 
 function attemptNavigation(step) {
@@ -1356,7 +1468,7 @@ function goToStep(step) {
 }
 
 function updateStepperIndicators(currentStep) {
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 4; i++) {
     const indicator = document.getElementById(`step${i}-indicator`);
     if (!indicator) continue;
 

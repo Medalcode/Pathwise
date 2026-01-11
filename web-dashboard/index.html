@@ -7,6 +7,7 @@
   <meta name="description" content="Gestiona tu CV y aplica a trabajos automáticamente con AutoApply">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/stepper.css">
+  <link rel="stylesheet" href="css/jobs.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -64,6 +65,10 @@
           <div class="stepper-item" id="step3-indicator" onclick="attemptNavigation(3)">
             <div class="step-counter">3</div>
             <div class="step-name">Perfiles IA</div>
+          </div>
+          <div class="stepper-item" id="step4-indicator" onclick="attemptNavigation(4)">
+            <div class="step-counter">4</div>
+            <div class="step-name">Buscar Empleo</div>
           </div>
         </div>
 
@@ -227,7 +232,33 @@
 
           <div class="step-actions hidden" id="finalActions">
             <button class="btn btn-secondary" onclick="attemptNavigation(2)">← Volver</button>
-            <button class="btn btn-success" onclick="finishWizard()">Finalizar y Guardar</button>
+            <button class="btn btn-primary" onclick="initJobSearch()">Continuar: Buscar Empleo →</button>
+          </div>
+        </div>
+
+        <!-- PASO 4: BUSCAR JOB MATCH (Inicialmente Oculto) -->
+        <div id="step4-content" class="step-content hidden">
+          <div class="text-center mb-4">
+            <h2>Ofertas de Empleo Inteligentes 🎯</h2>
+            <p>Hacemos match de tu perfil seleccionado con ofertas reales en la web.</p>
+          </div>
+
+          <div id="jobSearchLoader" class="search-loader hidden">
+              <div class="spinner"></div>
+              <h3>Analizando el mercado laboral...</h3>
+              <p>Conectando con fuentes de empleo remotas...</p>
+          </div>
+          
+          <div id="jobResultsList" class="job-results-container">
+              <!-- Resultados -->
+              <div class="empty-state-search">
+                  <p>Presiona "Continuar" desde el paso anterior para iniciar la búsqueda.</p>
+              </div>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-secondary" onclick="attemptNavigation(3)">← Volver a Perfiles</button>
+            <button class="btn btn-success" onclick="finishWizard()">Guardar Progreso</button>
           </div>
         </div>
 
@@ -624,6 +655,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/app.js?v=3.6"></script>
+  <script src="js/app.js?v=3.7"></script>
 </body>
 </html>
