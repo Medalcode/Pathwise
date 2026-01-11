@@ -60,8 +60,8 @@ async function init() {
             console.log("Perfil detectado, saltando al paso 3");
             currentProfile = profile;
             
-            // Llenar vista previa oculta por si acaso
-            prepareStep2(profile);
+            // Llenar vista previa
+            populateForm(profile);
             
             goToStep(3); 
             return;
@@ -1299,8 +1299,8 @@ async function handleFileUploadWizard(file) {
             document.getElementById('uploadProgress').classList.add('hidden');
             document.getElementById('uploadArea').classList.remove('hidden'); 
             
-            // Logica crítica: Mover formulario al paso 2
-            prepareStep2(result.data);
+            // Poblar datos en el formulario existente del paso 2
+            populateForm(result.data);
             
             goToStep(2);
             showToast('CV procesado correctamente', 'success');
@@ -1316,20 +1316,5 @@ async function handleFileUploadWizard(file) {
     }
 }
 
-function prepareStep2(data) {
-    const container = document.getElementById('extractedDataPlaceholder');
-    const modalBody = document.querySelector('#editProfileModal .modal-body');
-    
-    if (container && modalBody) {
-        // Mover formulario del modal oculto al paso 2 visibles
-        container.innerHTML = '';
-        const formClone = modalBody.cloneNode(true);
-        container.appendChild(formClone);
-        
-        // Limpiar modal original para evitar ID duplicados
-        modalBody.innerHTML = ''; 
-        
-        // Poblar datos
-        setTimeout(() => populateForm(data), 50);
-    }
-}
+// prepareStep2 Eiminada porque el formulario ya es estático en el HTML
+

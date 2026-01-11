@@ -100,7 +100,91 @@
           </div>
           
           <div id="extractedDataPlaceholder">
-            <!-- Aquí se moverá la vista previa de datos cuando se cargue -->
+            <!-- FORMULARIO DE EDICIÓN (Incrustado directamente) -->
+            <form id="profileForm" class="profile-form">
+                <!-- 1. Información Personal -->
+                <div class="form-section">
+                    <h3>👤 Información Personal</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="firstName" name="firstName" placeholder="Ej: Juan">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellidos</label>
+                            <input type="text" id="lastName" name="lastName" placeholder="Ej: Pérez">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="email" name="email" placeholder="juan@ejemplo.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+56 9 1234 5678">
+                        </div>
+                        <div class="form-group">
+                            <label>Cargo Actual / Título</label>
+                            <input type="text" id="currentTitle" name="currentTitle" class="full-width" placeholder="Ej: Full Stack Developer">
+                        </div>
+                        <div class="form-group">
+                            <label>Ciudad</label>
+                            <input type="text" id="city" name="city">
+                        </div>
+                        <div class="form-group">
+                            <label>País</label>
+                            <input type="text" id="country" name="country">
+                        </div>
+                        <div class="form-group">
+                            <label>LinkedIn (URL)</label>
+                            <input type="url" id="linkedin" name="linkedin" class="full-width" placeholder="https://linkedin.com/in/usuario">
+                        </div>
+                        <div class="form-group">
+                            <label>Portafolio / GitHub (URL)</label>
+                            <input type="url" id="portfolio" name="portfolio" class="full-width">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Resumen Profesional (Bio)</label>
+                            <textarea id="summary" name="summary" rows="3" placeholder="Breve descripción de tu perfil..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Habilidades -->
+                <div class="form-section">
+                    <h3>🛠️ Habilidades Técnicas</h3>
+                    <div class="skills-input-container">
+                        <input type="text" id="skillInput" placeholder="Escribe una habilidad y presiona Enter (ej: React, Python)">
+                        <button type="button" id="addSkillBtn" class="btn btn-sm btn-secondary">Agregar</button>
+                    </div>
+                    <div id="skillsTagsContainer" class="skills-tags-container">
+                        <!-- Las skills se generarán aquí -->
+                    </div>
+                    <!-- Input oculto para guardar array -->
+                    <input type="hidden" id="skillsHidden" name="skills">
+                </div>
+
+                <!-- 3. Experiencia Laboral -->
+                <div class="form-section">
+                    <div class="section-header-row">
+                        <h3>💼 Experiencia Laboral</h3>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addExperienceField()">+ Agregar</button>
+                    </div>
+                    <div id="experienceContainer" class="dynamic-list">
+                        <!-- Items de experiencia -->
+                    </div>
+                </div>
+
+                <!-- 4. Educación -->
+                <div class="form-section">
+                    <div class="section-header-row">
+                        <h3>🎓 Educación</h3>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addEducationField()">+ Agregar</button>
+                    </div>
+                    <div id="educationContainer" class="dynamic-list">
+                        <!-- Items de educación -->
+                    </div>
+                </div>
+            </form>
           </div>
 
           <div class="step-actions">
@@ -519,6 +603,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/app.js?v=3.2"></script>
+  <script src="js/app.js?v=3.3"></script>
 </body>
 </html>
