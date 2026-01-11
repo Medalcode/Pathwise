@@ -479,6 +479,12 @@ function showExtractedDataPreview(data) {
     }
   });
   
+  // Render experience
+  renderExtractedExperience();
+  
+  // Render education
+  renderExtractedEducation();
+  
   // Render skills
   renderExtractedSkills();
   
@@ -489,6 +495,51 @@ function showExtractedDataPreview(data) {
   // Setup buttons
   document.getElementById('saveExtractedData').addEventListener('click', saveExtractedData);
   document.getElementById('discardExtraction').addEventListener('click', discardExtraction);
+}
+
+function renderExtractedExperience() {
+  const experienceList = document.getElementById('extractedExperienceList');
+  
+  if (!extractedData.experience || extractedData.experience.length === 0) {
+    experienceList.innerHTML = '<div class="empty-list">No se detectó experiencia profesional</div>';
+    return;
+  }
+  
+  experienceList.innerHTML = extractedData.experience.map((exp, index) => `
+    <div class="experience-item">
+      <div class="experience-header">
+        <div class="experience-title">${exp.title || 'Sin título'}</div>
+        <div class="experience-company">${exp.company || 'Sin empresa'}</div>
+        <div class="experience-dates">
+          ${exp.startDate || ''}${exp.startDate && exp.endDate ? ' - ' : ''}${exp.endDate || ''}
+          ${exp.current ? ' (Actual)' : ''}
+        </div>
+      </div>
+      ${exp.description ? `<div class="experience-description">${exp.description}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderExtractedEducation() {
+  const educationList = document.getElementById('extractedEducationList');
+  
+  if (!extractedData.education || extractedData.education.length === 0) {
+    educationList.innerHTML = '<div class="empty-list">No se detectó educación</div>';
+    return;
+  }
+  
+  educationList.innerHTML = extractedData.education.map((edu, index) => `
+    <div class="education-item">
+      <div class="education-header">
+        <div class="education-title">${edu.degree || 'Sin título'}</div>
+        <div class="education-school">${edu.school || 'Sin institución'}</div>
+        <div class="education-dates">
+          ${edu.startDate || ''}${edu.startDate && edu.endDate ? ' - ' : ''}${edu.endDate || ''}
+          ${edu.current ? ' (En curso)' : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
 function renderExtractedSkills() {

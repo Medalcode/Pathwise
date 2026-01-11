@@ -363,8 +363,10 @@ function parseCV(text) {
   ];
   
   skillKeywords.forEach(skill => {
+    // Escapar caracteres especiales en regex
+    const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Buscar con word boundaries para evitar falsos positivos
-    const regex = new RegExp(`\\b${skill}\\b`, 'i');
+    const regex = new RegExp(`\\b${escapedSkill}\\b`, 'i');
     if (regex.test(text)) {
       data.skills.push(skill);
     }

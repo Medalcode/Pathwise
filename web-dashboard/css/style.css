@@ -669,6 +669,74 @@ body {
   font-style: italic;
 }
 
+/* Experience and Education Lists */
+.extracted-experience-list,
+.extracted-education-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.experience-item,
+.education-item {
+  background: var(--surface);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary);
+  transition: var(--transition);
+}
+
+.experience-item:hover,
+.education-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.experience-header,
+.education-header {
+  margin-bottom: var(--spacing-sm);
+}
+
+.experience-title,
+.education-title {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.experience-company,
+.education-school {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.experience-dates,
+.education-dates {
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.experience-description {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.empty-list {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+
 .extraction-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
