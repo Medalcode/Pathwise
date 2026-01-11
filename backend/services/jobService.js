@@ -11,7 +11,7 @@ const { scanChileTrabajos } = require('./scrapers/chiletrabajosScanner');
 // Fuentes de empleo soportadas (APIs y Scrapers)
 const JOB_SOURCES = {
   REMOTEOK: 'https://remoteok.com/api',
-  ARBEITNOW: 'https://arbeitnow.com/api/job-board-api',
+
   REMOTIVE: 'https://remotive.com/api/remote-jobs',
   WEWORKREMOTELY_RSS: 'https://weworkremotely.com/categories/remote-programming-jobs.rss',
   ADZUNA: 'https://api.adzuna.com/v1/api/jobs'
@@ -33,7 +33,7 @@ async function searchJobsForProfile(profile, userLocation = 'Chile', remoteOnly 
     // Ejecutar TODAS las búsquedas en paralelo
     const promises = [
       fetchRemoteOkJobs(keywords),
-      fetchArbeitNowJobs(mainTerm),
+
       fetchRemotiveJobs(mainTerm),
       fetchWeWorkRemotelyRSS(mainTerm),
       scanCompuTrabajo(mainTerm, userLocation),
@@ -152,30 +152,7 @@ async function fetchRemoteOkJobs(tags) {
   }
 }
 
-async function fetchArbeitNowJobs(search) {
-    try {
-        const url = `${JOB_SOURCES.ARBEITNOW}?search=${encodeURIComponent(search)}&sort=relevance`;
-        const response = await axios.get(url);
-        
-        const data = response.data.data || [];
-        
-        return data.map(j => ({
-            id: j.slug,
-            title: j.title,
-            company: j.company_name,
-            location: (j.remote ? 'Remote, ' : '') + j.location, // Asegurar palabra clave si flag activo
-            url: j.url,
-            description: j.description, // HTML content
-            date: j.created_at,
-            tags: j.tags,
-            source: 'ArbeitNow',
-            salary: 'No especificado'
-        }));
-    } catch (e) {
-        console.error('Error fetching ArbeitNow:', e.message);
-        return [];
-    }
-}
+
 
 async function fetchRemotiveJobs(search) {
     try {
