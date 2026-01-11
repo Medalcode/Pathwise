@@ -605,22 +605,19 @@ function attachItemFieldListeners() {
 }
 
 function removeExperience(index) {
-  if (confirm('¿Eliminar esta experiencia?')) {
-    extractedData.experience.splice(index, 1);
-    renderExtractedExperience();
-    showToast('Experiencia eliminada', 'info');
-    updateEditedCount();
-  }
+  extractedData.experience.splice(index, 1);
+  renderExtractedExperience();
+  showToast('Experiencia eliminada', 'success');
+  updateEditedCount();
 }
 
 function removeEducation(index) {
-  if (confirm('¿Eliminar esta educación?')) {
-    extractedData.education.splice(index, 1);
-    renderExtractedEducation();
-    showToast('Educación eliminada', 'info');
-    updateEditedCount();
-  }
+  extractedData.education.splice(index, 1);
+  renderExtractedEducation();
+  showToast('Educación eliminada', 'success');
+  updateEditedCount();
 }
+
 
 
 function renderExtractedSkills() {
