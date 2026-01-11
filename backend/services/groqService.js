@@ -1,9 +1,6 @@
 const Groq = require('groq-sdk');
 
-// Inicializar cliente de Groq
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+// La inicialización del cliente se hace bajo demanda en generateProfessionalProfiles
 
 /**
  * Genera 3 perfiles profesionales basados en los datos extraídos del CV
