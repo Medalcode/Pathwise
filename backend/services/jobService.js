@@ -84,8 +84,15 @@ async function searchJobsForProfile(profile, userLocation = 'Chile', remoteOnly 
  */
 function isLocationValid(job, userCountry, remoteOnly) {
     const loc = (job.location || '').toLowerCase();
-    const country = (userCountry || 'chile').toLowerCase(); 
     
+    // Validación robusta: Si country viene vacío, usar Chile por defecto.
+    // Evita el bug donde "".includes("") es true globalmente.
+    let country = userCountry;
+    if (!country || typeof country !== 'string' || country.trim() === '') {
+        country = 'chile';
+    }
+    country = country.toLowerCase();
+
     // Lista de términos que confirman explícitamente que es remoto
     const REMOTE_TERMS = [
         'remote', 'remoto', 
@@ -96,31 +103,19 @@ function isLocationValid(job, userCountry, remoteOnly) {
     ];
 
     // Verificar si contiene algún término remoto explícito
-    // OJO: ArbeitNow a veces trae la flag en 'remote' (bool) dentro del objeto original si lo mapeamos, 
-    // pero aquí 'job' es nuestro objeto normalizado. 
-    // Asumiremos que si la fuente lo sabe, lo puso en location o title.
     const isExplicitlyRemote = REMOTE_TERMS.some(term => loc.includes(term));
     
-    // DEBUG LOG para entender descartes (solo en desarrollo o si hay pocos jobs)
-    // console.log(`[GeoCheck] Job: ${job.company} | Loc: ${loc} | User: ${country} | RemoteOnly: ${remoteOnly} -> IsRemote: ${isExplicitlyRemote}`);
-
     // CASO 1: USUARIO PIDE "SOLO REMOTO"
     if (remoteOnly) {
         return isExplicitlyRemote;
     }
 
     // CASO 2: USUARIO FLEXIBLE
-    
-    // Si es remoto, pasa siempre (es accesible desde tu país teóricamente)
     if (isExplicitlyRemote) return true;
     
     // Si NO es remoto, OBLIGATORIAMENTE debe ser en tu país.
-    // Aquí es donde "Berlin, Germany" debe fallar si userCountry es "Chile".
     if (loc.includes(country)) return true;
 
-    // Si llegamos aquí, es una oferta PRESENCIAL en OTRO PAÍS.
-    // Ej: Location: "Munich", Country: "Chile" -> False.
-    // console.log(`[GeoDrop] Descartada por ubicación: ${loc} (Usuario en: ${country})`);
     return false;
 }
 
