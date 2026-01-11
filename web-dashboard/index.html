@@ -6,6 +6,7 @@
   <title>AutoApply - Dashboard</title>
   <meta name="description" content="Gestiona tu CV y aplica a trabajos automáticamente con AutoApply">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/stepper.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -49,88 +50,91 @@
     <div class="container">
       <!-- Welcome Section -->
       <section id="dashboard" class="section">
-        <div class="welcome-banner">
-          <div class="welcome-content">
-            <h2>Bienvenido a AutoApply 👋</h2>
-            <p>Automatiza tus aplicaciones a trabajos y ahorra tiempo valioso. Completa tu perfil para comenzar.</p>
+        
+        <!-- STEPPER -->
+        <div class="stepper-wrapper">
+          <div class="stepper-item completed" id="step1-indicator">
+            <div class="step-counter">1</div>
+            <div class="step-name">Subir CV</div>
           </div>
-          <div class="welcome-stats">
-            <div class="stat-card">
-              <div class="stat-icon blue">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="8.5" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                  <path d="M20 8V14M23 11H17" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <span class="stat-value" id="profileCompleteness">0%</span>
-                <span class="stat-label">Perfil Completado</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon green">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <span class="stat-value" id="fieldsCount">0</span>
-                <span class="stat-label">Campos Listos</span>
-              </div>
-            </div>
+          <div class="stepper-item" id="step2-indicator">
+            <div class="step-counter">2</div>
+            <div class="step-name">Verificar Datos</div>
+          </div>
+          <div class="stepper-item" id="step3-indicator">
+            <div class="step-counter">3</div>
+            <div class="step-name">Perfiles IA</div>
           </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <h3>Acciones Rápidas</h3>
-          <div class="actions-grid">
-            <a href="#upload" class="action-card">
-              <div class="action-icon">📄</div>
-              <div class="action-content">
-                <h4>Subir CV PDF</h4>
-                <p>Extrae automáticamente tu información</p>
-              </div>
-              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </a>
-            
-            <a href="#profile" class="action-card">
-              <div class="action-icon">✏️</div>
-              <div class="action-content">
-                <h4>Editar Manualmente</h4>
-                <p>Completa o actualiza tu información</p>
-              </div>
-              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </a>
-            
-            <button class="action-card" id="generateProfiles">
-              <div class="action-icon">🤖</div>
-              <div class="action-content">
-                <h4>Generar Perfiles con IA</h4>
-                <p>Crea 3 perfiles profesionales optimizados</p>
-              </div>
-              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
-            
-            <button class="action-card" id="testExtension">
-              <div class="action-icon">🚀</div>
-              <div class="action-content">
-                <h4>Probar Extensión</h4>
-                <p>Abre un formulario de prueba</p>
-              </div>
-              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
+        <!-- PASO 1: SUBIR CV -->
+        <div id="step1-content" class="step-content">
+          <div class="text-center mb-4">
+            <h2>Comienza tu Viaje 🚀</h2>
+            <p>Sube tu CV en PDF para extraer toda tu información automáticamente.</p>
+          </div>
+          
+          <div class="upload-area-large" id="uploadArea">
+            <div class="upload-icon-large">📄</div>
+            <h3>Arrastra y suelta tu CV aquí</h3>
+            <p>Soporta formato PDF (Máx 10MB)</p>
+            <button class="btn btn-primary mt-3" onclick="document.getElementById('cvUpload').click()">Seleccionar Archivo</button>
+            <input type="file" id="cvUpload" accept=".pdf" hidden>
+          </div>
+
+          <div id="uploadProgress" class="upload-progress hidden">
+            <div class="spinner"></div>
+            <h3>Analizando tu CV con IA...</h3>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+            <p id="progressText">Extrayendo experiencia laboral...</p>
           </div>
         </div>
+
+        <!-- PASO 2: VERIFICAR DATOS (Inicialmente Oculto) -->
+        <div id="step2-content" class="step-content hidden">
+          <div class="text-center mb-4">
+            <h2>Verifica tu Información ✏️</h2>
+            <p>Hemos extraído estos datos. Confirma que todo esté correcto antes de continuar.</p>
+          </div>
+          
+          <div id="extractedDataPlaceholder">
+            <!-- Aquí se moverá la vista previa de datos cuando se cargue -->
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-secondary" onclick="resetWizard()">Subir otro CV</button>
+            <button class="btn btn-primary" id="confirmDataBtn" onclick="goToStep(3)">Confirmar y Continuar →</button>
+          </div>
+        </div>
+
+        <!-- PASO 3: GENERAR PERFILES IA (Inicialmente Oculto) -->
+        <div id="step3-content" class="step-content hidden">
+          <div class="text-center mb-4">
+            <h2>Crea tu Estrategia Profesional 🤖</h2>
+            <p>Genera 3 variantes de perfil optimizadas para diferentes roles.</p>
+          </div>
+
+          <div class="ai-cards-container">
+            <div class="ai-intro-card">
+              <div class="icon">✨</div>
+              <h3>Potencia tu Perfil</h3>
+              <p>Nuestra IA analizará tu trayectoria y creará perfiles enfocados en tus fortalezas.</p>
+              <button class="btn btn-primary btn-lg" onclick="generateProfiles()">Generar Perfiles Ahora</button>
+            </div>
+          </div>
+          
+          <div id="aiProfilesResult" class="hidden">
+             <!-- Aquí se inyectarán los perfiles generados -->
+          </div>
+
+          <div class="step-actions hidden" id="finalActions">
+            <button class="btn btn-secondary" onclick="goToStep(2)">← Volver</button>
+            <button class="btn btn-success" onclick="finishWizard()">Finalizar y Guardar</button>
+          </div>
+        </div>
+
       </section>
 
       <!-- Upload Section -->
@@ -514,6 +518,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/app.js?v=2.0"></script>
+  <script src="js/app.js?v=3.0"></script>
 </body>
 </html>

@@ -10,15 +10,69 @@ let currentProfile = null;
 let skills = [];
 
 // Init
+// Init
 document.addEventListener('DOMContentLoaded', init);
 
-function init() {
-  console.log('🚀 AutoApply Dashboard iniciado');
+async function init() {
+  console.log('🚀 AutoApply Wizard iniciado');
   
-  setupNavigation();
-  setupUpload();
+  // Setup Wizard specific listeners
+  const fileInput = document.getElementById('cvUpload');
+  if (fileInput) { 
+      // Reemplazamos el listener original si existiera o agregamos uno nuevo
+      // Nota: handleFileUpload es la vieja funcion. Usamos handleFileUploadWizard
+      fileInput.addEventListener('change', (e) => handleFileUploadWizard(e.target.files[0]));
+  }
+  
+  // Setup drag and drop for large area
+  const dropZone = document.getElementById('uploadArea');
+  if (dropZone) {
+       dropZone.addEventListener('dragover', (e) => {
+           e.preventDefault();
+           dropZone.style.borderColor = 'var(--primary-color)';
+           dropZone.style.backgroundColor = 'rgba(37, 99, 235, 0.05)';
+       });
+       dropZone.addEventListener('dragleave', (e) => {
+           e.preventDefault();
+           dropZone.style.borderColor = 'var(--border-color)';
+           dropZone.style.backgroundColor = 'var(--bg-secondary)';
+       });
+       dropZone.addEventListener('drop', (e) => {
+           e.preventDefault();
+           dropZone.style.borderColor = 'var(--border-color)';
+           dropZone.style.backgroundColor = 'var(--bg-secondary)';
+           if (e.dataTransfer.files.length) {
+               handleFileUploadWizard(e.dataTransfer.files[0]);
+           }
+       });
+  }
+
+  // Setup Profile Logic (Modales, etc. para soporte legacy interno)
   setupProfileForm();
-  loadProfile();
+  
+  // Check Initial State to decide Step
+  try {
+    const response = await fetch(`${API_URL}/profile`);
+    if (response.ok) {
+        const profile = await response.json();
+        // Si tiene nombre, asumimos que ya pasó el paso 1
+        if (profile && profile.personalInfo && profile.personalInfo.firstName) {
+            console.log("Perfil detectado, saltando al paso 3");
+            currentProfile = profile;
+            
+            // Llenar vista previa oculta por si acaso
+            prepareStep2(profile);
+            
+            goToStep(3); 
+            return;
+        }
+    }
+  } catch (e) {
+    console.log("Perfil no encontrado o error", e);
+  }
+  
+  // Default: Paso 1
+  goToStep(1);
 }
 
 // Navigation
@@ -1127,3 +1181,138 @@ generateProfiles = async function() {
 };
 
 console.log('✅ Sistema de configuración de API Key listo');
+
+// ==========================================
+// WIZARD LOGIC ADDITIONS
+// ==========================================
+
+function goToStep(step) {
+  // Ocultar todos los contenidos de paso
+  document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+  
+  // Mostrar contenido objetivo
+  const targetContent = document.getElementById(`step${step}-content`);
+  if (targetContent) {
+    targetContent.classList.remove('hidden');
+  }
+
+  // Actualizar indicadores
+  updateStepperIndicators(step);
+
+  // Scroll arriba
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStepperIndicators(currentStep) {
+  for (let i = 1; i <= 3; i++) {
+    const indicator = document.getElementById(`step${i}-indicator`);
+    if (!indicator) continue;
+
+    indicator.classList.remove('active', 'completed');
+    
+    // Set active class
+    if (i === currentStep) {
+      indicator.classList.add('active');
+    } else if (i < currentStep) {
+      indicator.classList.add('completed');
+    }
+    
+    // También pintar el círculo interior si usamos CSS específico
+    const circle = indicator.querySelector('.step-counter');
+    if (circle) {
+        if(i < currentStep) {
+            circle.innerText = '✓';
+            circle.style.backgroundColor = 'var(--primary-color)';
+            circle.style.color = 'white';
+        } else {
+            circle.innerText = i;
+            circle.style.backgroundColor = ''; // reset
+            circle.style.color = ''; // reset
+        }
+    }
+  }
+}
+
+function resetWizard() {
+  if (confirm('¿Estás seguro? Se perderán los datos actuales no guardados.')) {
+    goToStep(1);
+    const fileInput = document.getElementById('cvUpload');
+    if(fileInput) fileInput.value = '';
+    
+    const preview = document.getElementById('extractedDataPlaceholder');
+    if (preview) preview.innerHTML = '';
+  }
+}
+
+function finishWizard() {
+  showToast('¡Proceso completado exitosamente!', 'success');
+  // Aquí podríamos redirigir o mostrar confeti
+}
+
+// Nueva función unificada de manejo de upload para el wizard
+async function handleFileUploadWizard(file) {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+        showToast('Solo se permiten archivos PDF', 'error');
+        return;
+    }
+
+    // UI Loading
+    document.getElementById('uploadArea').classList.add('hidden');
+    document.getElementById('uploadProgress').classList.remove('hidden');
+    
+    const formData = new FormData();
+    formData.append('cv', file);
+
+    try {
+        animateProgress(0, 50, 800);
+        
+        const response = await fetch(`${API_URL}/upload/cv`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Error en carga');
+
+        animateProgress(50, 100, 500);
+        const result = await response.json();
+
+        // Delay para UX
+        setTimeout(() => {
+            document.getElementById('uploadProgress').classList.add('hidden');
+            document.getElementById('uploadArea').classList.remove('hidden'); 
+            
+            // Logica crítica: Mover formulario al paso 2
+            prepareStep2(result.data);
+            
+            goToStep(2);
+            showToast('CV procesado correctamente', 'success');
+            
+            currentProfile = result.data; 
+        }, 1000);
+
+    } catch (error) {
+        console.error(error);
+        showToast('Error procesando CV', 'error');
+        document.getElementById('uploadProgress').classList.add('hidden');
+        document.getElementById('uploadArea').classList.remove('hidden');
+    }
+}
+
+function prepareStep2(data) {
+    const container = document.getElementById('extractedDataPlaceholder');
+    const modalBody = document.querySelector('#editProfileModal .modal-body');
+    
+    if (container && modalBody) {
+        // Mover formulario del modal oculto al paso 2 visibles
+        container.innerHTML = '';
+        const formClone = modalBody.cloneNode(true);
+        container.appendChild(formClone);
+        
+        // Limpiar modal original para evitar ID duplicados
+        modalBody.innerHTML = ''; 
+        
+        // Poblar datos
+        setTimeout(() => populateForm(data), 50);
+    }
+}

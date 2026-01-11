@@ -8,7 +8,7 @@ const CONFIG = {
   // API URLs
   API_URLS: {
     development: 'http://localhost:3000/api',
-    production: 'https://autoapply-XXXXXXXXX.run.app/api' // Reemplazar con tu URL de Cloud Run
+    production: 'https://panoptes-72529155548.us-central1.run.app/api'
   },
   
   // Get current API URL based on environment
@@ -19,7 +19,7 @@ const CONFIG = {
   // Dashboard URLs
   DASHBOARD_URLS: {
     development: 'http://localhost:3000',
-    production: 'https://autoapply-XXXXXXXXX.run.app' // Reemplazar con tu URL de Cloud Run
+    production: 'https://panoptes-72529155548.us-central1.run.app'
   },
   
   // Get current dashboard URL
