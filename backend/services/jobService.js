@@ -1,10 +1,11 @@
 const axios = require('axios');
+const { scanCompuTrabajo } = require('./scrapers/computrabajoScanner');
 
 /**
  * Servicio para buscar empleos y calcular match con el perfil
  */
 
-// Fuentes de empleo soportadas
+// Fuentes de empleo soportadas (APIs y Scrapers)
 const JOB_SOURCES = {
   REMOTEOK: 'https://remoteok.com/api',
   ARBEITNOW: 'https://arbeitnow.com/api/job-board-api'
@@ -20,22 +21,30 @@ async function searchJobsForProfile(profile) {
     const keywords = profile.searchKeywords || [];
     const role = profile.title || '';
     
-    // Construir término de búsqueda principal (usando el rol o la primera keyword)
-    // RemoteOK acepta tags, arbeitnow acepta search params
+    // Término principal
     const mainTerm = keywords.length > 0 ? keywords[0] : role;
     
     console.log(`🔍 Buscando empleos para: ${mainTerm} con keywords: ${keywords.join(', ')}`);
     
-    // Ejecutar búsquedas en paralelo (por ahora solo RemoteOK y Arbeitnow para demostración)
-    const [remoteOkJobs, arbeitJobs] = await Promise.allSettled([
+    // Ejecutar búsquedas en paralelo (RemoteOK, ArbeitNow, CompuTrabajo)
+    const [remoteOkJobs, arbeitJobs, computrabajoJobs] = await Promise.allSettled([
       fetchRemoteOkJobs(keywords),
-      fetchArbeitNowJobs(mainTerm)
+      fetchArbeitNowJobs(mainTerm),
+      scanCompuTrabajo(mainTerm, profile.location || 'Chile')
     ]);
     
     let allJobs = [];
     
     if (remoteOkJobs.status === 'fulfilled') allJobs = [...allJobs, ...remoteOkJobs.value];
     if (arbeitJobs.status === 'fulfilled') allJobs = [...allJobs, ...arbeitJobs.value];
+    if (computrabajoJobs.status === 'fulfilled') allJobs = [...allJobs, ...computrabajoJobs.value];
+    
+    // Si no hay resultados y el usuario buscó algo muy específico, intentar solo con el rol
+    if (allJobs.length === 0) {
+        console.log("⚠️ Sin resultados, reintentando solo con título del rol...");
+        const retryJobs = await scanCompuTrabajo(role.split(' ')[0], 'Chile'); // Intento simple
+        allJobs = [...retryJobs];
+    }
     
     // Calcular Match Score para cada oferta
     const scoredJobs = allJobs.map(job => {
