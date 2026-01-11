@@ -789,6 +789,8 @@ body {
 
 .editable-item-field {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: var(--spacing-sm) var(--spacing-md);
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
@@ -797,6 +799,8 @@ body {
   transition: var(--transition);
   background: var(--surface);
   color: var(--text);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .editable-item-field:focus {
@@ -814,6 +818,7 @@ body {
   resize: vertical;
   min-height: 60px;
 }
+
 
 .empty-list {
   text-align: center;
