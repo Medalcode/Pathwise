@@ -57,25 +57,39 @@ async function searchJobsForProfile(profile, userLocation = 'Chile', remoteOnly 
 /**
  * Valida si la ubicación del trabajo es aceptable para el usuario
  */
+/**
+ * Valida si la ubicación del trabajo es aceptable para el usuario
+ */
 function isLocationValid(job, userCountry, remoteOnly) {
     const loc = (job.location || '').toLowerCase();
     const country = (userCountry || 'chile').toLowerCase(); 
     
-    // 1. Es oferta remota?
-    const isRemote = loc.includes('remote') || loc.includes('remoto') || 
-                     loc.includes('latam') || loc.includes('worldwide') || 
-                     loc.includes('anywhere') || loc.includes('cualquier lugar');
-    
-    if (isRemote) return true;
-    
-    // Si el usuario SOLO quiere remoto, y no es remoto, descartamos
-    if (remoteOnly) return false;
+    // Lista de términos que confirman explícitamente que es remoto
+    const REMOTE_TERMS = [
+        'remote', 'remoto', 
+        'teletrabajo', 'home office', 
+        'trabajo desde casa', 'anywhere', 
+        'worldwide', 'global', 
+        'latam', 'cuidar de casa'
+    ];
 
-    // 2. Si acepta presencial, validamos país
-    if (loc.includes(country)) {
-        return true;
+    // Verificar si contiene algún término remoto explícito
+    const isExplicitlyRemote = REMOTE_TERMS.some(term => loc.includes(term));
+    
+    // CASO 1: USUARIO PIDE "SOLO REMOTO"
+    if (remoteOnly) {
+        // Solo aceptamos si es explícitamente remoto.
+        // Incluso si es en Chile, si es presencial, se descarta.
+        return isExplicitlyRemote;
     }
 
+    // CASO 2: USUARIO FLEXIBLE (REMOTO O PRESENCIAL EN SU PAÍS)
+    if (isExplicitlyRemote) return true;
+    
+    // Si no es remoto, debe estar en su país
+    if (loc.includes(country)) return true;
+
+    // Caso contrario (Presencial en otro país) -> Descartar
     return false;
 }
 
