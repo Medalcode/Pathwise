@@ -1,3 +1,29 @@
+// Intercept Console Logs for On-Screen Debugging
+(function() {
+    const oldLog = console.log;
+    const oldError = console.error;
+    const consoleDiv = document.getElementById('debugConsole');
+
+    function appendLog(msg, type) {
+        if (!consoleDiv) return;
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        consoleDiv.appendChild(entry);
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+        oldLog.apply(console, args);
+        appendLog(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' '), 'info');
+    };
+
+    console.error = function(...args) {
+        oldError.apply(console, args);
+        appendLog(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' '), 'error');
+    };
+})();
+
 // AutoApply Dashboard - Main Application
 
 // Detectar si estamos en producción (Cloud Run) o desarrollo local
@@ -1026,7 +1052,7 @@ async function generateProfiles() {
     console.log('🤖 Generando perfiles profesionales con Groq AI...');
     
     // Obtener API Key si existe en localStorage
-    const savedKey = localStorage.getItem('panoptes_groq_api_key');
+    const savedKey = localStorage.getItem('groqApiKey');
     const headers = { 'Content-Type': 'application/json' };
     if (savedKey) {
         headers['X-Groq-API-Key'] = savedKey;
@@ -1286,57 +1312,8 @@ async function saveGroqApiKey() {
   }
 }
 
-// Update generateProfiles to use localStorage API key
-const originalGenerateProfiles = generateProfiles;
-generateProfiles = async function() {
-  // Check if API key is in localStorage
-  const apiKey = localStorage.getItem('groqApiKey');
-  
-  if (apiKey) {
-    // Add API key to request headers
-    try {
-      document.getElementById('profilesLoading').classList.remove('hidden');
-      document.getElementById('profilesError').classList.add('hidden');
-      document.getElementById('profilesGrid').classList.add('hidden');
-      
-      console.log('🤖 Generando perfiles profesionales con Groq AI...');
-      
-      const response = await fetch(`${API_URL}/profile/generate-profiles`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Groq-API-Key': apiKey  // Send API key in header
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al generar perfiles');
-      }
-      
-      const result = await response.json();
-      generatedProfiles = result.data;
-      
-      console.log('✅ Perfiles generados:', generatedProfiles);
-      
-      document.getElementById('profilesLoading').classList.add('hidden');
-      renderProfiles();
-      document.getElementById('profilesFooter').classList.remove('hidden');
-      
-      showToast('Perfiles generados exitosamente', 'success');
-      
-    } catch (error) {
-      console.error('❌ Error:', error);
-      document.getElementById('profilesLoading').classList.add('hidden');
-      document.getElementById('profilesError').classList.remove('hidden');
-      document.getElementById('profilesErrorMessage').textContent = error.message;
-      showToast('Error al generar perfiles: ' + error.message, 'error');
-    }
-  } else {
-    // No API key, use original function
-    await originalGenerateProfiles();
-  }
-};
+// La lógica de API Key ahora está integrada en la función generateProfiles principal.
+// Bloque duplicado eliminado.
 
 console.log('✅ Sistema de configuración de API Key listo');
 

@@ -613,7 +613,17 @@
   <!-- Toast Notifications -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <link rel="stylesheet" href="css/debug.css">
+  
+  <!-- Debug Console -->
+  <div id="debugConsole" class="visible">
+    <div style="position:sticky; top:0; background:#333; padding:2px; margin-bottom:5px; display:flex; justify-content:space-between;">
+        <span>CONSOLE LOGS</span>
+        <button onclick="document.getElementById('debugConsole').innerHTML=''" style="background:red;color:white;border:none;cursor:pointer;">CLEAR</button>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="js/app.js?v=3.5"></script>
+  <script src="js/app.js?v=3.6"></script>
 </body>
 </html>
