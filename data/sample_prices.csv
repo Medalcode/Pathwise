@@ -1,5 +1,0 @@
-timestamp,site,product,price,currency,url
-2025-10-01T12:00:00,https://ejemplo.tld/producto-1,Notebook Modelo X,199999,ARS,https://ejemplo.tld/producto-1
-2025-10-05T12:00:00,https://ejemplo.tld/producto-1,Notebook Modelo X,195000,ARS,https://ejemplo.tld/producto-1
-2025-10-10T12:00:00,https://otro-ecommerce.tld/item/456,Zapatillas Marca Y,12999,ARS,https://otro-ecommerce.tld/item/456
-2025-10-15T12:00:00,https://ejemplo.tld/producto-1,Notebook Modelo X,189500,ARS,https://ejemplo.tld/producto-1
