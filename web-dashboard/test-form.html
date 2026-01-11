@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Prueba - AutoApply</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    
+    .form-section {
+      margin-bottom: 30px;
+    }
+    
+    .form-section h2 {
+      color: #333;
+      font-size: 20px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    .submit-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      width: 100%;
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .info-box {
+      background: #e8eaf6;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    
+    .info-box p {
+      margin: 0;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 Formulario de Aplicación a Empleo</h1>
+    <p class="subtitle">Completa este formulario para aplicar al puesto de trabajo</p>
+    
+    <div class="info-box">
+      <p><strong>💡 Tip:</strong> Usa la extensión AutoApply para completar este formulario automáticamente. Click en el ícono de la extensión y selecciona "Llenar Formulario".</p>
+    </div>
+    
+    <form id="jobApplicationForm">
+      <!-- Información Personal -->
+      <div class="form-section">
+        <h2>👤 Información Personal</h2>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="first-name">Nombre *</label>
+            <input type="text" id="first-name" name="first-name" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="last-name">Apellido *</label>
+            <input type="text" id="last-name" name="last-name" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Correo Electrónico *</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="phone">Teléfono</label>
+            <input type="tel" id="phone" name="phone">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="address">Dirección</label>
+          <input type="text" id="address" name="address">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">Ciudad</label>
+            <input type="text" id="city" name="city">
+          </div>
+          
+          <div class="form-group">
+            <label for="country">País</label>
+            <input type="text" id="country" name="country">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Información Profesional -->
+      <div class="form-section">
+        <h2>💼 Información Profesional</h2>
+        
+        <div class="form-group">
+          <label for="job-title">Título Profesional Actual</label>
+          <input type="text" id="job-title" name="job-title" placeholder="ej: Full Stack Developer">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="linkedin">LinkedIn</label>
+            <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/tu-perfil">
+          </div>
+          
+          <div class="form-group">
+            <label for="portfolio">Portfolio/Website</label>
+            <input type="url" id="portfolio" name="portfolio" placeholder="https://tu-sitio.com">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="summary">Resumen Profesional</label>
+          <textarea id="summary" name="summary" placeholder="Describe brevemente tu experiencia profesional y por qué encajas en este puesto..."></textarea>
+        </div>
+      </div>
+      
+      <!-- Habilidades -->
+      <div class="form-section">
+        <h2>🎯 Habilidades</h2>
+        
+        <div class="form-group">
+          <label for="skills">Habilidades Técnicas (separadas por comas)</label>
+          <textarea id="skills" name="skills" rows="3" placeholder="JavaScript, React, Node.js, Python, etc."></textarea>
+        </div>
+      </div>
+      
+      <!-- Submit -->
+      <button type="submit" class="submit-btn">Enviar Aplicación</button>
+    </form>
+  </div>
+  
+  <script>
+    document.getElementById('jobApplicationForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('✅ ¡Formulario enviado exitosamente!\n\nEsta es una demo. En un sitio real, tu aplicación sería procesada.');
+    });
+  </script>
+</body>
+</html>
