@@ -506,18 +506,38 @@ function renderExtractedExperience() {
   }
   
   experienceList.innerHTML = extractedData.experience.map((exp, index) => `
-    <div class="experience-item">
-      <div class="experience-header">
-        <div class="experience-title">${exp.title || 'Sin título'}</div>
-        <div class="experience-company">${exp.company || 'Sin empresa'}</div>
-        <div class="experience-dates">
-          ${exp.startDate || ''}${exp.startDate && exp.endDate ? ' - ' : ''}${exp.endDate || ''}
-          ${exp.current ? ' (Actual)' : ''}
+    <div class="experience-item-editable">
+      <div class="item-header">
+        <strong>Experiencia ${index + 1}</strong>
+        <button type="button" class="btn-remove-item" onclick="removeExperience(${index})" title="Eliminar">×</button>
+      </div>
+      <div class="editable-fields-grid">
+        <div class="field-group">
+          <label>Título del Puesto</label>
+          <input type="text" class="editable-item-field" data-type="experience" data-index="${index}" data-field="title" value="${exp.title || ''}" placeholder="ej: Full Stack Developer">
+        </div>
+        <div class="field-group">
+          <label>Empresa</label>
+          <input type="text" class="editable-item-field" data-type="experience" data-index="${index}" data-field="company" value="${exp.company || ''}" placeholder="ej: Tech Corp">
+        </div>
+        <div class="field-group">
+          <label>Año Inicio</label>
+          <input type="text" class="editable-item-field" data-type="experience" data-index="${index}" data-field="startDate" value="${exp.startDate || ''}" placeholder="2020">
+        </div>
+        <div class="field-group">
+          <label>Año Fin</label>
+          <input type="text" class="editable-item-field" data-type="experience" data-index="${index}" data-field="endDate" value="${exp.endDate || ''}" placeholder="2024 o Presente">
+        </div>
+        <div class="field-group full-width">
+          <label>Descripción (opcional)</label>
+          <textarea class="editable-item-field" data-type="experience" data-index="${index}" data-field="description" rows="2" placeholder="Describe tus responsabilidades...">${exp.description || ''}</textarea>
         </div>
       </div>
-      ${exp.description ? `<div class="experience-description">${exp.description}</div>` : ''}
     </div>
   `).join('');
+  
+  // Agregar event listeners
+  attachItemFieldListeners();
 }
 
 function renderExtractedEducation() {
@@ -529,18 +549,77 @@ function renderExtractedEducation() {
   }
   
   educationList.innerHTML = extractedData.education.map((edu, index) => `
-    <div class="education-item">
-      <div class="education-header">
-        <div class="education-title">${edu.degree || 'Sin título'}</div>
-        <div class="education-school">${edu.school || 'Sin institución'}</div>
-        <div class="education-dates">
-          ${edu.startDate || ''}${edu.startDate && edu.endDate ? ' - ' : ''}${edu.endDate || ''}
-          ${edu.current ? ' (En curso)' : ''}
+    <div class="education-item-editable">
+      <div class="item-header">
+        <strong>Educación ${index + 1}</strong>
+        <button type="button" class="btn-remove-item" onclick="removeEducation(${index})" title="Eliminar">×</button>
+      </div>
+      <div class="editable-fields-grid">
+        <div class="field-group">
+          <label>Título/Grado</label>
+          <input type="text" class="editable-item-field" data-type="education" data-index="${index}" data-field="degree" value="${edu.degree || ''}" placeholder="ej: Ingeniería Informática">
+        </div>
+        <div class="field-group">
+          <label>Institución</label>
+          <input type="text" class="editable-item-field" data-type="education" data-index="${index}" data-field="school" value="${edu.school || ''}" placeholder="ej: Universidad XYZ">
+        </div>
+        <div class="field-group">
+          <label>Año Inicio</label>
+          <input type="text" class="editable-item-field" data-type="education" data-index="${index}" data-field="startDate" value="${edu.startDate || ''}" placeholder="2016">
+        </div>
+        <div class="field-group">
+          <label>Año Fin</label>
+          <input type="text" class="editable-item-field" data-type="education" data-index="${index}" data-field="endDate" value="${edu.endDate || ''}" placeholder="2020">
         </div>
       </div>
     </div>
   `).join('');
+  
+  // Agregar event listeners
+  attachItemFieldListeners();
 }
+
+function attachItemFieldListeners() {
+  document.querySelectorAll('.editable-item-field').forEach(field => {
+    field.addEventListener('input', (e) => {
+      const type = e.target.dataset.type;
+      const index = parseInt(e.target.dataset.index);
+      const fieldName = e.target.dataset.field;
+      const value = e.target.value;
+      
+      // Actualizar el array de datos
+      if (type === 'experience') {
+        extractedData.experience[index][fieldName] = value;
+      } else if (type === 'education') {
+        extractedData.education[index][fieldName] = value;
+      }
+      
+      // Marcar como editado
+      e.target.classList.add('edited');
+      editedFields.add(`${type}-${index}-${fieldName}`);
+      updateEditedCount();
+    });
+  });
+}
+
+function removeExperience(index) {
+  if (confirm('¿Eliminar esta experiencia?')) {
+    extractedData.experience.splice(index, 1);
+    renderExtractedExperience();
+    showToast('Experiencia eliminada', 'info');
+    updateEditedCount();
+  }
+}
+
+function removeEducation(index) {
+  if (confirm('¿Eliminar esta educación?')) {
+    extractedData.education.splice(index, 1);
+    renderExtractedEducation();
+    showToast('Educación eliminada', 'info');
+    updateEditedCount();
+  }
+}
+
 
 function renderExtractedSkills() {
   const skillsList = document.getElementById('extractedSkillsList');
@@ -636,6 +715,9 @@ function discardExtraction() {
 
 // Make new functions global
 window.removeExtractedSkill = removeExtractedSkill;
+window.removeExperience = removeExperience;
+window.removeEducation = removeEducation;
 
 console.log('✅ Dashboard listo');
+
 

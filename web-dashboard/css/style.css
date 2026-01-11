@@ -669,7 +669,7 @@ body {
   font-style: italic;
 }
 
-/* Experience and Education Lists */
+/* Experience and Education Lists - Editable */
 .extracted-experience-list,
 .extracted-education-list {
   display: flex;
@@ -678,55 +678,105 @@ body {
   margin-bottom: var(--spacing-md);
 }
 
-.experience-item,
-.education-item {
+.experience-item-editable,
+.education-item-editable {
   background: var(--surface);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  border-left: 4px solid var(--primary);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
   transition: var(--transition);
 }
 
-.experience-item:hover,
-.education-item:hover {
-  transform: translateX(4px);
+.experience-item-editable:hover,
+.education-item-editable:hover {
+  border-color: var(--primary);
   box-shadow: var(--shadow-md);
 }
 
-.experience-header,
-.education-header {
-  margin-bottom: var(--spacing-sm);
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border);
 }
 
-.experience-title,
-.education-title {
-  font-weight: 600;
-  color: var(--text);
-  font-size: 15px;
-  margin-bottom: 2px;
-}
-
-.experience-company,
-.education-school {
-  color: var(--text-muted);
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.experience-dates,
-.education-dates {
-  font-size: 13px;
+.item-header strong {
+  font-size: 16px;
   color: var(--primary);
-  font-weight: 500;
 }
 
-.experience-description {
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--border);
+.btn-remove-item {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.btn-remove-item:hover {
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+.editable-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.field-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.editable-item-field {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
   font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.5;
+  font-family: inherit;
+  transition: var(--transition);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.editable-item-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+}
+
+.editable-item-field.edited {
+  border-color: var(--warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.editable-item-field textarea {
+  resize: vertical;
+  min-height: 60px;
 }
 
 .empty-list {
@@ -735,6 +785,7 @@ body {
   color: var(--text-muted);
   font-style: italic;
 }
+
 
 
 .extraction-stats {
