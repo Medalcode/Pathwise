@@ -143,19 +143,11 @@ async function handleFileUpload(file) {
       // Hide progress
       document.getElementById('uploadProgress').classList.add('hidden');
       
-      // Show results
-      document.getElementById('uploadResults').classList.remove('hidden');
-      document.getElementById('extractedInfo').innerHTML = 
-        `Se extrajeron <strong>${countExtractedFields(result.data)}</strong> campos de información`;
-      
-      // Update current profile
-      currentProfile = result.data;
+      // Show extracted data preview
+      showExtractedDataPreview(result.data);
       
       // Show success toast
       showToast('CV procesado exitosamente', 'success');
-      
-      // Reload profile
-      loadProfile();
     }, 500);
     
   } catch (error) {
@@ -433,4 +425,166 @@ document.getElementById('testExtension')?.addEventListener('click', () => {
 window.navigateTo = navigateTo;
 window.removeSkill = removeSkill;
 
+// Extracted Data Preview
+let extractedData = null;
+let extractedSkills = [];
+let editedFields = new Set();
+
+function showExtractedDataPreview(data) {
+  extractedData = data;
+  extractedSkills = data.skills || [];
+  editedFields.clear();
+  
+  // Show the preview section
+  document.getElementById('extractedDataPreview').classList.remove('hidden');
+  
+  // Populate fields
+  const fieldMapping = {
+    'firstName': data.personalInfo.firstName,
+    'lastName': data.personalInfo.lastName,
+    'email': data.personalInfo.email,
+    'phone': data.personalInfo.phone,
+    'currentTitle': data.personalInfo.currentTitle,
+    'city': data.personalInfo.city,
+    'country': data.personalInfo.country,
+    'linkedin': data.personalInfo.linkedin
+  };
+  
+  Object.entries(fieldMapping).forEach(([key, value]) => {
+    const input = document.getElementById(`extracted-${key}`);
+    if (input) {
+      input.value = value || '';
+      if (value) {
+        input.classList.add('has-value');
+      }
+      
+      // Track original value
+      input.dataset.originalValue = value || '';
+      
+      // Listen for changes
+      input.addEventListener('input', () => {
+        if (input.value !== input.dataset.originalValue) {
+          input.classList.add('edited');
+          input.classList.remove('has-value');
+          editedFields.add(key);
+        } else {
+          input.classList.remove('edited');
+          if (input.value) {
+            input.classList.add('has-value');
+          }
+          editedFields.delete(key);
+        }
+        updateEditedCount();
+      });
+    }
+  });
+  
+  // Render skills
+  renderExtractedSkills();
+  
+  // Update stats
+  document.getElementById('fieldsExtracted').textContent = countExtractedFields(data);
+  updateEditedCount();
+  
+  // Setup buttons
+  document.getElementById('saveExtractedData').addEventListener('click', saveExtractedData);
+  document.getElementById('discardExtraction').addEventListener('click', discardExtraction);
+}
+
+function renderExtractedSkills() {
+  const skillsList = document.getElementById('extractedSkillsList');
+  skillsList.innerHTML = extractedSkills.map(skill => `
+    <div class="extracted-skill" onclick="removeExtractedSkill('${skill}')">
+      <span>${skill}</span>
+      <span>×</span>
+    </div>
+  `).join('');
+}
+
+function removeExtractedSkill(skillName) {
+  extractedSkills = extractedSkills.filter(s => s !== skillName);
+  renderExtractedSkills();
+  showToast(`Habilidad "${skillName}" eliminada`, 'info');
+}
+
+function updateEditedCount() {
+  document.getElementById('fieldsEdited').textContent = editedFields.size;
+}
+
+async function saveExtractedData() {
+  // Gather edited data
+  const profileData = {
+    personalInfo: {
+      firstName: document.getElementById('extracted-firstName').value,
+      lastName: document.getElementById('extracted-lastName').value,
+      email: document.getElementById('extracted-email').value,
+      phone: document.getElementById('extracted-phone').value,
+      currentTitle: document.getElementById('extracted-currentTitle').value,
+      city: document.getElementById('extracted-city').value,
+      country: document.getElementById('extracted-country').value,
+      linkedin: document.getElementById('extracted-linkedin').value,
+      address: extractedData.personalInfo.address || '',
+      portfolio: extractedData.personalInfo.portfolio || '',
+      summary: extractedData.personalInfo.summary || ''
+    },
+    skills: extractedSkills,
+    experience: extractedData.experience || [],
+    education: extractedData.education || []
+  };
+  
+  try {
+    const response = await fetch(`${API_URL}/profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(profileData)
+    });
+    
+    if (response.ok) {
+      showToast('✅ Datos guardados exitosamente', 'success');
+      currentProfile = profileData;
+      
+      // Hide preview
+      document.getElementById('extractedDataPreview').classList.add('hidden');
+      
+      // Reset upload area
+      document.getElementById('uploadArea').classList.remove('hidden');
+      document.getElementById('cvFile').value = '';
+      
+      // Update stats
+      updateStats(profileData);
+      
+      // Populate form in profile section
+      populateForm(profileData);
+      
+      // Show navigation hint
+      setTimeout(() => {
+        showToast('Navega a "Mi Perfil" para ver y editar más detalles', 'info');
+      }, 2000);
+    } else {
+      throw new Error('Error al guardar');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showToast('❌ Error al guardar los datos', 'error');
+  }
+}
+
+function discardExtraction() {
+  if (confirm('¿Estás seguro de que quieres descartar estos datos extraídos?')) {
+    document.getElementById('extractedDataPreview').classList.add('hidden');
+    document.getElementById('uploadArea').classList.remove('hidden');
+    document.getElementById('cvFile').value = '';
+    extractedData = null;
+    extractedSkills = [];
+    editedFields.clear();
+    showToast('Datos descartados', 'warning');
+  }
+}
+
+// Make new functions global
+window.removeExtractedSkill = removeExtractedSkill;
+
 console.log('✅ Dashboard listo');
+

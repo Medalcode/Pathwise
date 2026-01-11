@@ -508,6 +508,208 @@ body {
   color: var(--success);
 }
 
+/* Extracted Data Preview */
+.extracted-data-preview {
+  background: var(--surface);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  margin-top: var(--spacing-xl);
+  border: 2px solid var(--success);
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--border);
+}
+
+.preview-header svg {
+  margin-bottom: var(--spacing-md);
+}
+
+.preview-header h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text);
+}
+
+.preview-header p {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.extracted-data-form {
+  max-width: 100%;
+}
+
+.data-section {
+  margin-bottom: var(--spacing-xl);
+  background: var(--bg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+}
+
+.data-section h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  color: var(--text);
+}
+
+.data-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.data-field {
+  position: relative;
+}
+
+.data-field label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.editable-field {
+  width: 100%;
+  padding: var(--spacing-md);
+  padding-right: 40px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-family: inherit;
+  transition: var(--transition);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.editable-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+}
+
+.editable-field.has-value {
+  border-color: var(--success);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.editable-field.edited {
+  border-color: var(--warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.field-status {
+  position: absolute;
+  right: 12px;
+  top: 38px;
+  width: 20px;
+  height: 20px;
+  display: none;
+}
+
+.field-status::after {
+  content: '✓';
+  color: var(--success);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.editable-field.has-value ~ .field-status {
+  display: block;
+}
+
+.editable-field.edited ~ .field-status::after {
+  content: '✎';
+  color: var(--warning);
+}
+
+.extracted-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  min-height: 40px;
+}
+
+.extracted-skill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, var(--success) 0%, hsl(142, 71%, 55%) 100%);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  animation: slideIn 0.3s ease-out;
+}
+
+.extracted-skill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+.extracted-skill:active {
+  transform: translateY(0);
+}
+
+.hint-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.extraction-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-xl) 0;
+  padding: var(--spacing-lg);
+  background: var(--primary-light);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--primary);
+}
+
+.extraction-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.extraction-stats .stat-icon {
+  font-size: 24px;
+}
+
+.extraction-stats .stat-text {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.extraction-stats strong {
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 2px solid var(--border);
+}
+
+
 /* Profile Form */
 .profile-form {
   background: var(--surface);
