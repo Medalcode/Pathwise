@@ -1,0 +1,36 @@
+María García López
+Full Stack Developer
+Santiago, Chile
+
++56987654321
+maria.garcia@example.com
+https://linkedin.com/in/mariagarcia
+https://github.com/mariagarcia
+
+RESUMEN PROFESIONAL
+Desarrolladora Full Stack con 4 años de experiencia en la creación de aplicaciones web modernas.
+Especializada en React, Node.js y bases de datos SQL. Apasionada por el código limpio y las
+mejores prácticas de desarrollo. Busco nuevas oportunidades para aplicar mis habilidades en
+proyectos desafiantes.
+
+EXPERIENCIA PROFESIONAL
+Full Stack Developer - Tech Solutions SpA
+Enero 2022 - Presente
+• Desarrollo de aplicaciones web usando React y Node.js
+• Implementación de APIs RESTful y microservicios
+• Trabajo colaborativo con equipos ágiles usando Scrum
+
+Frontend Developer - Digital Agency
+Marzo 2020 - Diciembre 2021
+• Desarrollo de interfaces de usuario responsivas
+• Optimización de rendimiento web
+• Integración con APIs de terceros
+
+EDUCACIÓN
+Ingeniería en Informática
+Universidad de Chile
+2016 - 2020
+
+HABILIDADES TÉCNICAS
+JavaScript, TypeScript, React, Vue, Node.js, Express, Python, Django, SQL, PostgreSQL, MongoDB,
+Git, Docker, AWS, HTML, CSS, SASS, REST APIs, GraphQL, Agile, Scrum
