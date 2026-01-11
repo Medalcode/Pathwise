@@ -1013,18 +1013,28 @@ function closeProfilesModal() {
 
 async function generateProfiles() {
   try {
-    // Show loading
+    // 1. UI State: Loading
+    const intro = document.getElementById('aiIntroContainer');
+    if(intro) intro.classList.add('hidden');
+    
     document.getElementById('profilesLoading').classList.remove('hidden');
-    document.getElementById('profilesError').classList.add('hidden');
-    document.getElementById('profilesGrid').classList.add('hidden');
+    // document.getElementById('profilesError').classList.add('hidden'); // Ya no usamos esto
+    
+    const resultDiv = document.getElementById('aiProfilesResult');
+    if(resultDiv) resultDiv.classList.add('hidden');
     
     console.log('🤖 Generando perfiles profesionales con Groq AI...');
     
+    // Obtener API Key si existe en localStorage
+    const savedKey = localStorage.getItem('panoptes_groq_api_key');
+    const headers = { 'Content-Type': 'application/json' };
+    if (savedKey) {
+        headers['X-Groq-API-Key'] = savedKey;
+    }
+
     const response = await fetch(`${API_URL}/profile/generate-profiles`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: headers
     });
     
     if (!response.ok) {
@@ -1037,33 +1047,37 @@ async function generateProfiles() {
     
     console.log('✅ Perfiles generados:', generatedProfiles);
     
-    // Hide loading
+    // 2. UI State: Success
     document.getElementById('profilesLoading').classList.add('hidden');
     
-    // Show profiles
+    if(resultDiv) resultDiv.classList.remove('hidden');
     renderProfiles();
     
-    // Show footer
-    document.getElementById('profilesFooter').classList.remove('hidden');
+    const actions = document.getElementById('finalActions');
+    if(actions) actions.classList.remove('hidden');
     
     showToast('Perfiles generados exitosamente', 'success');
     
   } catch (error) {
     console.error('❌ Error:', error);
     
-    // Hide loading
+    // UI State: Error (Revertir)
     document.getElementById('profilesLoading').classList.add('hidden');
-    
-    // Show error
-    document.getElementById('profilesError').classList.remove('hidden');
-    document.getElementById('profilesErrorMessage').textContent = error.message;
+    const intro = document.getElementById('aiIntroContainer');
+    if(intro) intro.classList.remove('hidden');
     
     showToast('Error al generar perfiles: ' + error.message, 'error');
+    
+    // Si es error de API Key, abrir modal de config
+    if (error.message.includes('API key') || error.message.includes('401')) {
+        openApiKeyModal(); 
+    }
   }
 }
 
 function renderProfiles() {
   const grid = document.getElementById('profilesGrid');
+  if(!grid) return;
   
   grid.innerHTML = generatedProfiles.map((profile, index) => `
     <div class="profile-card ${selectedProfileIndex === index ? 'selected' : ''}" data-index="${index}">
@@ -1110,7 +1124,7 @@ function renderProfiles() {
     </div>
   `).join('');
   
-  grid.classList.remove('hidden');
+  // grid.classList.remove('hidden'); // Ya no necesario, controlado por contenedor padre
   
   // Add click handlers to cards
   document.querySelectorAll('.profile-card').forEach(card => {

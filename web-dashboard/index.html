@@ -201,7 +201,8 @@
             <p>Genera 3 variantes de perfil optimizadas para diferentes roles.</p>
           </div>
 
-          <div class="ai-cards-container">
+          <!-- Estado Inicial: Card de Introducción -->
+          <div id="aiIntroContainer" class="ai-cards-container">
             <div class="ai-intro-card">
               <div class="icon">✨</div>
               <h3>Potencia tu Perfil</h3>
@@ -210,12 +211,22 @@
             </div>
           </div>
           
+          <!-- Estado Cargando -->
+          <div id="profilesLoading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <h3>Generando Estrategias con IA...</h3>
+              <p>Optimizando títulos, habilidades y palabras clave. Esto toma unos segundos.</p>
+          </div>
+
+          <!-- Estado Resultados -->
           <div id="aiProfilesResult" class="hidden">
-             <!-- Aquí se inyectarán los perfiles generados -->
+             <div id="profilesGrid" class="profiles-grid">
+                 <!-- Aquí se inyectan las tarjetas -->
+             </div>
           </div>
 
           <div class="step-actions hidden" id="finalActions">
-            <button class="btn btn-secondary" onclick="goToStep(2)">← Volver</button>
+            <button class="btn btn-secondary" onclick="attemptNavigation(2)">← Volver</button>
             <button class="btn btn-success" onclick="finishWizard()">Finalizar y Guardar</button>
           </div>
         </div>
@@ -603,6 +614,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/app.js?v=3.4"></script>
+  <script src="js/app.js?v=3.5"></script>
 </body>
 </html>
