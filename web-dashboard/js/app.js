@@ -1,6 +1,9 @@
 // AutoApply Dashboard - Main Application
 
-const API_URL = 'http://localhost:3000/api';
+// Detectar si estamos en producción (Cloud Run) o desarrollo local
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000/api'
+  : '/api';
 
 // State
 let currentProfile = null;
