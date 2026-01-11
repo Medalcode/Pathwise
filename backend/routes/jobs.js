@@ -6,15 +6,18 @@ const jobService = require('../services/jobService');
 // Body: { profile: { ... } }
 router.post('/search', async (req, res) => {
   try {
-    const { profile } = req.body;
+    const { profile, preferences } = req.body;
     
     if (!profile) {
       return res.status(400).json({ success: false, message: 'Se requiere un perfil para buscar empleos' });
     }
     
-    console.log(`📡 Buscando empleos para perfil: ${profile.title}`);
+    // location del usuario (fallback a Chile si no se especifica)
+    const userLocation = preferences?.location || 'Chile';
     
-    const jobs = await jobService.searchJobsForProfile(profile);
+    console.log(`📡 Buscando empleos para perfil: ${profile.title}, en: ${userLocation}`);
+    
+    const jobs = await jobService.searchJobsForProfile(profile, userLocation);
     
     res.json({
       success: true,

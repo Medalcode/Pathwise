@@ -16,7 +16,7 @@ const JOB_SOURCES = {
  * @param {Object} profile - Perfil profesional seleccionado (con searchKeywords)
  * @returns {Promise<Array>} - Lista de ofertas con score de match
  */
-async function searchJobsForProfile(profile) {
+async function searchJobsForProfile(profile, userLocation = 'Chile') {
   try {
     const keywords = profile.searchKeywords || [];
     const role = profile.title || '';
@@ -24,13 +24,13 @@ async function searchJobsForProfile(profile) {
     // Término principal
     const mainTerm = keywords.length > 0 ? keywords[0] : role;
     
-    console.log(`🔍 Buscando empleos para: ${mainTerm} con keywords: ${keywords.join(', ')}`);
+    console.log(`🔍 Buscando empleos para: ${mainTerm} (${userLocation})`);
     
-    // Ejecutar búsquedas en paralelo (RemoteOK, ArbeitNow, CompuTrabajo)
+    // Ejecutar búsquedas en paralelo
     const [remoteOkJobs, arbeitJobs, computrabajoJobs] = await Promise.allSettled([
       fetchRemoteOkJobs(keywords),
       fetchArbeitNowJobs(mainTerm),
-      scanCompuTrabajo(mainTerm, profile.location || 'Chile')
+      scanCompuTrabajo(mainTerm, userLocation)
     ]);
     
     let allJobs = [];
@@ -39,26 +39,54 @@ async function searchJobsForProfile(profile) {
     if (arbeitJobs.status === 'fulfilled') allJobs = [...allJobs, ...arbeitJobs.value];
     if (computrabajoJobs.status === 'fulfilled') allJobs = [...allJobs, ...computrabajoJobs.value];
     
-    // Si no hay resultados y el usuario buscó algo muy específico, intentar solo con el rol
-    if (allJobs.length === 0) {
-        console.log("⚠️ Sin resultados, reintentando solo con título del rol...");
-        const retryJobs = await scanCompuTrabajo(role.split(' ')[0], 'Chile'); // Intento simple
-        allJobs = [...retryJobs];
+    // FILTRADO GEOGRÁFICO ESTRICTO
+    // Solo permitir: Remotos Globales/Latam O Presenciales en el país del usuario
+    const filteredJobs = allJobs.filter(job => isLocationValid(job, userLocation));
+    
+    // Si después de filtrar no queda nada, avisar
+    if (filteredJobs.length === 0) {
+        console.log("⚠️ Sin resultados válidos tras filtrado geográfico.");
     }
     
-    // Calcular Match Score para cada oferta
-    const scoredJobs = allJobs.map(job => {
+    // Calcular Match Score
+    const scoredJobs = filteredJobs.map(job => {
       const matchDetails = calculateMatchScore(job, profile);
       return { ...job, ...matchDetails };
     });
     
-    // Ordenar por score descendente
     return scoredJobs.sort((a, b) => b.matchScore - a.matchScore);
     
   } catch (error) {
     console.error('Error buscando empleos:', error);
     throw error;
   }
+}
+
+/**
+ * Valida si la ubicación del trabajo es aceptable para el usuario
+ */
+function isLocationValid(job, userCountry) {
+    const loc = (job.location || '').toLowerCase();
+    const country = (userCountry || 'chile').toLowerCase(); 
+    
+    // 1. Es oferta remota?
+    // "anywhere" es común en RemoteOK
+    if (loc.includes('remote') || loc.includes('remoto') || 
+        loc.includes('latam') || loc.includes('worldwide') || 
+        loc.includes('anywhere') || loc.includes('cualquier lugar')) {
+        return true;
+    }
+
+    // 2. Es oferta local en el país del usuario?
+    // Buscamos coincidencia parcial (ej: "SANTIAGO, CHILE" contiene "chile")
+    if (loc.includes(country)) {
+        return true;
+    }
+
+    // Caso especial para RemoteOK que a veces pone ciudades sin país claro,
+    // pero si no dice remoto y no es el país, asumimos extranjero.
+    // Ej: "London" != "Chile" -> False.
+    return false;
 }
 
 async function fetchRemoteOkJobs(tags) {

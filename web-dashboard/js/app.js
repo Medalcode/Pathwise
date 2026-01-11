@@ -1340,11 +1340,17 @@ async function initJobSearch() {
     if (loader) loader.classList.remove('hidden');
     if (results) results.innerHTML = ''; // Limpiar
 
+    // Obtener ubicación del usuario
+    const userCountry = currentProfile?.personalInfo?.country || 'Chile';
+    
     try {
         const response = await fetch(`${API_URL}/jobs/search`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ profile })
+            body: JSON.stringify({ 
+                profile,
+                preferences: { location: userCountry }
+            })
         });
 
         if (!response.ok) throw new Error('Error buscando empleos');
