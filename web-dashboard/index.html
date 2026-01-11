@@ -108,6 +108,17 @@
               </svg>
             </a>
             
+            <button class="action-card" id="generateProfiles">
+              <div class="action-icon">🤖</div>
+              <div class="action-content">
+                <h4>Generar Perfiles con IA</h4>
+                <p>Crea 3 perfiles profesionales optimizados</p>
+              </div>
+              <svg class="action-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+            
             <button class="action-card" id="testExtension">
               <div class="action-icon">🚀</div>
               <div class="action-content">
@@ -373,6 +384,131 @@
       </section>
     </div>
   </main>
+
+  <!-- Profiles Modal -->
+  <div id="profilesModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content profiles-modal-content">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h2>🤖 Perfiles Profesionales Generados</h2>
+          <p>Selecciona el perfil con el que deseas buscar trabajo</p>
+        </div>
+        <button class="modal-close" id="closeProfilesModal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="profilesLoading" class="profiles-loading">
+        <div class="loading-spinner"></div>
+        <p>Generando perfiles profesionales con IA...</p>
+        <span class="loading-hint">Esto puede tomar unos segundos</span>
+      </div>
+
+      <!-- Error State -->
+      <div id="profilesError" class="profiles-error hidden">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#ef4444" stroke-width="2"/>
+          <path d="M12 8V12M12 16H12.01" stroke="#ef4444" stroke-width="2"/>
+        </svg>
+        <h3>Error al generar perfiles</h3>
+        <p id="profilesErrorMessage"></p>
+        <div class="error-actions">
+          <button class="btn btn-secondary" id="configureApiKey">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Configurar API Key
+          </button>
+          <button class="btn btn-primary" id="retryGenerateProfiles">
+            Intentar de nuevo
+          </button>
+        </div>
+      </div>
+
+      <!-- Profiles Grid -->
+      <div id="profilesGrid" class="profiles-grid hidden">
+        <!-- Profile cards will be inserted here dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div id="profilesFooter" class="modal-footer hidden">
+        <div class="footer-info">
+          <span class="info-icon">💡</span>
+          <span>Puedes cambiar de perfil en cualquier momento desde tu dashboard</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Key Configuration Modal -->
+  <div id="apiKeyModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content api-key-modal-content">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h2>⚙️ Configurar API Key de Groq</h2>
+          <p>Ingresa tu API key para habilitar la generación de perfiles con IA</p>
+        </div>
+        <button class="modal-close" id="closeApiKeyModal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="api-key-form">
+        <div class="form-group">
+          <label for="groqApiKeyInput">API Key de Groq</label>
+          <input 
+            type="password" 
+            id="groqApiKeyInput" 
+            class="api-key-input" 
+            placeholder="gsk_..." 
+            autocomplete="off"
+          />
+          <button type="button" class="toggle-visibility" id="toggleApiKeyVisibility">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="api-key-info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#3b82f6" stroke-width="2"/>
+            <path d="M12 16V12M12 8H12.01" stroke="#3b82f6" stroke-width="2"/>
+          </svg>
+          <div>
+            <p><strong>¿Dónde obtener tu API Key?</strong></p>
+            <ol>
+              <li>Visita <a href="https://console.groq.com" target="_blank">console.groq.com</a></li>
+              <li>Crea una cuenta gratuita</li>
+              <li>Ve a "API Keys" y genera una nueva key</li>
+              <li>Copia y pega la key aquí</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="api-key-actions">
+          <button class="btn btn-secondary" id="cancelApiKey">
+            Cancelar
+          </button>
+          <button class="btn btn-primary" id="saveApiKey">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Guardar y Continuar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast Notifications -->
   <div id="toastContainer" class="toast-container"></div>

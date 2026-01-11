@@ -773,3 +773,354 @@ window.removeEducation = removeEducation;
 console.log('✅ Dashboard listo');
 
 
+
+// ========================================
+// PROFILES GENERATION WITH GROQ AI
+// ========================================
+
+let generatedProfiles = [];
+let selectedProfileIndex = null;
+
+// Setup Generate Profiles button
+document.getElementById('generateProfiles')?.addEventListener('click', openProfilesModal);
+
+// Setup modal close
+document.getElementById('closeProfilesModal')?.addEventListener('click', closeProfilesModal);
+document.querySelector('.modal-overlay')?.addEventListener('click', closeProfilesModal);
+
+// Setup retry button
+document.getElementById('retryGenerateProfiles')?.addEventListener('click', generateProfiles);
+
+function openProfilesModal() {
+  const modal = document.getElementById('profilesModal');
+  modal.classList.remove('hidden');
+  
+  // Reset state
+  document.getElementById('profilesLoading').classList.remove('hidden');
+  document.getElementById('profilesError').classList.add('hidden');
+  document.getElementById('profilesGrid').classList.add('hidden');
+  document.getElementById('profilesFooter').classList.add('hidden');
+  
+  // Generate profiles
+  generateProfiles();
+}
+
+function closeProfilesModal() {
+  const modal = document.getElementById('profilesModal');
+  modal.classList.add('hidden');
+}
+
+async function generateProfiles() {
+  try {
+    // Show loading
+    document.getElementById('profilesLoading').classList.remove('hidden');
+    document.getElementById('profilesError').classList.add('hidden');
+    document.getElementById('profilesGrid').classList.add('hidden');
+    
+    console.log('🤖 Generando perfiles profesionales con Groq AI...');
+    
+    const response = await fetch(`${API_URL}/profile/generate-profiles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al generar perfiles');
+    }
+    
+    const result = await response.json();
+    generatedProfiles = result.data;
+    
+    console.log('✅ Perfiles generados:', generatedProfiles);
+    
+    // Hide loading
+    document.getElementById('profilesLoading').classList.add('hidden');
+    
+    // Show profiles
+    renderProfiles();
+    
+    // Show footer
+    document.getElementById('profilesFooter').classList.remove('hidden');
+    
+    showToast('Perfiles generados exitosamente', 'success');
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    
+    // Hide loading
+    document.getElementById('profilesLoading').classList.add('hidden');
+    
+    // Show error
+    document.getElementById('profilesError').classList.remove('hidden');
+    document.getElementById('profilesErrorMessage').textContent = error.message;
+    
+    showToast('Error al generar perfiles: ' + error.message, 'error');
+  }
+}
+
+function renderProfiles() {
+  const grid = document.getElementById('profilesGrid');
+  
+  grid.innerHTML = generatedProfiles.map((profile, index) => `
+    <div class="profile-card ${selectedProfileIndex === index ? 'selected' : ''}" data-index="${index}">
+      <div class="profile-card-header">
+        <span class="profile-number">Perfil ${index + 1}</span>
+        <span class="profile-level-badge ${profile.experienceLevel.toLowerCase().replace(' ', '-')}">${profile.experienceLevel}</span>
+      </div>
+      
+      <h3 class="profile-title">${profile.title}</h3>
+      
+      <p class="profile-description">${profile.description}</p>
+      
+      <div class="profile-section">
+        <h4>🎯 Habilidades Clave</h4>
+        <div class="skills-container">
+          ${profile.keySkills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h4>🔍 Palabras Clave</h4>
+        <div class="keywords-container">
+          ${profile.searchKeywords.map(keyword => `<span class="keyword-tag">${keyword}</span>`).join('')}
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h4>💼 Roles Objetivo</h4>
+        <ul class="roles-list">
+          ${profile.targetRoles.map(role => `<li>${role}</li>`).join('')}
+        </ul>
+      </div>
+      
+      <div class="profile-actions">
+        <button class="btn-select-profile ${selectedProfileIndex === index ? 'selected' : ''}" onclick="selectProfile(${index})">
+          ${selectedProfileIndex === index ? `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Perfil Seleccionado
+          ` : 'Usar este perfil'}
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  grid.classList.remove('hidden');
+  
+  // Add click handlers to cards
+  document.querySelectorAll('.profile-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      // Don't trigger if clicking the button
+      if (!e.target.closest('.btn-select-profile')) {
+        const index = parseInt(card.dataset.index);
+        selectProfile(index);
+      }
+    });
+  });
+}
+
+function selectProfile(index) {
+  selectedProfileIndex = index;
+  const selectedProfile = generatedProfiles[index];
+  
+  console.log('✅ Perfil seleccionado:', selectedProfile);
+  
+  // Update UI
+  renderProfiles();
+  
+  // Save selected profile to localStorage
+  localStorage.setItem('selectedProfile', JSON.stringify(selectedProfile));
+  localStorage.setItem('selectedProfileIndex', index);
+  
+  showToast(`Perfil "${selectedProfile.title}" seleccionado`, 'success');
+  
+  // Close modal after a short delay
+  setTimeout(() => {
+    closeProfilesModal();
+    
+    // Show next steps toast
+    setTimeout(() => {
+      showToast('Ahora puedes buscar empleos con este perfil', 'info');
+    }, 500);
+  }, 1000);
+}
+
+// Load selected profile on init
+function loadSelectedProfile() {
+  const savedProfile = localStorage.getItem('selectedProfile');
+  const savedIndex = localStorage.getItem('selectedProfileIndex');
+  
+  if (savedProfile && savedIndex) {
+    selectedProfileIndex = parseInt(savedIndex);
+    console.log('📌 Perfil guardado cargado:', JSON.parse(savedProfile));
+  }
+}
+
+// Call on init
+loadSelectedProfile();
+
+// Make functions global
+window.selectProfile = selectProfile;
+
+console.log('✅ Sistema de perfiles profesionales listo');
+
+// ========================================
+// API KEY CONFIGURATION
+// ========================================
+
+// Setup API Key modal
+document.getElementById('configureApiKey')?.addEventListener('click', openApiKeyModal);
+document.getElementById('closeApiKeyModal')?.addEventListener('click', closeApiKeyModal);
+document.getElementById('cancelApiKey')?.addEventListener('click', closeApiKeyModal);
+document.getElementById('saveApiKey')?.addEventListener('click', saveGroqApiKey);
+document.getElementById('toggleApiKeyVisibility')?.addEventListener('click', toggleApiKeyVisibility);
+
+function openApiKeyModal() {
+  // Close profiles modal
+  closeProfilesModal();
+  
+  // Open API key modal
+  const modal = document.getElementById('apiKeyModal');
+  modal.classList.remove('hidden');
+  
+  // Load saved API key if exists
+  const savedApiKey = localStorage.getItem('groqApiKey');
+  if (savedApiKey) {
+    document.getElementById('groqApiKeyInput').value = savedApiKey;
+  }
+  
+  // Focus input
+  setTimeout(() => {
+    document.getElementById('groqApiKeyInput').focus();
+  }, 300);
+}
+
+function closeApiKeyModal() {
+  const modal = document.getElementById('apiKeyModal');
+  modal.classList.add('hidden');
+  
+  // Clear input
+  document.getElementById('groqApiKeyInput').value = '';
+}
+
+function toggleApiKeyVisibility() {
+  const input = document.getElementById('groqApiKeyInput');
+  const button = document.getElementById('toggleApiKeyVisibility');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    button.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2"/>
+        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    `;
+  } else {
+    input.type = 'password';
+    button.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    `;
+  }
+}
+
+async function saveGroqApiKey() {
+  const apiKey = document.getElementById('groqApiKeyInput').value.trim();
+  
+  if (!apiKey) {
+    showToast('Por favor ingresa una API key', 'warning');
+    return;
+  }
+  
+  if (!apiKey.startsWith('gsk_')) {
+    showToast('La API key de Groq debe comenzar con "gsk_"', 'warning');
+    return;
+  }
+  
+  try {
+    // Save to localStorage
+    localStorage.setItem('groqApiKey', apiKey);
+    
+    // Send to backend to save in .env (optional - requires backend endpoint)
+    // For now, we'll just use it from localStorage
+    
+    showToast('✅ API Key guardada exitosamente', 'success');
+    
+    // Close modal
+    closeApiKeyModal();
+    
+    // Show success message
+    setTimeout(() => {
+      showToast('Ahora puedes generar perfiles profesionales', 'info');
+      
+      // Reopen profiles modal and retry
+      setTimeout(() => {
+        openProfilesModal();
+      }, 1000);
+    }, 500);
+    
+  } catch (error) {
+    console.error('Error guardando API key:', error);
+    showToast('Error al guardar la API key', 'error');
+  }
+}
+
+// Update generateProfiles to use localStorage API key
+const originalGenerateProfiles = generateProfiles;
+generateProfiles = async function() {
+  // Check if API key is in localStorage
+  const apiKey = localStorage.getItem('groqApiKey');
+  
+  if (apiKey) {
+    // Add API key to request headers
+    try {
+      document.getElementById('profilesLoading').classList.remove('hidden');
+      document.getElementById('profilesError').classList.add('hidden');
+      document.getElementById('profilesGrid').classList.add('hidden');
+      
+      console.log('🤖 Generando perfiles profesionales con Groq AI...');
+      
+      const response = await fetch(`${API_URL}/profile/generate-profiles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Groq-API-Key': apiKey  // Send API key in header
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al generar perfiles');
+      }
+      
+      const result = await response.json();
+      generatedProfiles = result.data;
+      
+      console.log('✅ Perfiles generados:', generatedProfiles);
+      
+      document.getElementById('profilesLoading').classList.add('hidden');
+      renderProfiles();
+      document.getElementById('profilesFooter').classList.remove('hidden');
+      
+      showToast('Perfiles generados exitosamente', 'success');
+      
+    } catch (error) {
+      console.error('❌ Error:', error);
+      document.getElementById('profilesLoading').classList.add('hidden');
+      document.getElementById('profilesError').classList.remove('hidden');
+      document.getElementById('profilesErrorMessage').textContent = error.message;
+      showToast('Error al generar perfiles: ' + error.message, 'error');
+    }
+  } else {
+    // No API key, use original function
+    await originalGenerateProfiles();
+  }
+};
+
+console.log('✅ Sistema de configuración de API Key listo');

@@ -1,6 +1,8 @@
-# AutoApply - Extensión de Chrome para Aplicaciones Automáticas
+# Panoptes (AutoApply) - Sistema de Aplicación Automática a Empleos con IA
 
-🚀 **AutoApply** es una extensión de Chrome que automatiza el proceso de aplicación a trabajos llenando formularios automáticamente con tu información personal y profesional.
+🚀 **Panoptes** es un sistema completo de aplicación automática a empleos que combina una extensión de Chrome, un dashboard web y generación de perfiles profesionales con IA.
+
+**🌐 Aplicación en Producción:** [https://panoptes-72529155548.us-central1.run.app](https://panoptes-72529155548.us-central1.run.app)
 
 ## 🌟 Características Principales
 
@@ -35,6 +37,14 @@
 - **Matching inteligente** de campos (por id, name, placeholder, aria-label)
 - **Colores de feedback**: Verde para campos completados
 - **Popup moderno**: Control fácil desde la extensión
+
+### 🤖 Generación de Perfiles Profesionales con IA
+
+- **Groq AI Integration**: Utiliza el modelo llama-3.3-70b-versatile
+- **3 perfiles automáticos**: Genera perfiles complementarios basados en tu CV
+- **Optimización para búsqueda**: Palabras clave y roles objetivo
+- **Análisis inteligente**: Identifica diferentes trayectorias profesionales
+- **Personalización**: Cada perfil maximiza diferentes aspectos de tu experiencia
 
 ### 💾 Almacenamiento Seguro
 
@@ -139,8 +149,15 @@ AutoApply/
 cd backend
 npm install
 cp .env.example .env
+# Edita .env y agrega tu GROQ_API_KEY
 npm start
 ```
+
+**Configurar Groq API (opcional pero recomendado):**
+
+1. Obtén tu API key en [console.groq.com](https://console.groq.com)
+2. Edita `backend/.env` y agrega: `GROQ_API_KEY=tu_api_key_aqui`
+3. Esto habilita la generación de perfiles profesionales con IA
 
 El servidor se iniciará en `http://localhost:3000`
 
@@ -163,6 +180,24 @@ python -m http.server 8000
 3. Click en **"Cargar extensión sin empaquetar"**
 4. Selecciona la carpeta `extension/`
 5. ¡Listo! Verás el ícono de AutoApply en la barra
+
+### 4. 🌐 Despliegue en Google Cloud Run
+
+El proyecto incluye configuración completa para despliegue en la nube.
+
+**Despliegue rápido:**
+
+```bash
+# Requiere Google Cloud SDK y proyecto configurado
+./deploy-cloud-run.sh [PROJECT_ID] [REGION]
+```
+
+**Configuración requerida:**
+
+1. API Key de Groq configurada en variables de entorno
+2. URL de producción actualizada en `extension/config.js`
+
+Para más detalles, ver [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
 
 ## 🎯 Guía de Uso
 
@@ -224,6 +259,7 @@ python -m http.server 8000
 - **[CV_PARSING_IMPROVEMENTS.md](./CV_PARSING_IMPROVEMENTS.md)**: Detalles técnicos del parser
 - **[COMPLETE_EDITING_SYSTEM.md](./COMPLETE_EDITING_SYSTEM.md)**: Sistema de edición completo
 - **[FEATURE_EXTRACTED_DATA_PREVIEW.md](./FEATURE_EXTRACTED_DATA_PREVIEW.md)**: Vista previa editable
+- **[GROQ_PROFILE_GENERATION.md](./GROQ_PROFILE_GENERATION.md)**: Generación de perfiles con IA
 
 ## 🎨 Características de UX
 

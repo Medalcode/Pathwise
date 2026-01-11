@@ -1,0 +1,57 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs/
+FLOW_DIAGRAM.md
+GROQ_PROFILE_GENERATION.md
+EXAMPLE_GENERATED_PROFILES.md
+SESSION_GROQ_PROFILES.md
+QUICKSTART_GROQ.md
+UI_PROFILES_SELECTION.md
+COMPLETE_IMPLEMENTATION_SUMMARY.md
+VISUAL_MOCKUPS.md
+
+# Scripts de prueba
+test-*.sh
+frontend-integration-example.js
+
+# Extension (no necesaria en el servidor)
+extension/
+
+# Database local
+backend/database/*.db
+backend/database/*.db-*
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporal
+tmp/
+temp/
+.cache/

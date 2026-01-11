@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "description": "Automatiza tus aplicaciones a trabajos llenando formularios con tu información almacenada",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["http://localhost:3000/*", "<all_urls>"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*.run.app/*",
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
