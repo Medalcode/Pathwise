@@ -329,25 +329,169 @@ async function loadProfile() {
 }
 
 function populateForm(profile) {
-  const { personalInfo } = profile;
+  if (!profile) return;
+
+  const { personalInfo, experience, education } = profile;
   
   // Personal info
-  document.getElementById('firstName').value = personalInfo.firstName || '';
-  document.getElementById('lastName').value = personalInfo.lastName || '';
-  document.getElementById('email').value = personalInfo.email || '';
-  document.getElementById('phone').value = personalInfo.phone || '';
-  document.getElementById('currentTitle').value = personalInfo.currentTitle || '';
-  document.getElementById('city').value = personalInfo.city || '';
-  document.getElementById('country').value = personalInfo.country || '';
-  document.getElementById('address').value = personalInfo.address || '';
-  document.getElementById('linkedin').value = personalInfo.linkedin || '';
-  document.getElementById('portfolio').value = personalInfo.portfolio || '';
-  document.getElementById('summary').value = personalInfo.summary || '';
+  if (personalInfo) {
+      document.getElementById('firstName').value = personalInfo.firstName || '';
+      document.getElementById('lastName').value = personalInfo.lastName || '';
+      document.getElementById('email').value = personalInfo.email || '';
+      document.getElementById('phone').value = personalInfo.phone || '';
+      document.getElementById('currentTitle').value = personalInfo.currentTitle || '';
+      document.getElementById('city').value = personalInfo.city || '';
+      document.getElementById('country').value = personalInfo.country || '';
+      const addressEl = document.getElementById('address');
+      if(addressEl) addressEl.value = personalInfo.address || '';
+      document.getElementById('linkedin').value = personalInfo.linkedin || '';
+      document.getElementById('portfolio').value = personalInfo.portfolio || '';
+      document.getElementById('summary').value = personalInfo.summary || '';
+  }
   
   // Skills
   skills = profile.skills || [];
   renderSkills();
+
+  // Experience
+  const expContainer = document.getElementById('experienceContainer');
+  if (expContainer) {
+      expContainer.innerHTML = ''; // Limpiar
+      if (experience && Array.isArray(experience)) {
+          experience.forEach(exp => {
+             // Crear campos y llenarlos
+             addExperienceField(exp);
+          });
+      }
+  }
+
+  // Education
+  const eduContainer = document.getElementById('educationContainer');
+  if (eduContainer) {
+      eduContainer.innerHTML = ''; // Limpiar
+      if (education && Array.isArray(education)) {
+          education.forEach(edu => {
+             addEducationField(edu);
+          });
+      }
+  }
 }
+
+// Helper para crear inputs dinámicos de experiencia
+function addExperienceField(data = null) {
+    const container = document.getElementById('experienceContainer');
+    if (!container) return;
+
+    const id = Date.now() + Math.random().toString(36).substr(2, 5);
+    const item = document.createElement('div');
+    item.className = 'dynamic-item card-nested';
+    item.id = `exp-${id}`;
+    
+    // Valores predeterminados
+    const title = data ? data.title || '' : '';
+    const company = data ? data.company || '' : '';
+    const startDate = data ? data.startDate || '' : '';
+    const endDate = data ? data.endDate || '' : '';
+    const current = data ? data.current || false : false;
+    const desc = data ? data.description || '' : '';
+
+    item.innerHTML = `
+        <div class="form-grid mb-2">
+            <div class="form-group">
+                <label>Cargo</label>
+                <input type="text" name="exp_title_${id}" value="${title}" placeholder="Ej: Senior Dev">
+            </div>
+            <div class="form-group">
+                <label>Empresa</label>
+                <input type="text" name="exp_company_${id}" value="${company}" placeholder="Ej: Tech Corp">
+            </div>
+        </div>
+        <div class="form-grid mb-2">
+             <div class="form-group">
+                <label>Desde</label>
+                <input type="text" name="exp_start_${id}" value="${startDate}" placeholder="YYYY-MM">
+            </div>
+            <div class="form-group">
+                <label>Hasta</label>
+                <input type="text" name="exp_end_${id}" value="${endDate}" placeholder="YYYY-MM" ${current ? 'disabled' : ''}>
+                <label class="checkbox-inline mt-1">
+                    <input type="checkbox" name="exp_current_${id}" ${current ? 'checked' : ''} onchange="toggleEndDate(this, 'exp_end_${id}')"> Actualmente
+                </label>
+            </div>
+        </div>
+        <div class="form-group full-width">
+            <label>Descripción</label>
+            <textarea name="exp_desc_${id}" rows="2">${desc}</textarea>
+        </div>
+        <div class="text-right">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDynamicItem('exp-${id}')">Eliminar</button>
+        </div>
+    `;
+    
+    container.appendChild(item);
+}
+
+function toggleEndDate(checkbox, targetId) {
+    const input = document.querySelector(`input[name="${targetId}"]`);
+    if(input) {
+        input.disabled = checkbox.checked;
+        if(checkbox.checked) input.value = 'Presente';
+    }
+}
+
+function addEducationField(data = null) {
+    const container = document.getElementById('educationContainer');
+    if (!container) return;
+
+    const id = Date.now() + Math.random().toString(36).substr(2, 5);
+    const item = document.createElement('div');
+    item.className = 'dynamic-item card-nested';
+    item.id = `edu-${id}`;
+    
+    const degree = data ? data.degree || '' : '';
+    const school = data ? data.school || '' : '';
+    const start = data ? data.startDate || '' : '';
+    const end = data ? data.endDate || '' : '';
+
+    item.innerHTML = `
+         <div class="form-grid mb-2">
+            <div class="form-group">
+                <label>Título / Grado</label>
+                <input type="text" name="edu_degree_${id}" value="${degree}">
+            </div>
+            <div class="form-group">
+                <label>Institución</label>
+                <input type="text" name="edu_school_${id}" value="${school}">
+            </div>
+        </div>
+        <div class="form-grid">
+             <div class="form-group">
+                <label>Inicio</label>
+                <input type="text" name="edu_start_${id}" value="${start}">
+            </div>
+            <div class="form-group">
+                <label>Fin</label>
+                <input type="text" name="edu_end_${id}" value="${end}">
+            </div>
+        </div>
+        <div class="text-right mt-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDynamicItem('edu-${id}')">Eliminar</button>
+        </div>
+    `;
+    container.appendChild(item);
+}
+
+function removeDynamicItem(id) {
+    const el = document.getElementById(id);
+    if(el) el.remove();
+}
+
+// Hacer globales las funciones necesarias para onclick
+window.addExperienceField = addExperienceField;
+window.addEducationField = addEducationField;
+window.removeDynamicItem = removeDynamicItem;
+window.toggleEndDate = toggleEndDate;
+
 
 function updateStats(profile) {
   const completeness = calculateCompleteness(profile);
