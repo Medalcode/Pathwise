@@ -1,5 +1,8 @@
 const axios = require('axios');
+const Parser = require('rss-parser');
+const parser = new Parser();
 const { scanCompuTrabajo } = require('./scrapers/computrabajoScanner');
+const { scanChileTrabajos } = require('./scrapers/chiletrabajosScanner');
 
 /**
  * Servicio para buscar empleos y calcular match con el perfil
@@ -8,7 +11,10 @@ const { scanCompuTrabajo } = require('./scrapers/computrabajoScanner');
 // Fuentes de empleo soportadas (APIs y Scrapers)
 const JOB_SOURCES = {
   REMOTEOK: 'https://remoteok.com/api',
-  ARBEITNOW: 'https://arbeitnow.com/api/job-board-api'
+  ARBEITNOW: 'https://arbeitnow.com/api/job-board-api',
+  REMOTIVE: 'https://remotive.com/api/remote-jobs',
+  WEWORKREMOTELY_RSS: 'https://weworkremotely.com/categories/remote-programming-jobs.rss',
+  ADZUNA: 'https://api.adzuna.com/v1/api/jobs'
 };
 
 /**
@@ -24,17 +30,33 @@ async function searchJobsForProfile(profile, userLocation = 'Chile', remoteOnly 
     
     console.log(`🔍 Buscando empleos para: ${mainTerm} (${userLocation}) [RemoteOnly: ${remoteOnly}]`);
     
-    // ... (fetch logic remains same)
-    const [remoteOkJobs, arbeitJobs, computrabajoJobs] = await Promise.allSettled([
+    // Ejecutar TODAS las búsquedas en paralelo
+    const promises = [
       fetchRemoteOkJobs(keywords),
       fetchArbeitNowJobs(mainTerm),
-      scanCompuTrabajo(mainTerm, userLocation) // CompuTrabajo busca en la ubicación igual
-    ]);
+      fetchRemotiveJobs(mainTerm),
+      fetchWeWorkRemotelyRSS(mainTerm),
+      scanCompuTrabajo(mainTerm, userLocation),
+      scanChileTrabajos(mainTerm, userLocation)
+    ];
+
+    // Adzuna requires keys
+    if (process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY) {
+        promises.push(fetchAdzunaJobs(mainTerm, 'cl')); // Default to Chile or use logic
+    }
+
+    const results = await Promise.allSettled(promises);
     
     let allJobs = [];
-    if (remoteOkJobs.status === 'fulfilled') allJobs = [...allJobs, ...remoteOkJobs.value];
-    if (arbeitJobs.status === 'fulfilled') allJobs = [...allJobs, ...arbeitJobs.value];
-    if (computrabajoJobs.status === 'fulfilled') allJobs = [...allJobs, ...computrabajoJobs.value];
+    results.forEach(res => {
+        if (res.status === 'fulfilled') {
+            allJobs = [...allJobs, ...res.value];
+        } else {
+             console.error(`Una fuente falló: ${res.reason}`);
+        }
+    });
+
+    console.log(`📊 Total Ofertas Brutas: ${allJobs.length}`);
     
     // FILTRADO GEOGRÁFICO
     const filteredJobs = allJobs.filter(job => isLocationValid(job, userLocation, remoteOnly));
@@ -158,6 +180,68 @@ async function fetchArbeitNowJobs(search) {
         console.error('Error fetching ArbeitNow:', e.message);
         return [];
     }
+}
+
+async function fetchRemotiveJobs(search) {
+    try {
+        const res = await axios.get(`${JOB_SOURCES.REMOTIVE}?search=${encodeURIComponent(search)}`);
+        return (res.data.jobs||[]).map(j => ({
+            id: j.id,
+            title: j.title, 
+            company: j.company_name,
+            location: j.candidate_required_location || 'Remote', // Remotive es remote-first
+            url: j.url, 
+            description: j.description, 
+            date: j.publication_date, 
+            source: 'Remotive',
+            salary: j.salary || 'No especificado',
+            tags: j.tags || []
+        }));
+    } catch(e) { console.error('Remotive Error:', e.message); return []; }
+}
+
+async function fetchWeWorkRemotelyRSS(search) {
+    try {
+        const feed = await parser.parseURL(JOB_SOURCES.WEWORKREMOTELY_RSS);
+        
+        // Filtrar localmente por término de búsqueda ya que el RSS es de toda la categoría
+        const term = search.toLowerCase();
+        
+        return feed.items
+            .filter(item => item.title.toLowerCase().includes(term) || (item.content||'').toLowerCase().includes(term))
+            .map(item => ({
+                id: item.guid || item.link,
+                title: item.title, 
+                company: 'WeWorkRemotely', // A veces el título es "Company: Role", parsearlo es complejo sin split consistente
+                location: 'Remote', // WWR es solo remoto
+                url: item.link, 
+                description: item.content, 
+                date: item.pubDate, 
+                source: 'WeWorkRemotely',
+                tags: []
+            }));
+    } catch(e) { console.error('WWR RSS Error:', e.message); return []; }
+}
+
+async function fetchAdzunaJobs(search, countryCode) {
+    try {
+        const appId = process.env.ADZUNA_APP_ID;
+        const appKey = process.env.ADZUNA_APP_KEY;
+        const url = `${JOB_SOURCES.ADZUNA}/${countryCode}/search/1?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(search)}`;
+        
+        const res = await axios.get(url);
+        return (res.data.results||[]).map(j => ({
+            id: j.id,
+            title: j.title, 
+            company: j.company.display_name,
+            location: j.location.display_name,
+            url: j.redirect_url, 
+            description: j.description, 
+            date: j.created, 
+            source: 'Adzuna',
+            tags: []
+        }));
+    } catch(e) { console.error('Adzuna Error:', e.message); return []; }
 }
 
 /**
