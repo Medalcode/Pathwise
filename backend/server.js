@@ -11,13 +11,27 @@ const storageService = require('./services/storageService');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware
+
+// Middleware de logging global
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Servir archivos estáticos del dashboard
-app.use(express.static(path.join(__dirname, '../web-dashboard')));
+// Middleware de manejo global de errores
+app.use((err, req, res, next) => {
+  console.error('🌋 Error global:', err);
+  res.status(500).send('Error interno global');
+});
+
+// Servir archivos estáticos del dashboard (corregido para Docker)
+const staticPath = path.join(__dirname, 'web-dashboard');
+console.log('🗂️ Servir estáticos desde:', staticPath);
+app.use(express.static(staticPath));
 
 // Rutas de la API
 const profileRoutes = require('./routes/profile');
@@ -39,7 +53,14 @@ app.get('/api/health', (req, res) => {
 
 // Ruta principal - Servir el dashboard
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../web-dashboard/index.html'));
+  const indexPath = path.join(__dirname, 'web-dashboard/index.html');
+  console.log('➡️ Petición a /, intentando servir:', indexPath);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('❌ Error enviando index.html:', err);
+      res.status(500).send('Error interno al servir el dashboard');
+    }
+  });
 });
 
 // Manejo de errores

@@ -4,7 +4,7 @@ const path = require('path');
 // Variable para la conexión
 let db;
 
-const dbPath = path.join(__dirname, 'autoapply.db');
+const dbPath = process.env.DB_PATH || '/tmp/autoapply.db';
 
 // Inicializar base de datos
 function initDB() {

@@ -1015,18 +1015,18 @@ document.getElementById('generateProfiles')?.addEventListener('click', openProfi
 document.getElementById('closeProfilesModal')?.addEventListener('click', closeProfilesModal);
 document.querySelector('.modal-overlay')?.addEventListener('click', closeProfilesModal);
 
-// Setup retry button
-document.getElementById('retryGenerateProfiles')?.addEventListener('click', generateProfiles);
+// Setup retry button (modal version)
+document.getElementById('retryGenerateProfilesModal')?.addEventListener('click', generateProfiles);
+// Setup config button (modal version) inside error view
+document.getElementById('configureApiKeyModalBtn')?.addEventListener('click', openApiKeyModal);
+
 
 function openProfilesModal() {
   const modal = document.getElementById('profilesModal');
   modal.classList.remove('hidden');
   
   // Reset state
-  document.getElementById('profilesLoading').classList.remove('hidden');
-  document.getElementById('profilesError').classList.add('hidden');
-  document.getElementById('profilesGrid').classList.add('hidden');
-  document.getElementById('profilesFooter').classList.add('hidden');
+  setLoadingState(true);
   
   // Generate profiles
   generateProfiles();
@@ -1037,17 +1037,72 @@ function closeProfilesModal() {
   modal.classList.add('hidden');
 }
 
+function setLoadingState(isLoading, errorMessage = null) {
+    // Parent Container in Step 3
+    const wizardResultContainer = document.getElementById('wizardProfilesResult'); // Renamed from aiProfilesResult
+
+    // Main Page Elements (Wizard)
+    const wizardLoading = document.getElementById('wizardProfilesLoading'); // Renamed
+    const wizardGrid = document.getElementById('wizardProfilesGrid'); // Renamed
+    const oldMainLoading = document.getElementById('profilesLoadingMain'); // Modal fallback/legacy
+    
+    // Modal Elements
+    const modalLoading = document.getElementById('modalProfilesLoading');
+    const modalError = document.getElementById('modalProfilesError');
+    const modalGrid = document.getElementById('modalProfilesGrid');
+    const modalFooter = document.getElementById('profilesFooter');
+    const modalErrorMsg = document.getElementById('modalProfilesErrorMessage');
+    
+    // Legacy/Main Error
+    const mainError = document.getElementById('profilesError');
+
+    if (isLoading) {
+        // Show Loading, Hide Results
+        if(wizardResultContainer) wizardResultContainer.classList.add('hidden'); // Hide result container while loading
+        
+        if(wizardLoading) wizardLoading.classList.remove('hidden');
+        if(oldMainLoading) oldMainLoading.classList.remove('hidden');
+        if(modalLoading) modalLoading.classList.remove('hidden');
+        
+        if(mainError) mainError.classList.add('hidden');
+        if(modalError) modalError.classList.add('hidden');
+        
+        if(wizardGrid) wizardGrid.classList.add('hidden');
+        if(modalGrid) modalGrid.classList.add('hidden');
+        if(modalFooter) modalFooter.classList.add('hidden');
+    } else {
+        // Hide Loading
+        if(wizardLoading) wizardLoading.classList.add('hidden');
+        if(oldMainLoading) oldMainLoading.classList.add('hidden');
+        if(modalLoading) modalLoading.classList.add('hidden');
+        
+        if (errorMessage) {
+            // Error State
+            if(wizardResultContainer) wizardResultContainer.classList.add('hidden'); // Hide results on error
+            
+            if(mainError) mainError.classList.remove('hidden');
+            if(modalError) {
+                modalError.classList.remove('hidden');
+                if(modalErrorMsg) modalErrorMsg.textContent = errorMessage;
+            }
+        } else {
+            // Success State
+            if(wizardResultContainer) wizardResultContainer.classList.remove('hidden'); // Show container
+            
+            if(wizardGrid) wizardGrid.classList.remove('hidden'); // Show grid
+            if(modalGrid) modalGrid.classList.remove('hidden');
+            if(modalFooter) modalFooter.classList.remove('hidden');
+        }
+    }
+}
+
 async function generateProfiles() {
   try {
     // 1. UI State: Loading
     const intro = document.getElementById('aiIntroContainer');
     if(intro) intro.classList.add('hidden');
     
-    document.getElementById('profilesLoading').classList.remove('hidden');
-    // document.getElementById('profilesError').classList.add('hidden'); // Ya no usamos esto
-    
-    const resultDiv = document.getElementById('aiProfilesResult');
-    if(resultDiv) resultDiv.classList.add('hidden');
+    setLoadingState(true);
     
     console.log('🤖 Generando perfiles profesionales con Groq AI...');
     
@@ -1074,9 +1129,8 @@ async function generateProfiles() {
     console.log('✅ Perfiles generados:', generatedProfiles);
     
     // 2. UI State: Success
-    document.getElementById('profilesLoading').classList.add('hidden');
+    setLoadingState(false);
     
-    if(resultDiv) resultDiv.classList.remove('hidden');
     renderProfiles();
     
     const actions = document.getElementById('finalActions');
@@ -1087,25 +1141,31 @@ async function generateProfiles() {
   } catch (error) {
     console.error('❌ Error:', error);
     
-    // UI State: Error (Revertir)
-    document.getElementById('profilesLoading').classList.add('hidden');
-    const intro = document.getElementById('aiIntroContainer');
-    if(intro) intro.classList.remove('hidden');
+    // UI State: Error
+    setLoadingState(false, error.message);
+    
+    // Si la intro estaba visible, y hubo error, quizás la mostramos de nuevo en main page
+    // pero en modal mostramos el error state
+    // const intro = document.getElementById('aiIntroContainer');
+    // if(intro) intro.classList.remove('hidden');
     
     showToast('Error al generar perfiles: ' + error.message, 'error');
     
     // Si es error de API Key, abrir modal de config
     if (error.message.includes('API key') || error.message.includes('401')) {
-        openApiKeyModal(); 
+        // Delay to allow user to see error msg briefly or click button
+        // openApiKeyModal(); 
     }
   }
 }
 
 function renderProfiles() {
-  const grid = document.getElementById('profilesGrid');
-  if(!grid) return;
+  const grids = [
+    document.getElementById('wizardProfilesGrid'),
+    document.getElementById('modalProfilesGrid')
+  ];
   
-  grid.innerHTML = generatedProfiles.map((profile, index) => `
+  const content = generatedProfiles.map((profile, index) => `
     <div class="profile-card ${selectedProfileIndex === index ? 'selected' : ''}" data-index="${index}">
       <div class="profile-card-header">
         <span class="profile-number">Perfil ${index + 1}</span>
@@ -1149,6 +1209,10 @@ function renderProfiles() {
       </div>
     </div>
   `).join('');
+
+  grids.forEach(grid => {
+      if(grid) grid.innerHTML = content;
+  });
   
   // grid.classList.remove('hidden'); // Ya no necesario, controlado por contenedor padre
   

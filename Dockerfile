@@ -1,5 +1,5 @@
 # Dockerfile para Panoptes - Optimizado para Cloud Run
-FROM node:18-alpine
+FROM node:18-slim
 
 # Metadata
 LABEL maintainer="MedalCode"
@@ -17,12 +17,9 @@ RUN npm install --production
 # Copiar todo el código del backend
 COPY backend/ ./
 
-# Copiar dashboard web (server.js espera ../web-dashboard)
-WORKDIR /
-COPY web-dashboard/ ./web-dashboard/
 
-# Volver al directorio de la app
-WORKDIR /app
+# Copiar dashboard web al lugar correcto relativo al backend
+COPY web-dashboard/ /app/web-dashboard/
 
 # Variables de entorno
 ENV NODE_ENV=production
