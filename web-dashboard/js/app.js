@@ -888,6 +888,54 @@ async function saveExtractedData() {
     education: extractedData.education || []
   };
   
+  // Validar datos antes de guardar
+  if (typeof Validators !== 'undefined') {
+    const validation = Validators.validateProfile(profileData);
+    
+    if (!validation.valid) {
+      console.error('❌ Errores de validación:', validation.errors);
+      
+      // Mostrar errores de información personal
+      if (validation.errors.personalInfo && Object.keys(validation.errors.personalInfo).length > 0) {
+        const errors = validation.errors.personalInfo;
+        let errorMessages = [];
+        
+        for (const [field, error] of Object.entries(errors)) {
+          errorMessages.push(`• ${error}`);
+          
+          // Marcar campo como inválido
+          const fieldElement = document.getElementById(`extracted-${field}`);
+          if (fieldElement) {
+            fieldElement.classList.add('invalid');
+            fieldElement.classList.remove('valid');
+          }
+        }
+        
+        showToast(`Errores en información personal:\n${errorMessages.join('\n')}`, 'error');
+      }
+      
+      // Mostrar errores de experiencia
+      if (validation.errors.experience && validation.errors.experience.length > 0) {
+        const expErrors = validation.errors.experience.filter(e => e && Object.keys(e).length > 0);
+        if (expErrors.length > 0) {
+          showToast(`Hay ${expErrors.length} experiencia(s) con errores. Por favor revisa las fechas y campos requeridos.`, 'error');
+        }
+      }
+      
+      // Mostrar errores de educación
+      if (validation.errors.education && validation.errors.education.length > 0) {
+        const eduErrors = validation.errors.education.filter(e => e && Object.keys(e).length > 0);
+        if (eduErrors.length > 0) {
+          showToast(`Hay ${eduErrors.length} educación(es) con errores. Por favor revisa las fechas y campos requeridos.`, 'error');
+        }
+      }
+      
+      return; // No guardar si hay errores
+    }
+    
+    console.log('✅ Validación exitosa');
+  }
+  
   try {
     const response = await fetch(`${API_URL}/profile`, {
       method: 'POST',
@@ -916,7 +964,7 @@ async function saveExtractedData() {
       
       // Show navigation hint
       setTimeout(() => {
-        showToast('Navega a "Mi Perfil" para ver y editar más detalles', 'info');
+        showToast('Navega a \"Mi Perfil\" para ver y editar más detalles', 'info');
       }, 2000);
     } else {
       throw new Error('Error al guardar');
