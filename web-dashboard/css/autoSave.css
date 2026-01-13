@@ -1,0 +1,205 @@
+/* ============================================
+   AUTO-SAVE STYLES
+   ============================================ */
+
+/* Auto-save Indicator */
+.auto-save-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 13px;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.auto-save-indicator.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.indicator-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.indicator-text {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.indicator-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: var(--spacing-xs);
+}
+
+/* Estados del indicador */
+.auto-save-indicator.saved {
+  border-color: var(--success);
+}
+
+.auto-save-indicator.saved .indicator-icon {
+  color: var(--success);
+  animation: checkmark 0.5s ease;
+}
+
+@keyframes checkmark {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.auto-save-indicator.saving .indicator-icon {
+  color: var(--primary);
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  to { transform: rotate(360deg); }
+}
+
+.auto-save-indicator.unsaved {
+  border-color: var(--warning);
+}
+
+.auto-save-indicator.unsaved .indicator-icon {
+  color: var(--warning);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.auto-save-indicator.error {
+  border-color: var(--danger);
+}
+
+.auto-save-indicator.error .indicator-icon {
+  color: var(--danger);
+}
+
+/* Recovery Toast */
+.recovery-toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  max-width: 400px;
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.recovery-toast-content {
+  padding: var(--spacing-lg);
+}
+
+.recovery-toast-content h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.recovery-toast-content p {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.recovery-toast-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.recovery-toast-actions .btn {
+  flex: 1;
+  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* Draft Info Badge */
+.draft-info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.draft-info-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auto-save-indicator {
+    bottom: 10px;
+    right: 10px;
+    font-size: 12px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .indicator-time {
+    display: none;
+  }
+
+  .recovery-toast {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .recovery-toast-actions {
+    flex-direction: column;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .auto-save-indicator {
+    background: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .recovery-toast {
+    background: #1a1a1a;
+  }
+}
