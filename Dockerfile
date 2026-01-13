@@ -1,5 +1,5 @@
 # Dockerfile para Panoptes - Optimizado para Cloud Run
-FROM node:18-slim
+FROM node:20-slim
 
 # Metadata
 LABEL maintainer="MedalCode"
