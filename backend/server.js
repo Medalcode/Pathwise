@@ -37,10 +37,12 @@ app.use(express.static(staticPath));
 const profileRoutes = require('./routes/profile');
 const uploadRoutes = require('./routes/upload');
 const jobsRoutes = require('./routes/jobs');
+const profilesRoutes = require('./routes/profiles');
 
 app.use('/api/profile', profileRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/profiles', profilesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

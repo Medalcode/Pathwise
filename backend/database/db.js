@@ -9,13 +9,23 @@ const dbPath = process.env.DB_PATH || '/tmp/autoapply.db';
 // Inicializar base de datos
 function initDB() {
   return new Promise((resolve, reject) => {
-    db = new sqlite3.Database(dbPath, (err) => {
+    db = new sqlite3.Database(dbPath, async (err) => {
       if (err) {
         console.error('❌ Error conectando a la base de datos:', err);
         reject(err);
       } else {
         console.log('✅ Conexión a SQLite establecida');
         initializeTables();
+        
+        // Ejecutar migración de perfiles
+        try {
+          const { migrateToProfiles } = require('./profilesSystem');
+          await migrateToProfiles(db);
+          console.log('✅ Migración de perfiles completada');
+        } catch (migrationError) {
+          console.error('⚠️ Error en migración de perfiles:', migrationError);
+        }
+        
         resolve(db);
       }
     });
