@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:3000/api';
 const SAMPLE_PDF_PATH = path.join(__dirname, '../dummy.pdf');
 
 // Colores para consola

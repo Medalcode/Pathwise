@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // Configuración de base de datos y almacenamiento
@@ -28,8 +29,14 @@ app.use((err, req, res, next) => {
   res.status(500).send('Error interno global');
 });
 
-// Servir archivos estáticos del dashboard (corregido para Docker)
-const staticPath = path.join(__dirname, 'web-dashboard');
+// Servir archivos estáticos del dashboard (Lógica Adaptativa Local/Docker)
+// 1. Intenta estructura local (../web-dashboard)
+let staticPath = path.join(__dirname, '../web-dashboard');
+if (!fs.existsSync(staticPath)) {
+    // 2. Si falla, intenta estructura Docker/Prod (./web-dashboard)
+    staticPath = path.join(__dirname, 'web-dashboard');
+}
+
 console.log('🗂️ Servir estáticos desde:', staticPath);
 app.use(express.static(staticPath));
 

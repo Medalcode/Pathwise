@@ -47,13 +47,6 @@ if ! command -v gcloud &> /dev/null; then
     exit 1
 fi
 
-# Verificar que Docker esté instalado
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}❌ Error: Docker no está instalado${NC}"
-    echo -e "${YELLOW}Instala Docker desde: https://docs.docker.com/get-docker/${NC}"
-    exit 1
-fi
-
 # Configurar proyecto
 echo -e "${BLUE}🔧 Configurando proyecto...${NC}"
 gcloud config set project ${PROJECT_ID}
@@ -64,17 +57,9 @@ gcloud services enable run.googleapis.com
 gcloud services enable containerregistry.googleapis.com
 gcloud services enable cloudbuild.googleapis.com
 
-# Configurar autenticación de Docker
-echo -e "${BLUE}🔐 Configurando autenticación de Docker...${NC}"
-gcloud auth configure-docker
-
-# Build de la imagen
-echo -e "${BLUE}🏗️  Construyendo imagen Docker...${NC}"
-docker build -t ${IMAGE_NAME}:latest .
-
-# Push de la imagen
-echo -e "${BLUE}📤 Subiendo imagen a Container Registry...${NC}"
-docker push ${IMAGE_NAME}:latest
+# Build y Push de la imagen usando Cloud Build (No requiere Docker local)
+echo -e "${BLUE}🏗️  Construyendo y subiendo imagen con Cloud Build...${NC}"
+gcloud builds submit --tag ${IMAGE_NAME}:latest .
 
 # Desplegar en Cloud Run
 echo -e "${BLUE}🚀 Desplegando en Cloud Run...${NC}"

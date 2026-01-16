@@ -153,56 +153,57 @@
           
           <div id="extractedDataPlaceholder">
             <!-- FORMULARIO DE EDICIÓN (Incrustado directamente) -->
-            <form id="profileForm" class="profile-form">
+            <!-- FORMULARIO DE EDICIÓN - STEP 2 (VERIFICACIÓN) -->
+            <form id="verificationForm" class="profile-form">
                 <!-- 1. Información Personal -->
                 <div class="form-section">
                     <h3>👤 Información Personal</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Nombre</label>
-                            <input type="text" id="firstName" name="firstName" placeholder="Ej: Juan">
+                            <input type="text" id="verify-firstName" name="firstName" placeholder="Ej: Juan">
                         </div>
                         <div class="form-group">
                             <label>Apellidos</label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Ej: Pérez">
+                            <input type="text" id="verify-lastName" name="lastName" placeholder="Ej: Pérez">
                         </div>
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="email" id="email" name="email" placeholder="juan@ejemplo.com">
+                            <input type="email" id="verify-email" name="email" placeholder="juan@ejemplo.com">
                         </div>
                         <div class="form-group">
                             <label>Teléfono</label>
-                            <input type="tel" id="phone" name="phone" placeholder="+56 9 1234 5678">
+                            <input type="tel" id="verify-phone" name="phone" placeholder="+56 9 1234 5678">
                         </div>
                         <div class="form-group">
                             <label>Cargo Actual / Título</label>
-                            <input type="text" id="currentTitle" name="currentTitle" class="full-width" placeholder="Ej: Full Stack Developer">
+                            <input type="text" id="verify-currentTitle" name="currentTitle" class="full-width" placeholder="Ej: Full Stack Developer">
                         </div>
                         <div class="form-group">
                             <label>Ciudad</label>
-                            <input type="text" id="city" name="city">
+                            <input type="text" id="verify-city" name="city">
                         </div>
                         <div class="form-group">
                             <label>País</label>
-                            <input type="text" id="country" name="country">
+                            <input type="text" id="verify-country" name="country">
                         </div>
                         <div class="form-group">
                             <label>LinkedIn (URL)</label>
-                            <input type="url" id="linkedin" name="linkedin" class="full-width" placeholder="https://linkedin.com/in/usuario">
+                            <input type="url" id="verify-linkedin" name="linkedin" class="full-width" placeholder="https://linkedin.com/in/usuario">
                         </div>
                         <div class="form-group">
                             <label>Portafolio / GitHub (URL)</label>
-                            <input type="url" id="portfolio" name="portfolio" class="full-width">
+                            <input type="url" id="verify-portfolio" name="portfolio" class="full-width">
                         </div>
                         <div class="form-group full-width">
                             <label>Resumen Profesional (Bio)</label>
-                            <textarea id="summary" name="summary" rows="3" placeholder="Breve descripción de tu perfil..."></textarea>
+                            <textarea id="verify-summary" name="summary" rows="3" placeholder="Breve descripción de tu perfil..."></textarea>
                         </div>
 
                         <!-- Preferencia de Trabajo Remoto -->
                         <div class="form-group full-width mt-2" style="border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: 10px;">
                             <label style="display:flex; align-items:center; cursor:pointer;" title="Activa para filtrar ofertas presenciales">
-                                <input type="checkbox" id="remoteOnlyPref" style="width:20px; height:20px; margin-right:10px; accent-color: var(--primary-color);">
+                                <input type="checkbox" id="verify-remoteOnlyPref" style="width:20px; height:20px; margin-right:10px; accent-color: var(--primary-color);">
                                 <div>
                                     <span style="font-weight:600; color: #2d3748;">🌍 Preferencia: Solo Trabajo Remoto</span>
                                     <p style="font-size:0.85rem; color:#718096; margin:0; font-weight:normal;">Ignorar ofertas presenciales (incluso en mi país)</p>
@@ -216,14 +217,14 @@
                 <div class="form-section">
                     <h3>🛠️ Habilidades Técnicas</h3>
                     <div class="skills-input-container">
-                        <input type="text" id="skillInput" placeholder="Escribe una habilidad y presiona Enter (ej: React, Python)">
-                        <button type="button" id="addSkillBtn" class="btn btn-sm btn-secondary">Agregar</button>
+                        <input type="text" id="verify-skillInput" placeholder="Escribe una habilidad y presiona Enter (ej: React, Python)">
+                        <button type="button" id="verify-addSkillBtn" class="btn btn-sm btn-secondary">Agregar</button>
                     </div>
-                    <div id="skillsTagsContainer" class="skills-tags-container">
+                    <div id="verify-skillsTagsContainer" class="skills-tags-container">
                         <!-- Las skills se generarán aquí -->
                     </div>
                     <!-- Input oculto para guardar array -->
-                    <input type="hidden" id="skillsHidden" name="skills">
+                    <input type="hidden" id="verify-skillsHidden" name="skills">
                 </div>
 
                 <!-- 3. Experiencia Laboral -->
@@ -246,6 +247,33 @@
                     <div id="educationContainer" class="dynamic-list">
                         <!-- Items de educación -->
                     </div>
+                </div>
+
+                <!-- 5. Certificaciones -->
+                <div class="form-section">
+                    <div class="section-header-row">
+                        <h3>📜 Certificaciones</h3>
+                         <button type="button" class="btn btn-sm btn-secondary" onclick="addNewCertification()">+ Agregar</button>
+                    </div>
+                    <div id="certificationsContainer" class="dynamic-list"></div>
+                </div>
+
+                <!-- 6. Idiomas -->
+                <div class="form-section">
+                     <div class="section-header-row">
+                        <h3>🗣️ Idiomas</h3>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addNewLanguage()">+ Agregar</button>
+                    </div>
+                    <div id="languagesContainer" class="dynamic-list"></div>
+                </div>
+
+                 <!-- 7. Proyectos -->
+                 <div class="form-section">
+                     <div class="section-header-row">
+                        <h3>🚀 Proyectos</h3>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addNewProject()">+ Agregar</button>
+                    </div>
+                    <div id="projectsContainer" class="dynamic-list"></div>
                 </div>
             </form>
           </div>
@@ -444,6 +472,48 @@
                   </button>
                 </div>
                 <div id="extractedEducationList" class="extracted-education-list"></div>
+              </div>
+
+              <!-- Certifications (NEW) -->
+              <div class="data-section">
+                 <div class="section-title-with-button">
+                  <h4>📜 Certificaciones</h4>
+                  <button type="button" class="btn-add-item" onclick="addNewCertification()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Agregar Certificación
+                  </button>
+                </div>
+                <div id="extractedCertificationsList" class="dynamic-list"></div>
+              </div>
+
+              <!-- Languages (NEW) -->
+              <div class="data-section">
+                <div class="section-title-with-button">
+                  <h4>🗣️ Idiomas</h4>
+                  <button type="button" class="btn-add-item" onclick="addNewLanguage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Agregar Idioma
+                  </button>
+                </div>
+                <div id="extractedLanguagesList" class="dynamic-list"></div>
+              </div>
+
+              <!-- Projects (NEW) -->
+              <div class="data-section">
+                <div class="section-title-with-button">
+                  <h4>🚀 Proyectos Destacados</h4>
+                  <button type="button" class="btn-add-item" onclick="addNewProject()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Agregar Proyecto
+                  </button>
+                </div>
+                <div id="extractedProjectsList" class="dynamic-list"></div>
               </div>
 
               <!-- Skills -->

@@ -1,344 +1,99 @@
-# Panoptes (AutoApply) - Sistema de Aplicación Automática a Empleos con IA
+# Panoptes (AutoApply) - Sistema Inteligente de Búsqueda y Aplicación a Empleos con IA
 
-🚀 **Panoptes** es un sistema completo de aplicación automática a empleos que combina una extensión de Chrome, un dashboard web y generación de perfiles profesionales con IA.
+🚀 **Panoptes** es un ecosistema avanzado para automatizar la búsqueda de empleo. Combina una extensión de Chrome, un dashboard de gestión y un motor de IA que optimiza tu perfil para pasar los filtros ATS y encontrar las mejores oportunidades.
 
-**🌐 Aplicación en Producción:** [https://panoptes-72529155548.us-central1.run.app](https://panoptes-72529155548.us-central1.run.app)
+**🌐 Estado Actual:** Versión 4.7 (Enero 2026)
 
-## 🌟 Características Principales
+## 🌟 Novedades de la Versión 4.6 (Enero 2026)
 
-### 📝 Sistema de Extracción de CV Completo
+### 🧠 Motor de Perfiles IA Mejorado (Groq + Llama 3)
 
-- **Parsing Avanzado de PDF**: Extracción inteligente de datos desde tu CV
-  - 👤 Información personal (nombre, email, teléfono, ubicación, LinkedIn, GitHub)
-  - 💼 **Experiencia profesional completa** (título, empresa, fechas, descripción)
-  - 🎓 **Educación** (títulos, instituciones, años)
-  - 🎯 **Habilidades técnicas** (60+ tecnologías detectadas automáticamente)
+- **Prompt Engineering Contextual**: Ahora la IA analiza no solo tu experiencia, sino también tus **Certificaciones, Idiomas y Proyectos** para generar perfiles de alto impacto.
+- **Estrategias Multi-Perfil**: Genera hasta 3 variantes de perfil (ej: "Full Stack", "Backend Specialist", "Tech Lead") para atacar diferentes nichos de mercado.
 
-### ✏️ Vista Previa Editable Completa
+### 🔌 Arquitectura de Búsqueda Modular (Plugins)
 
-- **Edición total** de todos los campos extraídos antes de guardar
-- **Agregar campos adicionales** con botones ➕ para experiencia y educación
-- **Eliminar items** con botones × rojos
-- **Visual feedback** con indicadores de campos detectados (✓) y editados (✎)
-- **Contador en tiempo real** de campos detectados y editados
-- **Word-wrap inteligente** para textos largos sin desbordamiento
+- **Plugin System**: Nuevo sistema de scrapers modulares. Agregar una nueva fuente de empleo (ej: LinkedIn, Indeed) es tan fácil como añadir un archivo `.js`.
+- **Fuentes Actuales**: ChileTrabajos, CompuTrabajo (Optimizados con anti-bot delay).
+- **Matching Híbrido**: Algoritmo que combina palabras clave (20%), skills (40%) y coincidencia de título (40%) para rankear ofertas. Deduplicación inteligente de ofertas repetidas.
 
-### 🎨 Interfaz Moderna
+### � Gestión de Datos Profesional
 
-- **Dashboard Web Premium**: Diseño moderno con gradientes azul/violeta
-- **Responsive**: Funciona en todos los tamaños de pantalla
-- **Drag & drop**: Sube tu CV arrastrando el archivo
-- **Toast notifications**: Feedback visual claro de todas las acciones
-- **Campos editables inline**: Edita directamente en la vista previa
+- **Nuevas Secciones Soportadas**:
+  - 📜 **Certificaciones**: Valida tu expertise con credenciales.
+  - �️ **Idiomas**: Nivel de dominio (Básico a Nativo).
+  - � **Proyectos**: Portafolio destacado con URLs.
+- **Validación Robusta**: Reglas de negocio para fechas, URLs y consistencia de datos.
 
-### 🔄 Autocompletado Inteligente
+---
 
-- **Detección automática** de formularios de trabajo
-- **Matching inteligente** de campos (por id, name, placeholder, aria-label)
-- **Colores de feedback**: Verde para campos completados
-- **Popup moderno**: Control fácil desde la extensión
+## 🚀 Características Core
 
-### 🤖 Generación de Perfiles Profesionales con IA
+### 1. Extracción de Datos (CV Parser)
 
-- **Groq AI Integration**: Utiliza el modelo llama-3.3-70b-versatile
-- **3 perfiles automáticos**: Genera perfiles complementarios basados en tu CV
-- **Optimización para búsqueda**: Palabras clave y roles objetivo
-- **Análisis inteligente**: Identifica diferentes trayectorias profesionales
-- **Personalización**: Cada perfil maximiza diferentes aspectos de tu experiencia
+- **PDF a JSON**: Convierte tu CV en datos estructurados.
+- **Detección de Skills**: Identifica +60 tecnologías automáticamente.
+- **Edición en Vivo**: Interfaz visual para corregir o enriquecer los datos extraídos antes de procesarlos.
 
-### 💾 Almacenamiento Seguro
+### 2. Dashboard de Control
 
-- **Backend con API REST** y base de datos SQLite
-- **Sincronización automática** entre dashboard y extensión
-- **Múltiples perfiles**: Diferentes versiones para diferentes trabajos
+- **Stepper Guiado**: Flujo paso a paso (Subir CV -> Verificar -> IA -> Búsqueda).
+- **Gestión de Perfiles**: Crea, edita y guarda múltiples versiones de tu "yo profesional".
+- **Búsqueda en Tiempo Real**: Lanza búsquedas federadas en múltiples portales con un solo click.
 
-## 📊 Capacidades de Extracción de CV
+### 3. Extensión de Chrome (AutoApply)
 
-### Antes vs Ahora
+- **Autocompletado**: Rellena formularios de postulación (Workday, Greenhouse, etc.) con sus datos guardados.
+- **Sincronización Bidireccional**: Lo que editas en el dashboard se refleja en la extensión.
 
-| Aspecto              | Versión Básica | **Versión Actual**         |
-| -------------------- | -------------- | -------------------------- |
-| Campos extraídos     | ~10            | **30-50+**                 |
-| Información personal | 4 campos       | **9 campos completos**     |
-| Experiencia          | ❌ No extraía  | ✅ **Múltiples trabajos**  |
-| Educación            | ❌ No extraía  | ✅ **Múltiples títulos**   |
-| Habilidades          | 19 tecnologías | **60+ tecnologías**        |
-| Editable             | ❌ No          | ✅ **Totalmente editable** |
-
-### Datos Extraídos por Sección
-
-#### 👤 Información Personal
-
-- Nombre y apellido
-- Email, teléfono
-- Ciudad, país
-- LinkedIn, GitHub, Portfolio
-- Título profesional actual
-
-#### 💼 Experiencia Profesional
-
-Para cada trabajo:
-
-- Título del puesto
-- Nombre de la empresa
-- Fecha de inicio y fin
-- Indicador de "trabajo actual"
-- Descripción de responsabilidades
-
-#### 🎓 Educación
-
-Para cada título:
-
-- Grado/título obtenido
-- Institución educativa
-- Año de inicio y fin
-- Indicador de "en curso"
-
-#### 🎯 Habilidades
-
-60+ tecnologías detectadas automáticamente:
-
-- **Lenguajes**: JavaScript, TypeScript, Python, Java, C#, C++, PHP, Ruby, Go, Rust, Swift, Kotlin
-- **Frontend**: React, Vue, Angular, Svelte, HTML, CSS, SASS, Tailwind, Bootstrap
-- **Backend**: Node.js, Express, Django, Flask, Spring, Laravel
-- **Bases de Datos**: SQL, PostgreSQL, MySQL, MongoDB, Redis, Cassandra, DynamoDB
-- **DevOps**: Git, GitHub, Docker, Kubernetes, Jenkins, CI/CD
-- **Cloud**: AWS, Azure, GCP, Heroku, Vercel, Netlify
-- **Otros**: REST, GraphQL, Agile, Scrum, Machine Learning, TensorFlow
+---
 
 ## 📁 Estructura del Proyecto
 
 ```
-AutoApply/
-├── extension/              # Extensión de Chrome (Manifest V3)
-│   ├── manifest.json
-│   ├── popup/             # Interfaz popup moderna
-│   ├── content/           # Scripts de autocompletado inteligente
-│   ├── background/        # Service worker con sincronización
-│   └── icons/             # Iconos responsive
-├── web-dashboard/         # Panel web premium
-│   ├── index.html         # Dashboard con múltiples secciones
-│   ├── css/
-│   │   └── style.css      # Diseño moderno con gradientes
-│   └── js/
-│       └── app.js         # Lógica completa de edición
-├── backend/               # API REST + Base de datos
-│   ├── server.js          # Express server
-│   ├── routes/
-│   │   ├── profile.js     # CRUD de perfiles
-│   │   └── upload.js      # Parsing avanzado de CV
-│   └── database/
-│       └── db.js          # SQLite con schema completo
-├── CV_PARSING_IMPROVEMENTS.md    # Documentación técnica del parser
-├── COMPLETE_EDITING_SYSTEM.md    # Guía completa del sistema de edición
-├── FEATURE_EXTRACTED_DATA_PREVIEW.md  # Docs de vista previa
-└── README.md
+Panoptes/
+├── backend/               # Servidor Node.js (Express)
+│   ├── services/          # Lógica de negocio (GroqService, JobService)
+│   ├── scrapers/          # Plugins de búsqueda de empleo (Modular)
+│   └── database/          # SQLite + GCS Sync
+├── web-dashboard/         # Interfaz de Usuario (HTML/JS Vanilla Moderno)
+├── extension/             # Extensión Chrome Manifest V3
+└── docs/                  # Documentación técnica detallada
 ```
 
-## 🚀 Instalación y Configuración
+## 🛠️ Instalación y Despliegue
 
-### Requisitos Previos
+### Requisitos
 
-- Node.js 14+ y npm
-- Google Chrome
-- PDF con tu CV actualizado
+- Node.js 18+
+- API Key de Groq (para funcionalidades de IA)
+- Cuenta de Google Cloud (opcional, para persistencia remota)
 
-### 1. Instalar Backend
+### Local Development
 
 ```bash
+# 1. Backend
 cd backend
 npm install
-cp .env.example .env
-# Edita .env y agrega tu GROQ_API_KEY
-npm start
+npm run dev
+# Server running on http://localhost:3000
+
+# 2. Frontend
+# Abrir http://localhost:3000 en tu navegador (El backend sirve el frontend)
 ```
 
-**Configurar Groq API (opcional pero recomendado):**
+### Despliegue en Cloud Run
 
-1. Obtén tu API key en [console.groq.com](https://console.groq.com)
-2. Edita `backend/.env` y agrega: `GROQ_API_KEY=tu_api_key_aqui`
-3. Esto habilita la generación de perfiles profesionales con IA
-
-El servidor se iniciará en `http://localhost:3000`
-
-### 2. Abrir Dashboard Web
+El proyecto incluye scripts automatizados para desplegar en Google Cloud Run con persistencia "Zero-Cost" usando SQLite + GCS.
 
 ```bash
-# Opción 1: Abrir directamente
-open web-dashboard/index.html
-
-# Opción 2: Con servidor local (recomendado)
-cd web-dashboard
-python -m http.server 8000
-# Abrir http://localhost:8000
-```
-
-### 3. Instalar Extensión de Chrome
-
-1. Abre Chrome y ve a `chrome://extensions/`
-2. Activa **"Modo de desarrollador"** (esquina superior derecha)
-3. Click en **"Cargar extensión sin empaquetar"**
-4. Selecciona la carpeta `extension/`
-5. ¡Listo! Verás el ícono de AutoApply en la barra
-
-### 4. 🌐 Despliegue en Google Cloud Run
-
-El proyecto incluye configuración completa para despliegue en la nube.
-
-**Despliegue rápido:**
-
-```bash
-# Requiere Google Cloud SDK y proyecto configurado
 ./deploy-cloud-run.sh [PROJECT_ID] [REGION]
 ```
 
-**Configuración requerida:**
-
-1. API Key de Groq configurada en variables de entorno
-2. URL de producción actualizada en `extension/config.js`
-
-Para más detalles, ver [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
-
-## 🎯 Guía de Uso
-
-### Primera Configuración
-
-1. **Abre el Dashboard** (http://localhost:3000)
-2. **Ve a "Subir CV"**
-3. **Arrastra tu PDF** o haz click para seleccionarlo
-4. **Revisa la vista previa editable**:
-   - ✓ Campos detectados automáticamente (borde verde)
-   - ✏️ Edita cualquier campo que necesite corrección
-   - ➕ Agrega experiencias o educación adicional
-   - × Elimina items incorrectos
-5. **Click en "Guardar y Continuar"**
-
-### Usar la Extensión
-
-1. **Abre cualquier formulario** de aplicación a trabajo
-2. **Click en el ícono** de AutoApply
-3. **Verifica tu información** en el popup
-4. **Click en "Autocompletar Formulario"**
-5. **¡Listo!** Todos los campos se llenan automáticamente
-
-### Editar tu Perfil
-
-1. Ve a **"Mi Perfil"** en el dashboard
-2. Edita cualquier información
-3. Agrega o elimina skills
-4. **Guarda los cambios**
-5. La extensión se sincroniza automáticamente
-
-## 🛠️ Stack Tecnológico
-
-### Frontend
-
-- **HTML5 Semantic**: Estructura accesible
-- **CSS3 Modern**: Gradients, animations, flexbox, grid
-- **Vanilla JavaScript ES6+**: Sin frameworks, máximo rendimiento
-- **Chrome Extension API**: Manifest V3, Storage, Scripting
-
-### Backend
-
-- **Node.js 14+**: Runtime moderno
-- **Express 4.x**: Framework minimalista
-- **SQLite3**: Base de datos embebida
-- **Multer**: Upload de archivos
-- **pdf-parse**: Extracción de texto de PDFs
-
-### DevOps
-
-- **Git**: Control de versiones
-- **npm**: Gestión de dependencias
-- **Nodemon**: Auto-reload en desarrollo
-
-## 📝 Documentación Adicional
-
-- **[INSTALL.md](./INSTALL.md)**: Guía detallada de instalación
-- **[DEMO.md](./DEMO.md)**: Demo completa del sistema
-- **[CV_PARSING_IMPROVEMENTS.md](./CV_PARSING_IMPROVEMENTS.md)**: Detalles técnicos del parser
-- **[COMPLETE_EDITING_SYSTEM.md](./COMPLETE_EDITING_SYSTEM.md)**: Sistema de edición completo
-- **[FEATURE_EXTRACTED_DATA_PREVIEW.md](./FEATURE_EXTRACTED_DATA_PREVIEW.md)**: Vista previa editable
-- **[GROQ_PROFILE_GENERATION.md](./GROQ_PROFILE_GENERATION.md)**: Generación de perfiles con IA
-
-## 🎨 Características de UX
-
-### Visual Feedback Completo
-
-- **Verde (✓)**: Campo detectado automáticamente del CV
-- **Naranja (✎)**: Campo editado manualmente por el usuario
-- **Azul**: Campo en focus (editando actualmente)
-- **Toast Notifications**: Confirmación de todas las acciones
-
-### Interacciones Modernas
-
-- **Hover effects**: En botones y cards
-- **Smooth transitions**: Animaciones suaves
-- **Responsive design**: Desde móvil hasta desktop
-- **Keyboard shortcuts**: Navegación rápida
-
-### Accesibilidad
-
-- **Semantic HTML**: Screen readers friendly
-- **ARIA labels**: Descripciones claras
-- **Color contrast**: WCAG AA compliant
-- **Keyboard navigation**: Tab, Enter, Escape
-
-## 🔒 Seguridad
-
-- ✅ Solo permisos necesarios en la extensión
-- ✅ Datos almacenados localmente (SQLite)
-- ✅ Sin envío de datos a terceros
-- ✅ HTTPS recomendado para producción
-- ✅ Validación de inputs en backend
-- ✅ Sanitización de datos del PDF
-
-## 💾 Persistencia de Datos "Zero Cost"
-
-Panoptes implementa una arquitectura de persistencia innovadora y 100% gratuita para Cloud Run:
-
-- **SQLite Local**: Base de datos de alta velocidad en el contenedor.
-- **Google Cloud Storage (GCS) Sync**:
-  - Al iniciar: Descarga automática de `autoapply.db` desde tu bucket privado.
-  - Backup automático: Sincronización cada 10 minutos hacia GCS.
-  - Graceful Shutdown: Respaldo final garantizado al detener/actualizar el servicio.
-- **Ventaja**: Datos persistentes sin pagar por bases de datos gestionadas (Cloud SQL).
-
-## 🚀 Roadmap Futuro
-
-- [ ] Soporte para más formatos de CV (DOCX, TXT)
-- [ ] Templates de CV personalizables
-- [ ] Exportar CV editado como PDF
-- [ ] Múltiples idiomas (i18n)
-- [ ] Analytics de aplicaciones
-- [ ] Integración con LinkedIn
-- [ ] Cover letter generator
-- [ ] Interview preparation tips
-
 ## 🤝 Contribuir
 
-¡Las contribuciones son bienvenidas! Por favor:
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m '✨ Add AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📊 Estado del Proyecto
-
-**Versión**: 2.0.0  
-**Estado**: ✅ Producción Ready  
-**Última actualización**: Enero 2026  
-**Commits totales**: 10+  
-**Líneas de código**: 1500+
+¡Las contribuciones son bienvenidas! Revisa los issues abiertos para empezar.
 
 ## 📄 Licencia
 
 MIT © 2026 MedalCode
-
----
-
-**Desarrollado con ❤️ por MedalCode**
-
-¿Necesitas ayuda? Abre un issue en GitHub o consulta la documentación completa.

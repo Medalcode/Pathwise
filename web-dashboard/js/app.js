@@ -281,37 +281,80 @@ function countExtractedFields(data) {
 
 // Profile Form
 function setupProfileForm() {
-  const form = document.getElementById('profileForm');
+  const modalForm = document.getElementById('profileForm');
+  const verifyForm = document.getElementById('verificationForm');
   const skillInput = document.getElementById('skillInput');
+  const verifySkillInput = document.getElementById('verify-skillInput');
   const resetBtn = document.getElementById('resetForm');
   
-  // Skill management
-  skillInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const skill = skillInput.value.trim();
-      if (skill) {
-        addSkill(skill);
-        skillInput.value = '';
+  // 1. Skill Management - Modal
+  if (skillInput) {
+    skillInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const skill = skillInput.value.trim();
+        if (skill) {
+          addSkill(skill);
+          skillInput.value = '';
+        }
       }
+    });
+  }
+
+  // 2. Skill Management - Verify Form (Step 2)
+  if (verifySkillInput) {
+    verifySkillInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+         e.preventDefault();
+         const skill = verifySkillInput.value.trim();
+         if (skill) {
+           addSkill(skill);
+           verifySkillInput.value = '';
+         }
+      }
+    });
+    
+    // Add Button
+    const verifyAddBtn = document.getElementById('verify-addSkillBtn');
+    if(verifyAddBtn) {
+        verifyAddBtn.addEventListener('click', () => {
+             const skill = verifySkillInput.value.trim();
+             if (skill) {
+               addSkill(skill);
+               verifySkillInput.value = '';
+             }
+        });
     }
-  });
+  }
   
-  // Form submit
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await saveProfile();
-  });
+  // 3. Form Submit - Modal
+  if (modalForm) {
+    modalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveProfile('profileForm');
+    });
+  }
+
+  // 4. Form Submit - Verify Form (Step 2)
+  if (verifyForm) {
+    verifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveProfile('verificationForm');
+    });
+  }
   
   // Reset
-  resetBtn.addEventListener('click', () => {
-    if (confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
-      form.reset();
-      skills = [];
-      renderSkills();
-      showToast('Formulario limpiado', 'warning');
-    }
-  });
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
+        if(modalForm) modalForm.reset();
+        if(verifyForm) verifyForm.reset();
+        skills = [];
+        renderSkills();
+        showToast('Formulario limpiado', 'warning');
+      }
+    });
+  }
 }
 
 function addSkill(skillName) {
@@ -327,13 +370,20 @@ function removeSkill(skillName) {
 }
 
 function renderSkills() {
-  const skillsList = document.getElementById('skillsList');
-  skillsList.innerHTML = skills.map(skill => `
+  const html = skills.map(skill => `
     <div class="skill-tag">
       <span>${skill}</span>
       <button type="button" onclick="removeSkill('${skill}')">&times;</button>
     </div>
   `).join('');
+
+  // Update Modal
+  const modalList = document.getElementById('skillsList');
+  if(modalList) modalList.innerHTML = html;
+  
+  // Update Verify Form
+  const verifyList = document.getElementById('verify-skillsTagsContainer');
+  if(verifyList) verifyList.innerHTML = html;
 }
 
 // Load Profile
@@ -359,20 +409,35 @@ function populateForm(profile) {
 
   const { personalInfo, experience, education } = profile;
   
+  const setField = (baseId, val) => {
+      const v = val || '';
+      const el1 = document.getElementById(baseId);
+      if(el1) el1.value = v;
+      const el2 = document.getElementById('verify-' + baseId);
+      if(el2) el2.value = v;
+  };
+  
   // Personal info
   if (personalInfo) {
-      document.getElementById('firstName').value = personalInfo.firstName || '';
-      document.getElementById('lastName').value = personalInfo.lastName || '';
-      document.getElementById('email').value = personalInfo.email || '';
-      document.getElementById('phone').value = personalInfo.phone || '';
-      document.getElementById('currentTitle').value = personalInfo.currentTitle || '';
-      document.getElementById('city').value = personalInfo.city || '';
-      document.getElementById('country').value = personalInfo.country || '';
-      const addressEl = document.getElementById('address');
-      if(addressEl) addressEl.value = personalInfo.address || '';
-      document.getElementById('linkedin').value = personalInfo.linkedin || '';
-      document.getElementById('portfolio').value = personalInfo.portfolio || '';
-      document.getElementById('summary').value = personalInfo.summary || '';
+      setField('firstName', personalInfo.firstName);
+      setField('lastName', personalInfo.lastName);
+      setField('email', personalInfo.email);
+      setField('phone', personalInfo.phone);
+      setField('currentTitle', personalInfo.currentTitle);
+      setField('city', personalInfo.city);
+      setField('country', personalInfo.country);
+      setField('address', personalInfo.address);
+      setField('linkedin', personalInfo.linkedin);
+      setField('portfolio', personalInfo.portfolio);
+      setField('summary', personalInfo.summary);
+      
+       // Remote preference
+      if (personalInfo.remoteOnly) {
+         const r1 = document.getElementById('remoteOnlyPref');
+         if(r1) r1.checked = true;
+         const r2 = document.getElementById('verify-remoteOnlyPref');
+         if(r2) r2.checked = true;
+      }
   }
   
   // Skills
@@ -557,8 +622,8 @@ function calculateCompleteness(profile) {
 }
 
 // Save Profile
-async function saveProfile() {
-  const form = document.getElementById('profileForm');
+async function saveProfile(formId = 'profileForm') {
+  const form = document.getElementById(formId);
   const formData = new FormData(form);
   
   const profileData = {
@@ -1692,3 +1757,198 @@ async function handleFileUploadWizard(file) {
 
 // prepareStep2 Eiminada porque el formulario ya es estático en el HTML
 
+
+// ==========================================
+// NEW FEATURES: CERTIFICATIONS, LANGUAGES, PROJECTS & VALIDATION
+// ==========================================
+
+// 1. Validaciones
+// Validators loaded from js/validators.js
+
+// 2. Nuevas Secciones de Renderizado
+
+// Certificaciones
+function renderExtractedCertifications() {
+    const list = document.getElementById('extractedCertificationsList');
+    if(!list) return; // Si no existe el elemento en HTML aun, salir
+
+    if (!extractedData.certifications || extractedData.certifications.length === 0) {
+        list.innerHTML = '<div class="empty-list">No se detectaron certificaciones</div>';
+        return;
+    }
+
+    list.innerHTML = extractedData.certifications.map((cert, index) => `
+        <div class="certification-item-editable">
+            <div class="item-header">
+                <strong>Certificación ${index + 1}</strong>
+                <button type="button" class="btn-remove-item" onclick="removeCertification(${index})" title="Eliminar">×</button>
+            </div>
+            <div class="editable-fields-grid">
+                <div class="field-group">
+                    <label>Nombre</label>
+                    <input type="text" class="editable-item-field" data-type="certification" data-index="${index}" data-field="name" value="${cert.name || ''}" placeholder="Ej: AWS Certified">
+                </div>
+                <div class="field-group">
+                    <label>Emisor</label>
+                    <input type="text" class="editable-item-field" data-type="certification" data-index="${index}" data-field="issuer" value="${cert.issuer || ''}" placeholder="Ej: Amazon">
+                </div>
+                <div class="field-group">
+                    <label>Año</label>
+                    <input type="text" class="editable-item-field" data-type="certification" data-index="${index}" data-field="date" value="${cert.date || ''}" placeholder="2023">
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    attachItemFieldListeners();
+}
+
+function addNewCertification() {
+    if (!extractedData.certifications) extractedData.certifications = [];
+    extractedData.certifications.push({ name: '', issuer: '', date: '' });
+    renderExtractedCertifications();
+    showToast('Nueva certificación agregada', 'success');
+}
+
+function removeCertification(index) {
+    extractedData.certifications.splice(index, 1);
+    renderExtractedCertifications();
+    showToast('Certificación eliminada', 'success');
+    updateEditedCount();
+}
+
+// Idiomas
+function renderExtractedLanguages() {
+    const list = document.getElementById('extractedLanguagesList');
+    if(!list) return;
+
+    if (!extractedData.languages || extractedData.languages.length === 0) {
+        list.innerHTML = '<div class="empty-list">No se detectaron idiomas</div>';
+        return;
+    }
+
+    list.innerHTML = extractedData.languages.map((lang, index) => `
+        <div class="language-item-editable">
+             <div class="item-header">
+                <strong>Idioma ${index + 1}</strong>
+                <button type="button" class="btn-remove-item" onclick="removeLanguage(${index})" title="Eliminar">×</button>
+            </div>
+            <div class="editable-fields-grid">
+                <div class="field-group">
+                    <label>Idioma</label>
+                    <input type="text" class="editable-item-field" data-type="language" data-index="${index}" data-field="language" value="${lang.language || ''}" placeholder="Ej: Inglés">
+                </div>
+                <div class="field-group">
+                    <label>Nivel</label>
+                    <select class="editable-item-field" data-type="language" data-index="${index}" data-field="level">
+                        <option value="Básico" ${lang.level === 'Básico' ? 'selected' : ''}>Básico</option>
+                        <option value="Intermedio" ${lang.level === 'Intermedio' ? 'selected' : ''}>Intermedio</option>
+                        <option value="Avanzado" ${lang.level === 'Avanzado' ? 'selected' : ''}>Avanzado</option>
+                        <option value="Nativo" ${lang.level === 'Nativo' ? 'selected' : ''}>Nativo</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    attachItemFieldListeners();
+}
+
+function addNewLanguage() {
+    if (!extractedData.languages) extractedData.languages = [];
+    extractedData.languages.push({ language: '', level: 'Intermedio' });
+    renderExtractedLanguages();
+    showToast('Nuevo idioma agregado', 'success');
+}
+
+function removeLanguage(index) {
+    extractedData.languages.splice(index, 1);
+    renderExtractedLanguages();
+    showToast('Idioma eliminado', 'success');
+    updateEditedCount();
+}
+
+
+// Proyectos
+function renderExtractedProjects() {
+    const list = document.getElementById('extractedProjectsList');
+    if(!list) return;
+
+    if (!extractedData.projects || extractedData.projects.length === 0) {
+        list.innerHTML = '<div class="empty-list">No se detectaron proyectos</div>';
+        return;
+    }
+
+    list.innerHTML = extractedData.projects.map((proj, index) => `
+        <div class="project-item-editable">
+            <div class="item-header">
+                <strong>Proyecto ${index + 1}</strong>
+                <button type="button" class="btn-remove-item" onclick="removeProject(${index})" title="Eliminar">×</button>
+            </div>
+            <div class="editable-fields-grid">
+                <div class="field-group">
+                    <label>Nombre del Proyecto</label>
+                    <input type="text" class="editable-item-field" data-type="project" data-index="${index}" data-field="name" value="${proj.name || ''}" placeholder="Ej: App E-commerce">
+                </div>
+                <div class="field-group">
+                    <label>Link (URL)</label>
+                    <input type="text" class="editable-item-field" data-type="project" data-index="${index}" data-field="url" value="${proj.url || ''}" placeholder="https://...">
+                </div>
+                <div class="field-group full-width">
+                     <label>Descripción</label>
+                     <textarea class="editable-item-field" data-type="project" data-index="${index}" data-field="description" rows="2">${proj.description || ''}</textarea>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    attachItemFieldListeners();
+}
+
+function addNewProject() {
+    if (!extractedData.projects) extractedData.projects = [];
+    extractedData.projects.push({ name: '', url: '', description: '' });
+    renderExtractedProjects();
+    showToast('Nuevo proyecto agregado', 'success');
+}
+
+function removeProject(index) {
+    extractedData.projects.splice(index, 1);
+    renderExtractedProjects();
+    showToast('Proyecto eliminado', 'success');
+    updateEditedCount();
+}
+
+// Make globally available
+window.addNewCertification = addNewCertification;
+window.removeCertification = removeCertification;
+window.addNewLanguage = addNewLanguage;
+window.removeLanguage = removeLanguage;
+window.addNewProject = addNewProject;
+window.removeProject = removeProject;
+window.Validators = Validators;
+
+// Update Attach Listeners to handle new types
+// Se reemplaza la anterior para incluir los nuevos tipos
+const originalAttachListeners = attachItemFieldListeners;
+attachItemFieldListeners = function() {
+    document.querySelectorAll('.editable-item-field').forEach(field => {
+        field.addEventListener('input', (e) => {
+            const type = e.target.dataset.type;
+            const index = parseInt(e.target.dataset.index);
+            const fieldName = e.target.dataset.field;
+            const value = e.target.value;
+
+            // Handle new types
+            if (type === 'certification') extractedData.certifications[index][fieldName] = value;
+            else if (type === 'language') extractedData.languages[index][fieldName] = value;
+            else if (type === 'project') extractedData.projects[index][fieldName] = value;
+            else if (type === 'experience') extractedData.experience[index][fieldName] = value;
+            else if (type === 'education') extractedData.education[index][fieldName] = value;
+
+            e.target.classList.add('edited');
+            editedFields.add(`${type}-${index}-${fieldName}`);
+            updateEditedCount();
+        });
+    });
+};

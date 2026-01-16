@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const db = require('../database/db');
+const groqService = require('../services/groqService');
 
 // Configurar almacenamiento de archivos
 const storage = multer.diskStorage({
@@ -47,8 +48,32 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text;
     
-    // Extraer información del CV
-    const parsedData = parseCV(extractedText);
+    // Intentar extracción con IA primero
+    let parsedData = null;
+    let parsingMethod = 'REGEX_FALLBACK';
+
+    if (groqService.isConfigured()) {
+      try {
+        console.log('🤖 Intentando parsing con Groq AI...');
+        const aiResult = await groqService.parseCVWithAI(extractedText);
+        
+        if (aiResult.success) {
+          parsedData = aiResult.data;
+          parsingMethod = 'AI_GROQ';
+          console.log('✅ Parsing con AI exitoso');
+        } else {
+          console.warn('⚠️ Falló parsing con AI, usando fallback:', aiResult.error);
+        }
+      } catch (aiError) {
+        console.error('❌ Error en servicio AI:', aiError);
+      }
+    }
+
+    // Si falló la IA o no está configurada, usar Regex clásico
+    if (!parsedData) {
+      console.log('🔄 Ejecutando parsing tradicional (Regex)...');
+      parsedData = parseCV(extractedText);
+    }
     
     // Guardar en la base de datos
     const userId = 1;
@@ -74,7 +99,8 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
       data: parsedData,
       stats: {
         pages: pdfData.numpages,
-        textLength: extractedText.length
+        textLength: extractedText.length,
+        method: parsingMethod
       }
     });
 
