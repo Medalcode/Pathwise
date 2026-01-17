@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://autoapply-wqov2qerrq-uc.a.run.app/api/:splat"
+  status = 200
+  force = true

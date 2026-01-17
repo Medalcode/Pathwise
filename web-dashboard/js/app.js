@@ -1311,7 +1311,12 @@ function renderProfiles() {
       </div>
       
       <div class="profile-actions">
-        <button class="btn-select-profile ${selectedProfileIndex === index ? 'selected' : ''}" onclick="selectProfile(${index})">
+        <button class="btn-select-profile" style="min-width: 40px; padding: 0 10px; margin-right: 8px; background: white; border: 1px solid #e5e7eb; color: #4b5563;" onclick="downloadProfilePDF(${index}); event.stopPropagation();" title="Descargar PDF">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"></path>
+            </svg>
+        </button>
+        <button class="btn-select-profile ${selectedProfileIndex === index ? 'selected' : ''}" style="flex: 1;" onclick="selectProfile(${index})">
           ${selectedProfileIndex === index ? `
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2"/>
@@ -1329,6 +1334,7 @@ function renderProfiles() {
   
   // grid.classList.remove('hidden'); // Ya no necesario, controlado por contenedor padre
   
+
   // Add click handlers to cards
   document.querySelectorAll('.profile-card').forEach(card => {
     card.addEventListener('click', (e) => {
@@ -1339,6 +1345,104 @@ function renderProfiles() {
       }
     });
   });
+}
+
+async function downloadProfilePDF(index) {
+  const profile = generatedProfiles[index];
+  const baseData = currentProfile || {};
+  const personalInfo = baseData.personalInfo || {};
+  
+  showToast('Generando PDF...', 'info');
+  
+  // Create template
+  const element = document.createElement('div');
+  element.id = 'cv-template';
+  element.style.padding = '40px';
+  element.style.fontFamily = 'Arial, sans-serif';
+  element.style.color = '#333';
+  element.style.lineHeight = '1.5';
+  element.style.background = 'white';
+  
+  // Helper for dates
+  const formatDates = (exp) => {
+      if (exp.dates) return exp.dates;
+      if (exp.startDate) return `${exp.startDate} - ${exp.endDate || 'Presente'}`;
+      return '';
+  };
+  
+  // HTML Content
+  element.innerHTML = `
+    <div style="border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px;">
+        <h1 style="margin: 0; font-size: 24px; text-transform: uppercase;">${personalInfo.firstName || ''} ${personalInfo.lastName || ''}</h1>
+        <h2 style="margin: 5px 0 0; font-size: 18px; color: #666;">${profile.title}</h2>
+        <div style="margin-top: 10px; font-size: 14px; color: #555;">
+            ${personalInfo.email ? `<span>📧 ${personalInfo.email}</span>` : ''}
+            ${personalInfo.phone ? `<span style="margin-left: 15px;">📱 ${personalInfo.phone}</span>` : ''}
+            ${personalInfo.linkedin ? `<span style="margin-left: 15px;">🔗 LinkedIn</span>` : ''}
+             ${personalInfo.city ? `<span style="margin-left: 15px;">📍 ${personalInfo.city}</span>` : ''}
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 25px;">
+        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; color: #333; text-transform: uppercase; font-size: 16px;">Perfil Profesional</h3>
+        <p style="text-align: justify; white-space: pre-line;">${profile.description}</p>
+    </div>
+    
+    <div style="margin-bottom: 25px;">
+        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; color: #333; text-transform: uppercase; font-size: 16px;">Habilidades Clave</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            ${profile.keySkills.map(skill => 
+                `<span style="background: #f3f4f6; padding: 4px 10px; border-radius: 4px; font-size: 13px;">${skill}</span>`
+            ).join('')}
+        </div>
+    </div>
+    
+    ${baseData.experience && baseData.experience.length > 0 ? `
+    <div style="margin-bottom: 25px;">
+        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; color: #333; text-transform: uppercase; font-size: 16px;">Experiencia</h3>
+        ${baseData.experience.map(exp => `
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <h4 style="margin: 0; font-size: 15px; font-weight: bold;">${exp.title}</h4>
+                    <span style="font-size: 13px; color: #666;">${formatDates(exp)}</span>
+                </div>
+                <div style="font-size: 14px; color: #555; margin-bottom: 5px;">${exp.company}</div>
+                <p style="margin: 5px 0; font-size: 14px;">${exp.description || ''}</p>
+            </div>
+        `).join('')}
+    </div>
+    ` : ''}
+    
+    ${baseData.education && baseData.education.length > 0 ? `
+    <div style="margin-bottom: 25px;">
+        <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; color: #333; text-transform: uppercase; font-size: 16px;">Educación</h3>
+        ${baseData.education.map(edu => `
+            <div style="margin-bottom: 10px;">
+                <div style="font-weight: bold; font-size: 15px;">${edu.degree}</div>
+                <div style="font-size: 14px; color: #555;">${edu.school} | ${edu.year || edu.endDate || ''}</div>
+            </div>
+        `).join('')}
+    </div>
+    ` : ''}
+  `;
+  
+  // Options
+  const opt = {
+    margin: [10, 15],
+    filename: `CV_${personalInfo.firstName || 'Candidato'}_${profile.title.replace(/[^a-z0-9]/gi, '_').substring(0,20)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  
+  // Generate
+  try {
+      await html2pdf().from(element).set(opt).save();
+      showToast('PDF descargado exitosamente', 'success');
+  } catch (err) {
+      console.error(err);
+      showToast('Error al generar PDF', 'error');
+  }
 }
 
 function selectProfile(index) {
@@ -1383,6 +1487,7 @@ loadSelectedProfile();
 
 // Make functions global
 window.selectProfile = selectProfile;
+window.downloadProfilePDF = downloadProfilePDF;
 
 console.log('✅ Sistema de perfiles profesionales listo');
 
