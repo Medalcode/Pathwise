@@ -415,6 +415,8 @@ function populateForm(profile) {
       if(el1) el1.value = v;
       const el2 = document.getElementById('verify-' + baseId);
       if(el2) el2.value = v;
+      const el3 = document.getElementById('extracted-' + baseId);
+      if(el3) el3.value = v;
   };
   
   // Personal info
@@ -468,14 +470,14 @@ function populateForm(profile) {
   }
 }
 
-// Helper para crear inputs dinámicos de experiencia
+// Helper para crear inputs dinámicos de experiencia (Cyberpunk Style)
 function addExperienceField(data = null) {
     const container = document.getElementById('experienceContainer');
     if (!container) return;
 
     const id = Date.now() + Math.random().toString(36).substr(2, 5);
     const item = document.createElement('div');
-    item.className = 'dynamic-item card-nested';
+    item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
     item.id = `exp-${id}`;
     
     // Valores predeterminados
@@ -487,35 +489,40 @@ function addExperienceField(data = null) {
     const desc = data ? data.description || '' : '';
 
     item.innerHTML = `
-        <div class="form-grid mb-2">
-            <div class="form-group">
-                <label>Cargo</label>
-                <input type="text" name="exp_title_${id}" value="${title}" placeholder="Ej: Senior Dev">
+        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button type="button" class="text-red-400 hover:text-red-300" onclick="removeDynamicItem('exp-${id}')">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="text-xs text-gray-500 uppercase">Cargo</label>
+                <input type="text" name="exp_title_${id}" value="${title}" placeholder="Ej: Senior Dev" class="glass-input">
             </div>
-            <div class="form-group">
-                <label>Empresa</label>
-                <input type="text" name="exp_company_${id}" value="${company}" placeholder="Ej: Tech Corp">
+            <div>
+                <label class="text-xs text-gray-500 uppercase">Empresa</label>
+                <input type="text" name="exp_company_${id}" value="${company}" placeholder="Ej: Tech Corp" class="glass-input">
             </div>
         </div>
-        <div class="form-grid mb-2">
-             <div class="form-group">
-                <label>Desde</label>
-                <input type="text" name="exp_start_${id}" value="${startDate}" placeholder="YYYY-MM">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+             <div>
+                <label class="text-xs text-gray-500 uppercase">Desde</label>
+                <input type="text" name="exp_start_${id}" value="${startDate}" placeholder="YYYY-MM" class="glass-input">
             </div>
-            <div class="form-group">
-                <label>Hasta</label>
-                <input type="text" name="exp_end_${id}" value="${endDate}" placeholder="YYYY-MM" ${current ? 'disabled' : ''}>
-                <label class="checkbox-inline mt-1">
-                    <input type="checkbox" name="exp_current_${id}" ${current ? 'checked' : ''} onchange="toggleEndDate(this, 'exp_end_${id}')"> Actualmente
-                </label>
+            <div>
+                <label class="text-xs text-gray-500 uppercase">Hasta</label>
+                <div class="flex flex-col gap-2">
+                    <input type="text" name="exp_end_${id}" value="${endDate}" placeholder="YYYY-MM" class="glass-input" ${current ? 'disabled' : ''}>
+                    <label class="flex items-center gap-2 text-xs text-gray-400">
+                        <input type="checkbox" name="exp_current_${id}" ${current ? 'checked' : ''} onchange="toggleEndDate(this, 'exp_end_${id}')" class="rounded bg-gray-700 border-gray-600">
+                        Actualmente
+                    </label>
+                </div>
             </div>
         </div>
-        <div class="form-group full-width">
-            <label>Descripción</label>
-            <textarea name="exp_desc_${id}" rows="2">${desc}</textarea>
-        </div>
-        <div class="text-right">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDynamicItem('exp-${id}')">Eliminar</button>
+        <div>
+            <label class="text-xs text-gray-500 uppercase">Descripción</label>
+            <textarea name="exp_desc_${id}" rows="2" class="glass-input">${desc}</textarea>
         </div>
     `;
     
@@ -525,9 +532,44 @@ function addExperienceField(data = null) {
 function toggleEndDate(checkbox, targetId) {
     const input = document.querySelector(`input[name="${targetId}"]`);
     if(input) {
-        input.disabled = checkbox.checked;
+    input.disabled = checkbox.checked;
         if(checkbox.checked) input.value = 'Presente';
     }
+}
+
+function addNewCertification(data = null) {
+    const container = document.getElementById('certificationsContainer');
+    if (!container) return;
+    const id = Date.now() + Math.random().toString(36).substr(2, 5);
+    const item = document.createElement('div');
+    item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
+    item.id = `cert-${id}`;
+    const name = data ? data.name || '' : '';
+    const issuer = data ? data.issuer || '' : '';
+    const date = data ? data.date || '' : '';
+
+    item.innerHTML = `
+        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button type="button" class="text-red-400 hover:text-red-300" onclick="removeDynamicItem('cert-${id}')">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+             <div>
+                <label class="text-xs text-gray-500 uppercase">Certificación</label>
+                 <input type="text" name="cert_name_${id}" value="${name}" class="glass-input">
+             </div>
+             <div>
+                <label class="text-xs text-gray-500 uppercase">Emisor</label>
+                 <input type="text" name="cert_issuer_${id}" value="${issuer}" class="glass-input">
+             </div>
+        </div>
+         <div>
+            <label class="text-xs text-gray-500 uppercase">Fecha</label>
+             <input type="text" name="cert_date_${id}" value="${date}" placeholder="YYYY-MM" class="glass-input">
+         </div>
+    `;
+    container.appendChild(item);
 }
 
 function addEducationField(data = null) {
@@ -536,7 +578,7 @@ function addEducationField(data = null) {
 
     const id = Date.now() + Math.random().toString(36).substr(2, 5);
     const item = document.createElement('div');
-    item.className = 'dynamic-item card-nested';
+    item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
     item.id = `edu-${id}`;
     
     const degree = data ? data.degree || '' : '';
@@ -545,28 +587,30 @@ function addEducationField(data = null) {
     const end = data ? data.endDate || '' : '';
 
     item.innerHTML = `
-         <div class="form-grid mb-2">
-            <div class="form-group">
-                <label>Título / Grado</label>
-                <input type="text" name="edu_degree_${id}" value="${degree}">
+        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button type="button" class="text-red-400 hover:text-red-300" onclick="removeDynamicItem('edu-${id}')">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+        </div>
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="text-xs text-gray-500 uppercase">Título / Grado</label>
+                <input type="text" name="edu_degree_${id}" value="${degree}" class="glass-input">
             </div>
-            <div class="form-group">
-                <label>Institución</label>
-                <input type="text" name="edu_school_${id}" value="${school}">
+            <div>
+                <label class="text-xs text-gray-500 uppercase">Institución</label>
+                <input type="text" name="edu_school_${id}" value="${school}" class="glass-input">
             </div>
         </div>
-        <div class="form-grid">
-             <div class="form-group">
-                <label>Inicio</label>
-                <input type="text" name="edu_start_${id}" value="${start}">
+        <div class="grid grid-cols-2 gap-4">
+             <div>
+                <label class="text-xs text-gray-500 uppercase">Inicio</label>
+                <input type="text" name="edu_start_${id}" value="${start}" class="glass-input">
             </div>
-            <div class="form-group">
-                <label>Fin</label>
-                <input type="text" name="edu_end_${id}" value="${end}">
+            <div>
+                <label class="text-xs text-gray-500 uppercase">Fin</label>
+                <input type="text" name="edu_end_${id}" value="${end}" class="glass-input">
             </div>
-        </div>
-        <div class="text-right mt-2">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDynamicItem('edu-${id}')">Eliminar</button>
         </div>
     `;
     container.appendChild(item);
@@ -1279,52 +1323,29 @@ function renderProfiles() {
   ];
   
   const content = generatedProfiles.map((profile, index) => `
-    <div class="profile-card ${selectedProfileIndex === index ? 'selected' : ''}" data-index="${index}">
-      <div class="profile-card-header">
-        <span class="profile-number">Perfil ${index + 1}</span>
-        <span class="profile-level-badge ${profile.experienceLevel.toLowerCase().replace(' ', '-')}">${profile.experienceLevel}</span>
-      </div>
-      
-      <h3 class="profile-title">${profile.title}</h3>
-      
-      <p class="profile-description">${profile.description}</p>
-      
-      <div class="profile-section">
-        <h4>🎯 Habilidades Clave</h4>
-        <div class="skills-container">
-          ${profile.keySkills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+    <div class="holographic-border rounded-xl group relative p-[1px] cursor-pointer profile-card" data-index="${index}">
+        <div class="holographic-inner bg-[#131118]/80 backdrop-blur-md h-full rounded-xl p-5 flex flex-col gap-4 border border-white/10 hover:border-primary/50 transition-colors ${selectedProfileIndex === index ? 'border-primary bg-primary/5' : ''}">
+            <div class="flex justify-between items-start">
+                 <div class="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-gray-400 uppercase tracking-wider font-bold">ID-${index+1}</div>
+                 <span class="px-2 py-0.5 rounded text-[10px] bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/30 font-bold uppercase tracking-wide">${profile.experienceLevel}</span>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white">${profile.title}</h3>
+                <p class="text-sm text-gray-400 mt-2 line-clamp-3">${profile.description}</p>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-auto pt-2">
+                ${profile.keySkills.slice(0,3).map(skill => `<span class="px-2 py-1 rounded text-xs bg-white/5 border border-white/10 text-gray-300">${skill}</span>`).join('')}
+            </div>
+            
+            <div class="flex gap-2 mt-2">
+                 <button class="btn-select-profile flex-1 h-10 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-white border border-primary/50 hover:border-primary transition-all duration-300 flex items-center justify-center gap-2 text-sm font-bold shadow-[0_0_10px_rgba(147,89,248,0.1)] hover:shadow-glow-primary group-hover:translate-y-[-2px]" onclick="selectProfile(${index})">
+                    ${selectedProfileIndex === index ? '<span class="material-symbols-outlined text-[16px]">check_circle</span> SELECTED' : 'SELECT TARGET'}
+                </button>
+                <button class="w-10 h-10 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors" onclick="downloadProfilePDF(${index}); event.stopPropagation();" title="Download Resume PDF">
+                    <span class="material-symbols-outlined text-[18px]">download</span>
+                </button>
+            </div>
         </div>
-      </div>
-      
-      <div class="profile-section">
-        <h4>🔍 Palabras Clave</h4>
-        <div class="keywords-container">
-          ${profile.searchKeywords.map(keyword => `<span class="keyword-tag">${keyword}</span>`).join('')}
-        </div>
-      </div>
-      
-      <div class="profile-section">
-        <h4>💼 Roles Objetivo</h4>
-        <ul class="roles-list">
-          ${profile.targetRoles.map(role => `<li>${role}</li>`).join('')}
-        </ul>
-      </div>
-      
-      <div class="profile-actions">
-        <button class="btn-select-profile" style="min-width: 40px; padding: 0 10px; margin-right: 8px; background: white; border: 1px solid #e5e7eb; color: #4b5563;" onclick="downloadProfilePDF(${index}); event.stopPropagation();" title="Descargar PDF">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"></path>
-            </svg>
-        </button>
-        <button class="btn-select-profile ${selectedProfileIndex === index ? 'selected' : ''}" style="flex: 1;" onclick="selectProfile(${index})">
-          ${selectedProfileIndex === index ? `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            Perfil Seleccionado
-          ` : 'Usar este perfil'}
-        </button>
-      </div>
     </div>
   `).join('');
 
@@ -1332,14 +1353,12 @@ function renderProfiles() {
       if(grid) grid.innerHTML = content;
   });
   
-  // grid.classList.remove('hidden'); // Ya no necesario, controlado por contenedor padre
-  
-
   // Add click handlers to cards
   document.querySelectorAll('.profile-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      // Don't trigger if clicking the button
-      if (!e.target.closest('.btn-select-profile')) {
+      // Don't trigger if clicking the button directly (managed by inline onclick)
+      // But we leave this here for card-area clicks if we want
+      if (!e.target.closest('button')) {
         const index = parseInt(card.dataset.index);
         selectProfile(index);
       }
@@ -1747,6 +1766,66 @@ function attemptNavigation(step) {
   goToStep(step);
 }
 
+const STATE_KEY = 'panoptes_state_v2';
+
+function saveState(step) {
+    const state = {
+        currentProfile: window.currentProfile || null,
+        generatedProfiles: window.generatedProfiles || [],
+        extractedData: window.extractedData || {}, 
+        selectedProfileIndex: window.selectedProfileIndex || -1,
+        step: step || 1,
+        timestamp: Date.now()
+    };
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+    const saved = localStorage.getItem(STATE_KEY);
+    if (!saved) return;
+    
+    try {
+        const state = JSON.parse(saved);
+        // Expiry check (4 hours)
+        if (Date.now() - state.timestamp > 14400000) {
+            localStorage.removeItem(STATE_KEY);
+            return;
+        }
+
+        if (state.currentProfile) window.currentProfile = state.currentProfile;
+        if (state.generatedProfiles) window.generatedProfiles = state.generatedProfiles;
+        if (state.extractedData) window.extractedData = state.extractedData;
+        if (state.selectedProfileIndex) window.selectedProfileIndex = state.selectedProfileIndex;
+
+        // Restore UI based on state
+        if (state.currentProfile) {
+            document.getElementById('uploadArea').classList.add('hidden');
+            // If Step 1, show extracted preview
+            if (state.step === 1) {
+                 document.getElementById('extractedDataPreview').classList.remove('hidden');
+                 populateForm(state.currentProfile); // Populates preview inputs
+            }
+             // Always populate Step 2 form just in case
+            populateForm(state.currentProfile);
+        }
+
+        if (state.generatedProfiles && state.generatedProfiles.length > 0) {
+             renderProfiles();
+             document.getElementById('aiIntroContainer').classList.add('hidden');
+             document.getElementById('wizardProfilesResult').classList.remove('hidden');
+        }
+
+        if (state.step > 1) {
+            console.log('Restoring step:', state.step);
+            goToStep(state.step);
+        }
+
+    } catch (e) {
+        console.error('Error loading state:', e);
+        localStorage.removeItem(STATE_KEY);
+    }
+}
+
 function goToStep(step) {
   // Ocultar todos los contenidos de paso
   document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
@@ -1757,12 +1836,32 @@ function goToStep(step) {
     targetContent.classList.remove('hidden');
   }
 
-  // Actualizar indicadores
-  updateStepperIndicators(step);
+  // Actualizar indicadores (New ID system)
+  for(let i=1; i<=4; i++) {
+        const el = document.getElementById(`stepIndicator${i}`);
+        if(el) {
+            if(i === step) {
+                el.className = "text-xs uppercase tracking-widest font-bold text-primary animate-pulse";
+            } else if (i < step) {
+                el.className = "text-xs uppercase tracking-widest text-success-green font-bold flex items-center gap-1";
+                if(!el.innerHTML.includes('✓')) el.innerHTML = `✓ ${el.innerHTML}`; // Add checkmark
+            } else {
+                el.className = "text-xs uppercase tracking-widest text-gray-500";
+                 // Remove checkmark if backtracking
+                 el.innerHTML = el.innerHTML.replace('✓ ', '');
+            }
+        }
+  }
+
+  // Save State
+  saveState(step);
 
   // Scroll arriba
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Auto-load on init
+document.addEventListener('DOMContentLoaded', loadState);
 
 function updateStepperIndicators(currentStep) {
   for (let i = 1; i <= 4; i++) {
@@ -1824,6 +1923,12 @@ async function handleFileUploadWizard(file) {
     
     const formData = new FormData();
     formData.append('cv', file);
+    
+    // Enviar API Key si existe localmente para habilitar parsing con IA
+    const storedApiKey = localStorage.getItem('groqApiKey');
+    if (storedApiKey) {
+        formData.append('groqApiKey', storedApiKey);
+    }
 
     try {
         animateProgress(0, 50, 800);

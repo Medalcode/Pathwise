@@ -82,12 +82,23 @@ npm run dev
 # Abrir http://localhost:3000 en tu navegador (El backend sirve el frontend)
 ```
 
-### Despliegue en Cloud Run
+### 🚀 Despliegue Simplificado
 
-El proyecto incluye scripts automatizados para desplegar en Google Cloud Run con persistencia "Zero-Cost" usando SQLite + GCS.
+### Backend (Google Cloud Run)
+
+El backend procesa los CVs usando IA y gestiona la base de datos.
 
 ```bash
-./deploy-cloud-run.sh [PROJECT_ID] [REGION]
+./deploy-cloud-run.sh
+```
+
+### Frontend (Vercel)
+
+El dashboard web moderno con interfaz Cyberpunk.
+
+```bash
+cd web-dashboard
+npx vercel --prod
 ```
 
 ## 🤝 Contribuir

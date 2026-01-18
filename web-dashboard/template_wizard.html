@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Panoptes AI Agent Wizard</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config -->
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9359f8", // Neon Purple
+                        "primary-dark": "#7a45d4",
+                        "background-light": "#f6f5f8",
+                        "background-dark": "#0a0a0a", // Deep Void Black
+                        "accent-cyan": "#06B6D4",
+                        "success-green": "#10B981",
+                        "surface-glass": "rgba(255, 255, 255, 0.03)"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "mono": ["Space Mono", "monospace"]
+                    },
+                    animation: {
+                        'scanline': 'scanline 3s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'blink': 'blink 1s step-end infinite',
+                    },
+                    keyframes: {
+                        scanline: {
+                            '0%': { top: '0%', opacity: '0' },
+                            '10%': { opacity: '1' },
+                            '90%': { opacity: '1' },
+                            '100%': { top: '100%', opacity: '0' },
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: '1', boxShadow: '0 0 20px rgba(147,89,248,0.4)' },
+                            '50%': { opacity: '.7', boxShadow: '0 0 10px rgba(147,89,248,0.1)' },
+                        },
+                        blink: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        }
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Scrollbar for Terminal */
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: #000;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-panel-active {
+            background: linear-gradient(135deg, rgba(147, 89, 248, 0.1) 0%, rgba(147, 89, 248, 0.02) 100%);
+            border: 1px solid rgba(147, 89, 248, 0.3);
+            box-shadow: 0 0 15px rgba(147, 89, 248, 0.1);
+        }
+
+        /* Grid Background Pattern */
+        .bg-grid-pattern {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white font-display overflow-hidden h-screen w-screen flex antialiased selection:bg-primary selection:text-white">
+<!-- Ambient Background Effects -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent-cyan/5 rounded-full blur-[120px]"></div>
+<div class="absolute inset-0 bg-grid-pattern opacity-30"></div>
+</div>
+<!-- Side Navigation -->
+<aside class="w-[80px] h-full glass-panel flex flex-col items-center py-8 z-50 border-r border-white/5 relative flex-shrink-0">
+<!-- Logo -->
+<div class="text-white font-bold text-xl tracking-tighter mb-10 flex flex-col items-center gap-1 group cursor-pointer">
+<span class="material-symbols-outlined text-3xl text-primary group-hover:text-white transition-colors duration-300 group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">visibility</span>
+</div>
+<!-- Nav Items -->
+<nav class="flex flex-col gap-6 w-full items-center">
+<!-- Home -->
+<button class="relative w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300 group">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<span class="absolute left-14 bg-black border border-white/10 px-2 py-1 rounded text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Home</span>
+</button>
+<!-- Jobs -->
+<button class="relative w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300 group">
+<span class="material-symbols-outlined text-[24px]">work</span>
+<span class="absolute left-14 bg-black border border-white/10 px-2 py-1 rounded text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Jobs</span>
+</button>
+<!-- Agent (Active) -->
+<button class="relative w-12 h-12 flex items-center justify-center rounded-xl text-white glass-panel-active transition-all duration-300 group">
+<span class="material-symbols-outlined text-[24px] text-primary drop-shadow-[0_0_5px_rgba(147,89,248,0.8)]">smart_toy</span>
+<div class="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-20"></div>
+<span class="absolute left-14 bg-primary text-white border border-primary px-2 py-1 rounded text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap font-bold">Agent</span>
+</button>
+<!-- Settings -->
+<button class="relative w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300 group">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="absolute left-14 bg-black border border-white/10 px-2 py-1 rounded text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Settings</span>
+</button>
+</nav>
+<!-- User Profile (Bottom) -->
+<div class="mt-auto mb-4">
+<button class="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center text-xs font-bold border border-white/20 hover:border-primary/50 transition-colors">
+                JD
+            </button>
+</div>
+</aside>
+<!-- Main Content Layout -->
+<main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
+<!-- Top Navigation / Breadcrumbs -->
+<header class="flex-shrink-0 px-8 py-6 flex justify-between items-center w-full">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 text-sm font-medium tracking-wide">
+<a class="text-gray-500 hover:text-primary transition-colors" href="#">HOME</a>
+<span class="text-gray-700">/</span>
+<a class="text-gray-500 hover:text-primary transition-colors" href="#">AGENT</a>
+<span class="text-gray-700">/</span>
+<span class="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">NEW APPLICATION</span>
+</div>
+</div>
+<!-- System Status Chip -->
+<div class="glass-panel pl-3 pr-4 py-1.5 rounded-full flex items-center gap-3">
+<div class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-green opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-success-green"></span>
+</div>
+<span class="text-xs font-bold tracking-widest text-gray-300 font-mono">SYSTEM: ONLINE</span>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-8 pb-8 flex flex-col relative">
+<!-- Page Heading -->
+<div class="flex flex-col gap-2 mb-12 animate-[fadeIn_0.5s_ease-out]">
+<h1 class="text-5xl font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-gray-500">
+                    SEQUENCE: NEW APPLICATION
+                </h1>
+<p class="text-gray-400 text-base font-normal max-w-2xl border-l-2 border-primary/50 pl-4 mt-2">
+                    Initiate autonomous job search protocol. Upload source material to begin neural analysis.
+                </p>
+</div>
+<!-- Wizard Stepper -->
+<div class="w-full max-w-5xl mx-auto mb-16">
+<div class="relative flex justify-between items-center">
+<!-- Connector Line -->
+<div class="absolute top-[24px] left-0 w-full h-[1px] bg-white/10 -z-10"></div>
+<div class="absolute top-[24px] left-0 w-[20%] h-[1px] bg-primary shadow-[0_0_10px_#9359f8] -z-10 transition-all duration-1000"></div>
+<!-- Step 1: Upload (Active) -->
+<div class="flex flex-col items-center gap-4 group cursor-pointer">
+<div class="relative">
+<div class="w-12 h-12 rounded-full bg-[#131118] border-2 border-primary flex items-center justify-center shadow-[0_0_20px_rgba(147,89,248,0.6)] z-20 transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined text-primary text-xl">upload_file</span>
+</div>
+<div class="absolute inset-0 bg-primary/30 rounded-full animate-ping z-10"></div>
+</div>
+<span class="text-primary font-bold tracking-[0.2em] text-xs uppercase drop-shadow-[0_0_5px_rgba(147,89,248,0.5)]">Upload</span>
+</div>
+<!-- Step 2: Verify -->
+<div class="flex flex-col items-center gap-4 group cursor-pointer opacity-40 hover:opacity-70 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-[#0f0e13] border border-white/20 flex items-center justify-center z-20 group-hover:border-white/40 transition-colors">
+<span class="material-symbols-outlined text-white text-xl">verified_user</span>
+</div>
+<span class="text-white font-medium tracking-[0.2em] text-xs uppercase">Verify</span>
+</div>
+<!-- Step 3: Optimize -->
+<div class="flex flex-col items-center gap-4 group cursor-pointer opacity-40 hover:opacity-70 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-[#0f0e13] border border-white/20 flex items-center justify-center z-20 group-hover:border-white/40 transition-colors">
+<span class="material-symbols-outlined text-white text-xl">neurology</span>
+</div>
+<span class="text-white font-medium tracking-[0.2em] text-xs uppercase">Optimize</span>
+</div>
+<!-- Step 4: Apply -->
+<div class="flex flex-col items-center gap-4 group cursor-pointer opacity-40 hover:opacity-70 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-[#0f0e13] border border-white/20 flex items-center justify-center z-20 group-hover:border-white/40 transition-colors">
+<span class="material-symbols-outlined text-white text-xl">send</span>
+</div>
+<span class="text-white font-medium tracking-[0.2em] text-xs uppercase">Apply</span>
+</div>
+</div>
+</div>
+<!-- Upload Hero Zone -->
+<div class="flex-1 flex flex-col items-center w-full max-w-4xl mx-auto mb-12">
+<div class="relative w-full aspect-[21/9] rounded-2xl overflow-hidden group">
+<!-- Glass Container -->
+<div class="absolute inset-0 glass-panel border-dashed border-2 border-primary/30 group-hover:border-primary/60 transition-colors duration-500 z-10 rounded-2xl"></div>
+<!-- Scanline Animation -->
+<div class="absolute inset-0 z-20 overflow-hidden rounded-2xl pointer-events-none">
+<div class="absolute left-0 w-full h-[2px] bg-accent-cyan shadow-[0_0_20px_#06B6D4] animate-scanline opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<!-- Content -->
+<div class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 p-8">
+<div class="relative">
+<div class="w-24 h-24 rounded-2xl bg-gradient-to-b from-primary/20 to-transparent border border-primary/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-105 transition-transform duration-300">
+<span class="material-symbols-outlined text-6xl text-primary/80">cloud_upload</span>
+</div>
+<!-- Decorative corner markers -->
+<div class="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-primary"></div>
+<div class="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-primary"></div>
+<div class="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-primary"></div>
+<div class="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-primary"></div>
+</div>
+<div class="text-center">
+<h3 class="text-2xl font-bold text-white mb-2 tracking-wide">UPLINK CV DATA</h3>
+<p class="text-gray-400 text-sm font-mono">Drop PDF/DOCX file here to initiate parsing sequence.</p>
+</div>
+<button class="relative overflow-hidden group/btn px-8 py-3 bg-primary text-white font-bold rounded-lg transition-all hover:bg-primary-dark shadow-[0_0_20px_rgba(147,89,248,0.3)]">
+<span class="relative z-10 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">folder_open</span>
+                                SELECT FILE SOURCE
+                            </span>
+<div class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+</button>
+</div>
+<!-- Inner Grid Texture -->
+<div class="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none z-0"></div>
+</div>
+</div>
+<!-- Spacer to push terminal to bottom of flex container if space allows, otherwise flows naturally -->
+<div class="mt-auto"></div>
+<!-- Live Terminal -->
+<div class="w-full max-w-6xl mx-auto rounded-t-xl overflow-hidden border border-white/10 shadow-2xl bg-black relative">
+<!-- Decorative Top Bar -->
+<div class="h-8 bg-[#1a1a1a] flex items-center justify-between px-4 border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="flex gap-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-success-green/50"></div>
+</div>
+<span class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">panoptes_core_v2.1.exe</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-success-green animate-pulse"></span>
+<span class="text-[10px] font-mono text-success-green uppercase">Live Feed</span>
+</div>
+</div>
+<!-- Terminal Body -->
+<div class="h-40 bg-black/95 p-4 font-mono text-xs md:text-sm text-success-green/90 overflow-y-auto terminal-scroll relative">
+<!-- Scan lines effect overlay -->
+<div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0,06))] bg-[size:100%_4px,3px_100%] pointer-events-none z-10"></div>
+<div class="flex flex-col gap-1 relative z-0">
+<p class="opacity-50">&gt; [10:42:01] System ready. Initializing Panoptes Core...</p>
+<p class="opacity-70">&gt; [10:42:02] Establishing secure handshake with neural network...</p>
+<p class="opacity-80">&gt; [10:42:02] Handshake accepted. Latency: 12ms.</p>
+<p class="opacity-90">&gt; [10:42:03] Modules loaded: [Parser], [Verifier], [Optimizer], [Applier].</p>
+<p class="opacity-90">&gt; [10:42:05] Waiting for CV input stream...</p>
+<div class="flex items-center gap-1 mt-1 text-white">
+<span>&gt;</span>
+<span class="animate-blink bg-success-green w-2 h-4 block"></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

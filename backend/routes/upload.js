@@ -52,10 +52,11 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
     let parsedData = null;
     let parsingMethod = 'REGEX_FALLBACK';
 
-    if (groqService.isConfigured()) {
+    if (groqService.isConfigured() || (req.body.groqApiKey && req.body.groqApiKey.length > 10)) {
       try {
         console.log('🤖 Intentando parsing con Groq AI...');
-        const aiResult = await groqService.parseCVWithAI(extractedText);
+        const clientApiKey = req.body.groqApiKey;
+        const aiResult = await groqService.parseCVWithAI(extractedText, clientApiKey);
         
         if (aiResult.success) {
           parsedData = aiResult.data;

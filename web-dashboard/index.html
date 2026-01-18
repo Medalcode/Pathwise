@@ -1,918 +1,370 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutoApply - Dashboard</title>
-  <meta name="description" content="Gestiona tu CV y aplica a trabajos automáticamente con AutoApply">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/stepper.css">
-  <link rel="stylesheet" href="css/jobs.css">
-  <link rel="stylesheet" href="css/validation.css">
-  <link rel="stylesheet" href="css/profiles.css">
-  <link rel="stylesheet" href="css/modals.css">
-  <link rel="stylesheet" href="css/autoSave.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Panoptes AI Agent</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <!-- Config -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9359f8",
+                        "primary-dark": "#7a45d4",
+                        "background-dark": "#0a0a0a",
+                        "accent-cyan": "#06B6D4",
+                        "success-green": "#10B981"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "mono": ["Space Mono", "monospace"]
+                    },
+                    animation: {
+                        'scanline': 'scanline 3s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        scanline: {
+                            '0%': { top: '0%', opacity: '0' },
+                            '10%': { opacity: '1' },
+                            '90%': { opacity: '1' },
+                            '100%': { top: '100%', opacity: '0' },
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: '1', boxShadow: '0 0 20px rgba(147,89,248,0.4)' },
+                            '50%': { opacity: '.7', boxShadow: '0 0 10px rgba(147,89,248,0.1)' },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .glass-input {
+            background: rgba(0,0,0,0.3) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            color: white !important;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            outline: none !important;
+            border-color: #9359f8 !important;
+            box-shadow: 0 0 10px rgba(147,89,248,0.2) !important;
+            --tw-ring-color: transparent !important; /* Disable Tailwind Forms ring */
+        }
+        /* Placeholder fix */
+        .glass-input::placeholder {
+            color: #9ca3af !important; /* gray-400 */
+        }
+        .step-content.hidden { display: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        
+        /* App.js Specific Overrides */
+        .loading-state { text-align: center; padding: 40px; }
+        .spinner { border: 4px solid rgba(255,255,255,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #9359f8; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
-  <!-- Header -->
-  <header class="header">
-    <div class="container">
-      <div class="header-content">
-        <div class="logo">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          <h1>AutoApply</h1>
-        </div>
-        
-        <nav class="nav">
-          <a href="#dashboard" class="nav-link active">Dashboard</a>
-          <a href="#profile" class="nav-link">Mi Perfil</a>
-          <a href="#upload" class="nav-link">Subir CV</a>
-        </nav>
+<body class="bg-background-dark text-white font-display overflow-hidden h-screen w-screen flex antialiased">
 
-        <!-- Profile Selector -->
-        <div class="profile-selector" id="profileSelector">
-          <button class="current-profile-btn" id="currentProfileBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <span class="profile-name" id="currentProfileName">Cargando...</span>
-            <span class="profile-badge default" id="currentProfileBadge" style="display:none;">Default</span>
-            <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none">
-              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </button>
-          
-          <div class="profile-dropdown" id="profileDropdown">
-            <div class="profile-dropdown-header">
-              <h4>Mis Perfiles</h4>
-            </div>
-            <div class="profile-list" id="profileList">
-              <!-- Perfiles se cargan dinámicamente -->
-              <div class="profile-loading">
-                <div class="spinner"></div>
-                <span>Cargando perfiles...</span>
-              </div>
-            </div>
-            <div class="profile-dropdown-footer">
-              <button class="btn-dropdown-action" id="createProfileBtn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                Crear Nuevo Perfil
-              </button>
-              <button class="btn-dropdown-action" id="manageProfilesBtn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2"/>
-                  <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                Gestionar Perfiles
-              </button>
-            </div>
-          </div>
+<!-- Sidebar -->
+<aside class="w-[80px] h-full glass-panel flex flex-col items-center py-8 z-50 border-r border-white/5 flex-shrink-0">
+    <div class="mb-10 group cursor-pointer flex flex-col items-center gap-1">
+        <div class="relative w-10 h-10 flex items-center justify-center">
+             <div class="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
+             <span class="material-symbols-outlined text-3xl text-primary group-hover:text-white transition-colors relative z-10">visibility</span>
         </div>
-
-        <div class="header-actions">
-          <button class="btn btn-secondary" id="installExtension">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2"/>
-              <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 15V3" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            Instalar Extensión
-          </button>
-        </div>
-      </div>
+        <span class="text-[10px] font-bold tracking-widest text-primary/80 group-hover:text-white transition-colors">PANOPTES</span>
     </div>
-  </header>
+    <nav class="flex flex-col gap-6 w-full items-center">
+        <button class="w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all" onclick="location.reload()">
+            <span class="material-symbols-outlined">home</span>
+        </button>
+        <button class="w-12 h-12 flex items-center justify-center rounded-xl text-white bg-primary/20 border border-primary/50 shadow-[0_0_15px_rgba(147,89,248,0.3)]">
+            <span class="material-symbols-outlined text-primary">smart_toy</span>
+        </button>
+         <button class="w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+            <span class="material-symbols-outlined">settings</span>
+        </button>
+    </nav>
+</aside>
 
-  <!-- Main Content -->
-  <main class="main">
-    <div class="container">
-      <!-- Welcome Section -->
-      <section id="dashboard" class="section">
+<main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
+    <!-- Header -->
+    <header class="flex-shrink-0 px-8 py-6 flex justify-between items-center w-full border-b border-white/5">
+        <div class="flex items-center gap-2 text-sm font-medium tracking-wide text-gray-400">
+            <span>HOME</span> / <span class="text-white">AGENT SEQUENCE</span>
+        </div>
+        <div class="glass-panel pl-3 pr-4 py-1.5 rounded-full flex items-center gap-3">
+            <div class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-green opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-success-green"></span>
+            </div>
+            <span class="text-xs font-bold tracking-widest text-gray-300 font-mono">SYSTEM: ONLINE</span>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto px-8 pb-8 flex flex-col relative w-full max-w-7xl mx-auto">
         
-        <!-- STEPPER -->
-        <div class="stepper-wrapper">
-          <div class="stepper-item completed" id="step1-indicator" onclick="attemptNavigation(1)">
-            <div class="step-counter">1</div>
-            <div class="step-name">Subir CV</div>
-          </div>
-          <div class="stepper-item" id="step2-indicator" onclick="attemptNavigation(2)">
-            <div class="step-counter">2</div>
-            <div class="step-name">Verificar Datos</div>
-          </div>
-          <div class="stepper-item" id="step3-indicator" onclick="attemptNavigation(3)">
-            <div class="step-counter">3</div>
-            <div class="step-name">Perfiles IA</div>
-          </div>
-          <div class="stepper-item" id="step4-indicator" onclick="attemptNavigation(4)">
-            <div class="step-counter">4</div>
-            <div class="step-name">Buscar Empleo</div>
-          </div>
+        <!-- Step Indicator -->
+        <div class="w-full max-w-5xl mx-auto my-8">
+            <div class="flex justify-between items-center relative">
+                 <div class="absolute top-1/2 left-0 w-full h-[1px] bg-white/10 -z-10"></div>
+                 <!-- Indicators -->
+                 <div class="flex gap-4 w-full justify-between px-4">
+                    <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(1)">
+                        <div class="text-xs uppercase tracking-widest font-bold text-primary" id="stepIndicator1">1. Upload</div>
+                    </button>
+                    <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(2)">
+                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator2">2. Verify</div>
+                    </button>
+                    <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(3)">
+                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator3">3. Optimize</div>
+                    </button>
+                    <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(4)">
+                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator4">4. Apply</div>
+                    </button>
+                 </div>
+            </div>
         </div>
 
-        <!-- PASO 1: SUBIR CV -->
+        <!-- STEP 1: UPLOAD & EXTRACTION PREVIEW -->
         <div id="step1-content" class="step-content">
-          <div class="text-center mb-4">
-            <h2>Comienza tu Viaje 🚀</h2>
-            <p>Sube tu CV en PDF para extraer toda tu información automáticamente.</p>
-          </div>
-          
-          <div class="upload-area-large" id="uploadArea">
-            <div class="upload-icon-large">📄</div>
-            <h3>Arrastra y suelta tu CV aquí</h3>
-            <p>Soporta formato PDF (Máx 10MB)</p>
-            <button class="btn btn-primary mt-3" onclick="document.getElementById('cvUpload').click()">Seleccionar Archivo</button>
-            <input type="file" id="cvUpload" accept=".pdf" hidden>
-          </div>
-
-          <div id="uploadProgress" class="upload-progress hidden">
-            <div class="spinner"></div>
-            <h3>Analizando tu CV con IA...</h3>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" id="progressBar"></div>
-            </div>
-            <p id="progressText">Extrayendo experiencia laboral...</p>
-          </div>
-        </div>
-
-        <!-- PASO 2: VERIFICAR DATOS (Inicialmente Oculto) -->
-        <div id="step2-content" class="step-content hidden">
-          <div class="text-center mb-4">
-            <h2>Verifica tu Información ✏️</h2>
-            <p>Hemos extraído estos datos. Confirma que todo esté correcto antes de continuar.</p>
-          </div>
-          
-          <div id="extractedDataPlaceholder">
-            <!-- FORMULARIO DE EDICIÓN (Incrustado directamente) -->
-            <!-- FORMULARIO DE EDICIÓN - STEP 2 (VERIFICACIÓN) -->
-            <form id="verificationForm" class="profile-form">
-                <!-- 1. Información Personal -->
-                <div class="form-section">
-                    <h3>👤 Información Personal</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nombre</label>
-                            <input type="text" id="verify-firstName" name="firstName" placeholder="Ej: Juan">
+            <!-- Upload Hero -->
+            <div class="flex-1 flex flex-col items-center w-full max-w-4xl mx-auto mb-12" id="uploadArea">
+                <div class="relative w-full aspect-[21/9] rounded-2xl overflow-hidden group cursor-pointer">
+                    <div class="absolute inset-0 glass-panel border-dashed border-2 border-primary/30 group-hover:border-primary/60 transition-colors duration-500 z-10 rounded-2xl"></div>
+                    <div class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 p-8">
+                        <div class="w-24 h-24 rounded-2xl bg-gradient-to-b from-primary/20 to-transparent border border-primary/20 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-6xl text-primary/80">cloud_upload</span>
                         </div>
-                        <div class="form-group">
-                            <label>Apellidos</label>
-                            <input type="text" id="verify-lastName" name="lastName" placeholder="Ej: Pérez">
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="verify-email" name="email" placeholder="juan@ejemplo.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Teléfono</label>
-                            <input type="tel" id="verify-phone" name="phone" placeholder="+56 9 1234 5678">
-                        </div>
-                        <div class="form-group">
-                            <label>Cargo Actual / Título</label>
-                            <input type="text" id="verify-currentTitle" name="currentTitle" class="full-width" placeholder="Ej: Full Stack Developer">
-                        </div>
-                        <div class="form-group">
-                            <label>Ciudad</label>
-                            <input type="text" id="verify-city" name="city">
-                        </div>
-                        <div class="form-group">
-                            <label>País</label>
-                            <input type="text" id="verify-country" name="country">
-                        </div>
-                        <div class="form-group">
-                            <label>LinkedIn (URL)</label>
-                            <input type="url" id="verify-linkedin" name="linkedin" class="full-width" placeholder="https://linkedin.com/in/usuario">
-                        </div>
-                        <div class="form-group">
-                            <label>Portafolio / GitHub (URL)</label>
-                            <input type="url" id="verify-portfolio" name="portfolio" class="full-width">
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Resumen Profesional (Bio)</label>
-                            <textarea id="verify-summary" name="summary" rows="3" placeholder="Breve descripción de tu perfil..."></textarea>
-                        </div>
-
-                        <!-- Preferencia de Trabajo Remoto -->
-                        <div class="form-group full-width mt-2" style="border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: 10px;">
-                            <label style="display:flex; align-items:center; cursor:pointer;" title="Activa para filtrar ofertas presenciales">
-                                <input type="checkbox" id="verify-remoteOnlyPref" style="width:20px; height:20px; margin-right:10px; accent-color: var(--primary-color);">
-                                <div>
-                                    <span style="font-weight:600; color: #2d3748;">🌍 Preferencia: Solo Trabajo Remoto</span>
-                                    <p style="font-size:0.85rem; color:#718096; margin:0; font-weight:normal;">Ignorar ofertas presenciales (incluso en mi país)</p>
-                                </div>
-                            </label>
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white mb-2">UPLINK CV DATA</h3>
+                            <p class="text-gray-400 text-sm font-mono">Drop PDF file here to initiate parsing.</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- 2. Habilidades -->
-                <div class="form-section">
-                    <h3>🛠️ Habilidades Técnicas</h3>
-                    <div class="skills-input-container">
-                        <input type="text" id="verify-skillInput" placeholder="Escribe una habilidad y presiona Enter (ej: React, Python)">
-                        <button type="button" id="verify-addSkillBtn" class="btn btn-sm btn-secondary">Agregar</button>
-                    </div>
-                    <div id="verify-skillsTagsContainer" class="skills-tags-container">
-                        <!-- Las skills se generarán aquí -->
-                    </div>
-                    <!-- Input oculto para guardar array -->
-                    <input type="hidden" id="verify-skillsHidden" name="skills">
-                </div>
-
-                <!-- 3. Experiencia Laboral -->
-                <div class="form-section">
-                    <div class="section-header-row">
-                        <h3>💼 Experiencia Laboral</h3>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="addExperienceField()">+ Agregar</button>
-                    </div>
-                    <div id="experienceContainer" class="dynamic-list">
-                        <!-- Items de experiencia -->
-                    </div>
-                </div>
-
-                <!-- 4. Educación -->
-                <div class="form-section">
-                    <div class="section-header-row">
-                        <h3>🎓 Educación</h3>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="addEducationField()">+ Agregar</button>
-                    </div>
-                    <div id="educationContainer" class="dynamic-list">
-                        <!-- Items de educación -->
-                    </div>
-                </div>
-
-                <!-- 5. Certificaciones -->
-                <div class="form-section">
-                    <div class="section-header-row">
-                        <h3>📜 Certificaciones</h3>
-                         <button type="button" class="btn btn-sm btn-secondary" onclick="addNewCertification()">+ Agregar</button>
-                    </div>
-                    <div id="certificationsContainer" class="dynamic-list"></div>
-                </div>
-
-                <!-- 6. Idiomas -->
-                <div class="form-section">
-                     <div class="section-header-row">
-                        <h3>🗣️ Idiomas</h3>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="addNewLanguage()">+ Agregar</button>
-                    </div>
-                    <div id="languagesContainer" class="dynamic-list"></div>
-                </div>
-
-                 <!-- 7. Proyectos -->
-                 <div class="form-section">
-                     <div class="section-header-row">
-                        <h3>🚀 Proyectos</h3>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="addNewProject()">+ Agregar</button>
-                    </div>
-                    <div id="projectsContainer" class="dynamic-list"></div>
-                </div>
-            </form>
-          </div>
-
-          <div class="step-actions">
-            <!-- Botón Atrás NO DESTRUCTIVO -->
-            <button class="btn btn-secondary" onclick="attemptNavigation(1)">← Atrás (Subir otro)</button>
-            <button class="btn btn-primary" id="confirmDataBtn" onclick="attemptNavigation(3)">Confirmar y Continuar →</button>
-          </div>
-        </div>
-
-        <!-- PASO 3: GENERAR PERFILES IA (Inicialmente Oculto) -->
-        <div id="step3-content" class="step-content hidden">
-          <div class="text-center mb-4">
-            <h2>Crea tu Estrategia Profesional 🤖</h2>
-            <p>Genera 3 variantes de perfil optimizadas para diferentes roles.</p>
-          </div>
-
-          <!-- Estado Inicial: Card de Introducción -->
-          <div id="aiIntroContainer" class="ai-cards-container">
-            <div class="ai-intro-card">
-              <div class="icon">✨</div>
-              <h3>Potencia tu Perfil</h3>
-              <p>Nuestra IA analizará tu trayectoria y creará perfiles enfocados en tus fortalezas.</p>
-              <button class="btn btn-primary btn-lg" onclick="generateProfiles()">Generar Perfiles Ahora</button>
-              <button class="btn btn-sm btn-outline-secondary mt-3" onclick="openApiKeyModal()" style="display:block; margin: 10px auto;">⚙️ Configurar API Key (Groq)</button>
-            </div>
-          </div>
-          
-          <!-- Estado Cargando -->
-          <div id="wizardProfilesLoading" class="loading-state hidden">
-              <div class="spinner"></div>
-              <h3>Generando Estrategias con IA...</h3>
-              <p>Optimizando títulos, habilidades y palabras clave. Esto toma unos segundos.</p>
-          </div>
-
-          <!-- Estado Resultados -->
-          <div id="wizardProfilesResult" class="hidden">
-             <div id="wizardProfilesGrid" class="profiles-grid">
-                 <!-- Aquí se inyectan las tarjetas -->
-             </div>
-          </div>
-
-          <div class="step-actions hidden" id="finalActions">
-            <button class="btn btn-secondary" onclick="attemptNavigation(2)">← Volver</button>
-            <button class="btn btn-primary" onclick="initJobSearch()">Continuar: Buscar Empleo →</button>
-          </div>
-        </div>
-
-        <!-- PASO 4: BUSCAR JOB MATCH (Inicialmente Oculto) -->
-        <div id="step4-content" class="step-content hidden">
-          <div class="text-center mb-4">
-            <h2>Ofertas de Empleo Inteligentes 🎯</h2>
-            <p>Hacemos match de tu perfil seleccionado con ofertas reales en la web.</p>
-          </div>
-
-          <div id="jobSearchLoader" class="search-loader hidden">
-              <div class="spinner"></div>
-              <h3>Analizando el mercado laboral...</h3>
-              <p>Conectando con fuentes de empleo remotas...</p>
-          </div>
-          
-          <div id="jobResultsList" class="job-results-container">
-              <!-- Resultados -->
-              <div class="empty-state-search">
-                  <p>Presiona "Continuar" desde el paso anterior para iniciar la búsqueda.</p>
-              </div>
-          </div>
-
-          <div class="step-actions">
-            <button class="btn btn-secondary" onclick="attemptNavigation(3)">← Volver a Perfiles</button>
-            <button class="btn btn-success" onclick="finishWizard()">Guardar Progreso</button>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- Upload Section -->
-      <section id="upload" class="section hidden">
-        <div class="section-header">
-          <h2>📄 Subir CV en PDF</h2>
-          <p>Sube tu CV y extraeremos automáticamente tu información</p>
-        </div>
-
-        <div class="upload-container">
-          <div class="upload-area" id="uploadArea">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2"/>
-              <path d="M17 8L12 3L7 8" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 3V15" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <h3>Arrastra tu CV aquí</h3>
-            <p>o haz click para seleccionar</p>
-            <span class="file-types">PDF • Máximo 10MB</span>
-            <input type="file" id="cvFile" accept=".pdf" hidden>
-          </div>
-
-          <div id="uploadProgress" class="upload-progress hidden">
-            <div class="progress-bar">
-              <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <p id="uploadStatus">Procesando...</p>
-          </div>
-
-          <!-- Extracted Data Preview - Editable -->
-          <div id="extractedDataPreview" class="extracted-data-preview hidden">
-            <div class="preview-header">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#22c55e" stroke-width="2"/>
-                <path d="M9 12L11 14L15 10" stroke="#22c55e" stroke-width="2"/>
-              </svg>
-              <h3>📋 Datos Extraídos del CV</h3>
-              <p>Revisa y edita la información antes de guardar</p>
-            </div>
-
-            <div class="extracted-data-form">
-              <!-- Personal Info -->
-              <div class="data-section">
-                <h4>👤 Información Personal</h4>
-                <div class="data-fields">
-                  <div class="data-field">
-                    <label>Nombre</label>
-                    <input type="text" id="extracted-firstName" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                  <div class="data-field">
-                    <label>Apellido</label>
-                    <input type="text" id="extracted-lastName" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                  <div class="data-field">
-                    <label>Email</label>
-                    <input type="email" id="extracted-email" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                  <div class="data-field">
-                    <label>Teléfono</label>
-                    <input type="tel" id="extracted-phone" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Professional Info -->
-              <div class="data-section">
-                <h4>💼 Información Profesional</h4>
-                <div class="data-fields">
-                  <div class="data-field">
-                    <label>Título Profesional</label>
-                    <input type="text" id="extracted-currentTitle" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                  <div class="data-field">
-                    <label>Ciudad</label>
-                    <input type="text" id="extracted-city" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                  <div class="data-field">
-                    <label>País</label>
-                    <input type="text" id="extracted-country" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                  <div class="data-field">
-                    <label>LinkedIn</label>
-                    <input type="url" id="extracted-linkedin" class="editable-field">
-                    <span class="field-status"></span>
-                  </div>
-                </div>
-              </div>
-
-
-
-              <!-- Experience -->
-              <div class="data-section">
-                <div class="section-title-with-button">
-                  <h4>💼 Experiencia Profesional</h4>
-                  <button type="button" class="btn-add-item" id="addExperience">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    Agregar Experiencia
-                  </button>
-                </div>
-                <div id="extractedExperienceList" class="extracted-experience-list"></div>
-              </div>
-
-              <!-- Education -->
-              <div class="data-section">
-                <div class="section-title-with-button">
-                  <h4>🎓 Educación</h4>
-                  <button type="button" class="btn-add-item" id="addEducation">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    Agregar Educación
-                  </button>
-                </div>
-                <div id="extractedEducationList" class="extracted-education-list"></div>
-              </div>
-
-              <!-- Certifications (NEW) -->
-              <div class="data-section">
-                 <div class="section-title-with-button">
-                  <h4>📜 Certificaciones</h4>
-                  <button type="button" class="btn-add-item" onclick="addNewCertification()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    Agregar Certificación
-                  </button>
-                </div>
-                <div id="extractedCertificationsList" class="dynamic-list"></div>
-              </div>
-
-              <!-- Languages (NEW) -->
-              <div class="data-section">
-                <div class="section-title-with-button">
-                  <h4>🗣️ Idiomas</h4>
-                  <button type="button" class="btn-add-item" onclick="addNewLanguage()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    Agregar Idioma
-                  </button>
-                </div>
-                <div id="extractedLanguagesList" class="dynamic-list"></div>
-              </div>
-
-              <!-- Projects (NEW) -->
-              <div class="data-section">
-                <div class="section-title-with-button">
-                  <h4>🚀 Proyectos Destacados</h4>
-                  <button type="button" class="btn-add-item" onclick="addNewProject()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    Agregar Proyecto
-                  </button>
-                </div>
-                <div id="extractedProjectsList" class="dynamic-list"></div>
-              </div>
-
-              <!-- Skills -->
-              <div class="data-section">
-                <h4>🎯 Habilidades Detectadas</h4>
-                <div id="extractedSkillsList" class="extracted-skills-list"></div>
-                <p class="hint-text">Haz click en una habilidad para eliminarla, o agrega más en el perfil</p>
-              </div>
-
-              <!-- Summary Stats -->
-              <div class="extraction-stats">
-                <div class="stat-item">
-                  <span class="stat-icon">✅</span>
-                  <span class="stat-text"><strong id="fieldsExtracted">0</strong> campos detectados</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-icon">📝</span>
-                  <span class="stat-text"><strong id="fieldsEdited">0</strong> campos editados</span>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="preview-actions">
-                <button type="button" class="btn btn-secondary" id="discardExtraction">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  Descartar
-                </button>
-                <button type="button" class="btn btn-primary" id="saveExtractedData">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  Guardar y Continuar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Profile Section -->
-      <section id="profile" class="section hidden">
-        <div class="section-header">
-          <h2>👤 Mi Perfil</h2>
-          <p>Completa tu información para autocompletar formularios</p>
-        </div>
-
-        <form id="profileForm" class="profile-form">
-          <!-- Personal Information -->
-          <div class="form-section">
-            <h3>Información Personal</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="firstName">Nombre *</label>
-                <input type="text" id="firstName" name="firstName" required>
-              </div>
-              <div class="form-group">
-                <label for="lastName">Apellido *</label>
-                <input type="text" id="lastName" name="lastName" required>
-              </div>
+                <input type="file" id="cvFile" accept=".pdf" hidden>
             </div>
             
-            <div class="form-row">
-              <div class="form-group">
-                <label for="email">Email *</label>
-                <input type="email" id="email" name="email" required>
-              </div>
-              <div class="form-group">
-                <label for="phone">Teléfono</label>
-                <input type="tel" id="phone" name="phone">
-              </div>
+            <!-- Progress -->
+            <div id="uploadProgress" class="hidden w-full max-w-md mx-auto mb-8 glass-panel p-4 rounded-xl">
+                 <p class="text-center text-primary font-mono animate-pulse mb-2">PROCESSING NEURAL NET...</p>
+                 <div class="w-full bg-gray-800 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full" style="width: 50%" id="progressFill"></div>
+                 </div>
             </div>
 
-            <div class="form-group">
-              <label for="currentTitle">Título Profesional</label>
-              <input type="text" id="currentTitle" name="currentTitle" placeholder="ej: Full Stack Developer">
+            <!-- Extracted Data Preview (Step 1.5) -->
+            <div id="extractedDataPreview" class="hidden w-full max-w-4xl mx-auto animate-[fadeIn_0.5s]">
+                 <div class="glass-panel p-8 rounded-2xl border border-primary/30">
+                     <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
+                         <span class="material-symbols-outlined text-success-green text-3xl">check_circle</span>
+                         <div>
+                             <h3 class="text-xl font-bold text-white">Extraction Complete</h3>
+                             <p class="text-gray-400 text-sm">Review raw data before proceeding.</p>
+                         </div>
+                     </div>
+                     
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                         <div>
+                             <label class="text-xs text-gray-500 uppercase">First Name</label>
+                             <input type="text" id="extracted-firstName" class="glass-input">
+                         </div>
+                         <div>
+                             <label class="text-xs text-gray-500 uppercase">Last Name</label>
+                             <input type="text" id="extracted-lastName" class="glass-input">
+                         </div>
+                         <div class="md:col-span-2">
+                             <label class="text-xs text-gray-500 uppercase">Current Title</label>
+                             <input type="text" id="extracted-currentTitle" class="glass-input">
+                         </div>
+                     </div>
+
+                     <div class="flex justify-end gap-3">
+                         <button id="discardExtraction" class="px-4 py-2 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10">Discard</button>
+                         <button id="saveExtractedData" class="px-6 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-[0_0_15px_rgba(147,89,248,0.4)]">Save & Verify Nexus →</button>
+                     </div>
+                 </div>
             </div>
+        </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="city">Ciudad</label>
-                <input type="text" id="city" name="city">
-              </div>
-              <div class="form-group">
-                <label for="country">País</label>
-                <input type="text" id="country" name="country">
-              </div>
+        <!-- STEP 2: VERIFICATION FORM -->
+        <div id="step2-content" class="step-content hidden w-full max-w-4xl mx-auto">
+            <div class="glass-panel p-8 rounded-2xl">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">verified_user</span>
+                    Verify Identity Matrix
+                </h2>
+                
+                <form id="verificationForm" class="space-y-8">
+                    <!-- Personal Info -->
+                    <div>
+                        <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 border-b border-white/10 pb-2">Core Identity</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <input type="text" id="verify-firstName" placeholder="First Name" class="glass-input">
+                             <input type="text" id="verify-lastName" placeholder="Last Name" class="glass-input">
+                             <input type="email" id="verify-email" placeholder="Email" class="glass-input">
+                             <input type="tel" id="verify-phone" placeholder="Phone" class="glass-input">
+                             <input type="text" id="verify-currentTitle" placeholder="Professional Title" class="glass-input md:col-span-2">
+                             <input type="text" id="verify-city" placeholder="City" class="glass-input">
+                             <input type="text" id="verify-country" placeholder="Country" class="glass-input">
+                             <input type="url" id="verify-linkedin" placeholder="LinkedIn URL" class="glass-input md:col-span-2">
+                             <textarea id="verify-summary" rows="3" placeholder="Professional Summary" class="glass-input md:col-span-2"></textarea>
+                        </div>
+                        <!-- Remote Pref -->
+                        <div class="mt-4 flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                            <input type="checkbox" id="verify-remoteOnlyPref" class="w-5 h-5 rounded border-gray-600 text-primary focus:ring-primary bg-gray-700">
+                            <div>
+                                <span class="block text-sm font-bold text-white">Remote Only Protocol</span>
+                                <span class="block text-xs text-gray-400">Filter out on-site positions automatically.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div>
+                        <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 border-b border-white/10 pb-2">Neural Skills</h4>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="verify-skillInput" placeholder="Add skill (e.g. React)" class="glass-input">
+                            <button type="button" id="verify-addSkillBtn" class="px-4 rounded-lg bg-white/10 hover:bg-white/20 text-white">Add</button>
+                        </div>
+                        <div id="verify-skillsTagsContainer" class="flex flex-wrap gap-2 min-h-[40px] p-2 rounded-lg bg-black/20"></div>
+                        <input type="hidden" id="verify-skillsHidden">
+                    </div>
+
+                    <!-- Dynamic Sections (Placeholders for JS injection) -->
+                    <div id="experienceContainer"></div>
+                    <div id="educationContainer"></div>
+                    <div id="certificationsContainer"></div>
+                    <div id="languagesContainer"></div>
+                    <div id="projectsContainer"></div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-between pt-6 border-t border-white/10">
+                        <button type="button" class="text-gray-400 hover:text-white" onclick="attemptNavigation(1)">← Back to Upload</button>
+                        <button type="button" id="confirmDataBtn" class="px-8 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-glow-primary" onclick="attemptNavigation(3)">CONFIRM DATA →</button>
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <div class="form-group">
-              <label for="address">Dirección</label>
-              <input type="text" id="address" name="address">
+        <!-- STEP 3: AI PROFILES -->
+        <div id="step3-content" class="step-content hidden w-full max-w-6xl mx-auto">
+             <div class="text-center mb-10">
+                 <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">STRATEGY GENERATION</h2>
+                 <p class="text-gray-400 mt-2">Neural Network is crafting optimized personas for infiltration.</p>
+             </div>
+
+             <!-- Intro -->
+             <div id="aiIntroContainer" class="text-center py-10">
+                 <div class="glass-panel inline-block p-10 rounded-2xl max-w-md">
+                     <span class="material-symbols-outlined text-6xl text-primary mb-4">neurology</span>
+                     <h3 class="text-2xl font-bold text-white mb-2">Ready to Optimize?</h3>
+                     <p class="text-gray-400 mb-6">We will generate 3 variations of your profile to target specific market segments.</p>
+                     <button class="px-8 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-lg w-full" onclick="generateProfiles()">INITIATE SEQUENCE</button>
+                     <button class="mt-4 text-xs text-gray-500 hover:text-white" onclick="openApiKeyModal()">⚙️ Configure Neural Key (Groq)</button>
+                 </div>
+             </div>
+
+             <!-- Loading -->
+             <div id="wizardProfilesLoading" class="loading-state hidden">
+                 <div class="spinner"></div>
+                 <h3 class="text-xl font-bold text-white">Synthesizing Personas...</h3>
+                 <p class="text-gray-500">Analysing market data...</p>
+             </div>
+
+             <!-- Results Grid -->
+             <div id="wizardProfilesResult" class="hidden">
+                 <div id="wizardProfilesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <!-- Card Template injected by App.js -->
+                 </div>
+                 
+                 <div class="flex justify-center mt-10 gap-4" id="finalActions">
+                     <button class="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white" onclick="attemptNavigation(2)">Modify Source Data</button>
+                     <button class="px-8 py-2 rounded-lg bg-success-green hover:bg-green-600 text-white font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)]" onclick="initJobSearch()">PROCEED TO TARGETING →</button>
+                 </div>
+             </div>
+        </div>
+
+        <!-- STEP 4: JOB SEARCH -->
+        <div id="step4-content" class="step-content hidden w-full max-w-6xl mx-auto">
+             <div class="flex justify-between items-end mb-6">
+                 <div>
+                     <h2 class="text-3xl font-bold text-white flex items-center gap-3">
+                         <span class="material-symbols-outlined text-success-green animate-pulse">radar</span>
+                         Active Targets
+                     </h2>
+                 </div>
+                 <div class="flex gap-2">
+                     <button class="px-4 py-2 rounded-lg bg-glass-bg border border-white/10 text-xs text-gray-300">Remote Only</button>
+                 </div>
+             </div>
+             
+             <div id="jobSearchLoader" class="text-center py-20 hidden">
+                  <div class="spinner"></div>
+                  <p class="text-primary font-mono">SCANNING GLOBAL NETWORKS...</p>
+             </div>
+
+             <div id="jobResultsList" class="flex flex-col gap-4">
+                 <!-- Job Cards injected here -->
+                 <div class="glass-panel p-8 text-center rounded-xl">
+                     <p class="text-gray-500">System idle. Initiate search protocol above.</p>
+                 </div>
+             </div>
+        </div>
+
+    </div>
+
+    <!-- Terminal (Footer) -->
+    <div class="h-8 bg-black/95 border-t border-white/10 flex items-center px-4 gap-4 overflow-hidden z-20 shrink-0">
+        <div class="flex items-center gap-2 text-xs font-mono text-gray-500 shrink-0">
+            <span class="size-1.5 bg-accent-cyan rounded-full animate-ping"></span>
+            <span>PANOPTES_TERMINAL</span>
+        </div>
+        <div class="text-[10px] font-mono text-accent-cyan/80 flex-1 truncate" id="debugConsole">
+            > System Ready.
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass-panel p-6 rounded-xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-white mb-4">Neural Link Configuration</h3>
+            <label class="block text-xs text-gray-400 mb-2 uppercase">Groq API Key</label>
+            <input type="password" id="groqApiKeyInput" class="glass-input mb-4">
+            <div class="flex justify-end gap-3">
+                <button id="cancelApiKey" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button id="saveApiKey" class="px-4 py-2 bg-primary rounded-lg text-white font-bold">Save Key</button>
             </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="linkedin">LinkedIn</label>
-                <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/tu-perfil">
-              </div>
-              <div class="form-group">
-                <label for="portfolio">Portfolio/Website</label>
-                <input type="url" id="portfolio" name="portfolio" placeholder="https://tu-sitio.com">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="summary">Resumen Profesional</label>
-              <textarea id="summary" name="summary" rows="4" placeholder="Describe brevemente tu experiencia y objetivos profesionales..."></textarea>
-            </div>
-          </div>
-
-          <!-- Skills -->
-          <div class="form-section">
-            <h3>Habilidades</h3>
-            <div class="skills-input">
-              <input type="text" id="skillInput" placeholder="Agrega una habilidad y presiona Enter">
-              <div id="skillsList" class="skills-list"></div>
-            </div>
-          </div>
-
-          <!-- Form Actions -->
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" id="resetForm">Limpiar</button>
-            <button type="submit" class="btn btn-primary">Guardar Perfil</button>
-          </div>
-        </form>
-      </section>
+        </div>
     </div>
-  </main>
 
-  <!-- Profiles Modal -->
-  <div id="profilesModal" class="modal hidden">
-    <div class="modal-overlay"></div>
-    <div class="modal-content profiles-modal-content">
-      <div class="modal-header">
-        <div class="modal-title-section">
-          <h2>🤖 Perfiles Profesionales Generados</h2>
-          <p>Selecciona el perfil con el que deseas buscar trabajo</p>
-        </div>
-        <button class="modal-close" id="closeProfilesModal">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </button>
-      </div>
+</main>
 
-      <!-- Loading State -->
-      <div id="modalProfilesLoading" class="profiles-loading">
-        <div class="loading-spinner"></div>
-        <p>Generando perfiles profesionales con IA...</p>
-        <span class="loading-hint">Esto puede tomar unos segundos</span>
-      </div>
-
-      <!-- Error State -->
-      <div id="modalProfilesError" class="profiles-error hidden">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="#ef4444" stroke-width="2"/>
-          <path d="M12 8V12M12 16H12.01" stroke="#ef4444" stroke-width="2"/>
-        </svg>
-        <h3>Error al generar perfiles</h3>
-        <p id="modalProfilesErrorMessage"></p>
-        <div class="error-actions">
-          <button class="btn btn-secondary" id="configureApiKeyModalBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            Configurar API Key
-          </button>
-          <button class="btn btn-primary" id="retryGenerateProfilesModal">
-            Intentar de nuevo
-          </button>
-        </div>
-      </div>
-
-      <!-- Profiles Grid -->
-      <div id="modalProfilesGrid" class="profiles-grid hidden">
-        <!-- Profile cards will be inserted here dynamically -->
-      </div>
-
-      <!-- Modal Footer -->
-      <div id="profilesFooter" class="modal-footer hidden">
-        <div class="footer-info">
-          <span class="info-icon">💡</span>
-          <span>Puedes cambiar de perfil en cualquier momento desde tu dashboard</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- API Key Configuration Modal -->
-  <div id="apiKeyModal" class="modal hidden">
-    <div class="modal-overlay"></div>
-    <div class="modal-content api-key-modal-content">
-      <div class="modal-header">
-        <div class="modal-title-section">
-          <h2>⚙️ Configurar API Key de Groq</h2>
-          <p>Ingresa tu API key para habilitar la generación de perfiles con IA</p>
-        </div>
-        <button class="modal-close" id="closeApiKeyModal">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="api-key-form">
-        <div class="form-group">
-          <label for="groqApiKeyInput">API Key de Groq</label>
-          <input 
-            type="password" 
-            id="groqApiKeyInput" 
-            class="api-key-input" 
-            placeholder="gsk_..." 
-            autocomplete="off"
-          />
-          <button type="button" class="toggle-visibility" id="toggleApiKeyVisibility">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="2"/>
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="api-key-info">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#3b82f6" stroke-width="2"/>
-            <path d="M12 16V12M12 8H12.01" stroke="#3b82f6" stroke-width="2"/>
-          </svg>
-          <div>
-            <p><strong>¿Dónde obtener tu API Key?</strong></p>
-            <ol>
-              <li>Visita <a href="https://console.groq.com" target="_blank">console.groq.com</a></li>
-              <li>Crea una cuenta gratuita</li>
-              <li>Ve a "API Keys" y genera una nueva key</li>
-              <li>Copia y pega la key aquí</li>
-            </ol>
-          </div>
-        </div>
-
-        <div class="api-key-actions">
-          <button class="btn btn-secondary" id="cancelApiKey">
-            Cancelar
-          </button>
-          <button class="btn btn-primary" id="saveApiKey">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            Guardar y Continuar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notifications -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <link rel="stylesheet" href="css/debug.css">
-  
-  <!-- Debug Console -->
-  <div id="debugConsole" class="visible">
-    <div style="position:sticky; top:0; background:#333; padding:2px; margin-bottom:5px; display:flex; justify-content:space-between;">
-        <span>CONSOLE LOGS</span>
-        <button onclick="document.getElementById('debugConsole').innerHTML=''" style="background:red;color:white;border:none;cursor:pointer;">CLEAR</button>
-    </div>
-  </div>
-
-  <!-- Profiles Management Modal -->
-  <div class="modal-overlay" id="profilesModalOverlay">
-    <div class="modal-container profiles-modal">
-      <div class="modal-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2"/>
-            <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="2"/>
-            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          Gestionar Perfiles
-        </h2>
-        <button class="modal-close" id="closeProfilesModal">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="profiles-grid" id="profilesGrid">
-          <!-- Profiles cards will be rendered here -->
-          <div class="profiles-loading">
-            <div class="spinner"></div>
-            <p>Cargando perfiles...</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-primary" id="addProfileBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          Crear Nuevo Perfil
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Create/Edit Profile Modal -->
-  <div class="modal-overlay" id="profileFormModalOverlay">
-    <div class="modal-container profile-form-modal">
-      <div class="modal-header">
-        <h2 id="profileFormTitle">Crear Nuevo Perfil</h2>
-        <button class="modal-close" id="closeProfileFormModal">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <form id="profileForm">
-          <div class="form-group">
-            <label for="profileName">
-              Nombre del Perfil <span class="required-indicator">*</span>
-            </label>
-            <input 
-              type="text" 
-              id="profileName" 
-              name="profileName" 
-              placeholder="ej: Frontend Developer"
-              required
-              maxlength="100"
-            />
-            <span class="field-error" id="profileNameError"></span>
-          </div>
-
-          <div class="form-group">
-            <label for="profileType">Tipo de Perfil</label>
-            <select id="profileType" name="profileType">
-              <option value="general">General</option>
-              <option value="frontend">Frontend Developer</option>
-              <option value="backend">Backend Developer</option>
-              <option value="fullstack">Full Stack Developer</option>
-              <option value="mobile">Mobile Developer</option>
-              <option value="devops">DevOps Engineer</option>
-              <option value="data">Data Scientist</option>
-              <option value="design">UI/UX Designer</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="profileIsDefault" name="profileIsDefault" />
-              <span>Marcar como perfil predeterminado</span>
-            </label>
-          </div>
-
-          <div class="form-group" id="copyFromGroup" style="display:none;">
-            <label class="checkbox-label">
-              <input type="checkbox" id="profileCopyFrom" name="profileCopyFrom" />
-              <span>Copiar datos del perfil actual</span>
-            </label>
-          </div>
-
-          <input type="hidden" id="profileId" name="profileId" />
-        </form>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelProfileForm">Cancelar</button>
-        <button class="btn btn-primary" id="saveProfileForm">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M17 21V13H7V21" stroke="currentColor" stroke-width="2"/>
-            <path d="M7 3V8H15" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          Guardar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Debug Console -->
-  <div id="debugConsole" class="visible">
-    <div style="position:sticky; top:0; background:#333; padding:2px; margin-bottom:5px; display:flex; justify-content:space-between;">
-        <span>CONSOLE LOGS</span>
-        <button onclick="document.getElementById('debugConsole').innerHTML=''" style="background:red;color:white;border:none;cursor:pointer;">CLEAR</button>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="js/validators.js"></script>
-  <script src="js/profilesManager.js"></script>
-  <script src="js/profilesModals.js"></script>
-  <script src="js/autoSave.js"></script>
-  <script src="js/app.js?v=4.5"></script>
+<script src="js/validators.js"></script>
+<script src="js/profilesManager.js"></script>
+<script src="js/profilesModals.js"></script>
+<script src="js/autoSave.js"></script>
+<script src="js/app.js?v=4.8"></script>
 </body>
 </html>
