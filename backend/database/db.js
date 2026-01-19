@@ -26,6 +26,14 @@ function initDB() {
           console.error('⚠️ Error en migración de perfiles:', migrationError);
         }
         
+        // Ejecutar migración de aplicaciones
+        try {
+          const { migrateApplications } = require('./applicationsSchema');
+          await migrateApplications(db);
+        } catch (migrationError) {
+          console.error('⚠️ Error en migración de aplicaciones:', migrationError);
+        }
+        
         resolve(db);
       }
     });
@@ -35,14 +43,19 @@ function initDB() {
 // Inicializar tablas
 function initializeTables() {
   db.serialize(() => {
-    // Tabla de usuarios
+    // Tabla de usuarios con autenticación
     db.run(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Crear índice único en email
+    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
 
     // Tabla de información personal
     db.run(`

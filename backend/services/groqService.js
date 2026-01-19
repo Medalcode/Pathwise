@@ -214,9 +214,105 @@ function isConfigured() {
   return !!process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here';
 }
 
+/**
+ * Genera una carta de presentación personalizada usando IA
+ * @param {Object} profile - Perfil del usuario
+ * @param {string} jobDescription - Descripción del trabajo
+ * @param {Object} options - Opciones (tone, company, jobTitle)
+ * @returns {Promise<Object>} - Carta generada
+ */
+async function generateCoverLetter(profile, jobDescription, options = {}) {
+  try {
+    const groqApiKey = process.env.GROQ_API_KEY;
+    
+    if (!groqApiKey || groqApiKey === 'your_groq_api_key_here') {
+      throw new Error('API key de Groq no configurada');
+    }
+    
+    const groqClient = new Groq({ apiKey: groqApiKey });
+    
+    const { tone = 'professional', company = '', jobTitle = '' } = options;
+    
+    const tonePrompts = {
+      professional: 'formal y corporativo, apropiado para empresas establecidas',
+      casual: 'amigable y cercano, apropiado para startups y empresas innovadoras',
+      technical: 'técnico y detallado, enfocado en habilidades y logros específicos'
+    };
+    
+    const toneInstruction = tonePrompts[tone] || tonePrompts.professional;
+    
+    // Construir contexto del perfil
+    let profileContext = '';
+    
+    if (profile.personalInfo) {
+      const { firstName, lastName, currentTitle, summary } = profile.personalInfo;
+      profileContext += `Nombre: ${firstName} ${lastName}\n`;
+      if (currentTitle) profileContext += `Título actual: ${currentTitle}\n`;
+      if (summary) profileContext += `Resumen: ${summary}\n`;
+    }
+    
+    if (profile.experience && profile.experience.length > 0) {
+      profileContext += '\nExperiencia:\n';
+      profile.experience.slice(0, 3).forEach(exp => {
+        profileContext += `- ${exp.title} en ${exp.company}\n`;
+        if (exp.description) profileContext += `  ${exp.description.substring(0, 200)}\n`;
+      });
+    }
+    
+    if (profile.skills && profile.skills.length > 0) {
+      profileContext += `\nHabilidades: ${profile.skills.slice(0, 10).join(', ')}\n`;
+    }
+    
+    const prompt = `Genera una carta de presentación ${toneInstruction} para:
+- Puesto: ${jobTitle || 'el puesto descrito'}
+- Empresa: ${company || 'la empresa'}
+- Descripción del trabajo: ${jobDescription}
+
+Basándote en mi perfil profesional:
+${profileContext}
+
+Requisitos:
+- Longitud: 250-300 palabras
+- Estructura: Introducción (por qué me interesa), cuerpo (experiencia y skills relevantes), cierre (llamado a la acción)
+- Destacar experiencia y habilidades que coincidan con la descripción del trabajo
+- Mencionar por qué me interesa la empresa/puesto
+- Tono: ${toneInstruction}
+- Idioma: Español
+- NO incluir dirección ni fecha (solo el cuerpo de la carta)
+
+Genera SOLO la carta de presentación, sin comentarios adicionales, sin "Estimado/a", sin firma al final.`;
+
+    const completion = await groqClient.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 800
+    });
+    
+    const coverLetter = completion.choices[0]?.message?.content || '';
+    const wordCount = coverLetter.split(/\s+/).length;
+    
+    return {
+      success: true,
+      coverLetter,
+      wordCount,
+      metadata: {
+        tone,
+        model: 'llama-3.3-70b-versatile',
+        tokensUsed: completion.usage?.total_tokens || 0,
+        generatedAt: new Date().toISOString()
+      }
+    };
+  } catch (error) {
+    console.error('❌ Error generando cover letter:', error);
+    throw new Error(`Error al generar carta de presentación: ${error.message}`);
+  }
+}
+
 module.exports = {
   generateProfessionalProfiles,
-  parseCVWithAI, // Nueva función exportada
+  parseCVWithAI,
+  generateCoverLetter,
   isConfigured
 };
 

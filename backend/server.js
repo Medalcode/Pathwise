@@ -41,15 +41,21 @@ console.log('🗂️ Servir estáticos desde:', staticPath);
 app.use(express.static(staticPath));
 
 // Rutas de la API
+const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const uploadRoutes = require('./routes/upload');
 const jobsRoutes = require('./routes/jobs');
 const profilesRoutes = require('./routes/profiles');
+const applicationsRoutes = require('./routes/applications');
+const coverLetterRoutes = require('./routes/coverLetter');
 
+app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/profiles', profilesRoutes);
+app.use('/api/applications', applicationsRoutes);
+app.use('/api/cover-letter', coverLetterRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -59,6 +65,16 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Sync status endpoint
+app.get('/api/sync/status', (req, res) => {
+  const syncStatus = storageService.getSyncStatus();
+  res.json({
+    success: true,
+    ...syncStatus
+  });
+});
+
 
 // Ruta principal - Servir el dashboard
 app.get('/', (req, res) => {
@@ -107,11 +123,12 @@ async function startServer() {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     });
 
-    // Configurar backup automático periódico (cada 10 minutos)
+    // Configurar backup automático periódico (cada 5 minutos)
     if (process.env.GCS_BUCKET_NAME) {
       setInterval(() => {
         storageService.uploadDatabase().catch(err => console.error('❌ Error en backup automático:', err));
-      }, 10 * 60 * 1000);
+      }, 5 * 60 * 1000); // 5 minutos
+      console.log('🔄 Backup automático configurado (cada 5 minutos)');
     }
 
     // Manejo de cierre graceful
