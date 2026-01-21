@@ -35,6 +35,9 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 let currentProfile = null;
 let skills = [];
 
+// Exponer globalmente para validaciones
+window.currentProfile = currentProfile;
+
 // Init
 // Init
 document.addEventListener('DOMContentLoaded', init);
@@ -835,6 +838,9 @@ async function saveExtractedData() {
     
     // Guardar datos completos del perfil
     localStorage.setItem(`panoptes_profile_data_${profileId}`, JSON.stringify(currentProfile));
+    
+    // Exponer globalmente
+    window.currentProfile = currentProfile;
     
     // Actualizar lista de perfiles si es nuevo
     if (window.ProfilesManager) {

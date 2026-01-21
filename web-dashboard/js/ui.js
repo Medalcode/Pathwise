@@ -122,7 +122,26 @@ const UI = {
     },
 
     checkProfileExists() {
-        return !!window.currentProfile;
+        // Check window.currentProfile first
+        if (window.currentProfile) return true;
+        
+        // Fallback: Check if there's any profile data in localStorage
+        const keys = Object.keys(localStorage);
+        const hasProfileData = keys.some(key => key.startsWith('panoptes_profile_data_'));
+        
+        if (hasProfileData) {
+            // Try to load the first profile found
+            const profileKey = keys.find(k => k.startsWith('panoptes_profile_data_'));
+            try {
+                const profileData = JSON.parse(localStorage.getItem(profileKey));
+                window.currentProfile = profileData;
+                return true;
+            } catch (e) {
+                console.error('Error loading profile from localStorage:', e);
+            }
+        }
+        
+        return false;
     },
 
     /**
