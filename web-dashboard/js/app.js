@@ -340,22 +340,53 @@ async function loadProfile() {
 }
 
 function populateForm(profile) {
-  if (!profile) return;
+  if (!profile) {
+    console.warn('⚠️ populateForm: No hay perfil para poblar');
+    return;
+  }
 
-  const { personalInfo, experience, education } = profile;
+  console.log('📝 Poblando formulario con perfil:', profile);
+
+  const { personalInfo, experience, education, skills } = profile;
   
   const setField = (baseId, val) => {
       const v = val || '';
+      let fieldsSet = 0;
+      
+      // Intentar con diferentes prefijos
       const el1 = document.getElementById(baseId);
-      if(el1) el1.value = v;
+      if(el1) {
+        el1.value = v;
+        fieldsSet++;
+      }
+      
       const el2 = document.getElementById('verify-' + baseId);
-      if(el2) el2.value = v;
+      if(el2) {
+        el2.value = v;
+        fieldsSet++;
+        // Trigger validation si existe
+        if (window.Step2Validator) {
+          window.Step2Validator.validateField(el2);
+        }
+      }
+      
       const el3 = document.getElementById('extracted-' + baseId);
-      if(el3) el3.value = v;
+      if(el3) {
+        el3.value = v;
+        fieldsSet++;
+      }
+      
+      if (fieldsSet > 0 && v) {
+        console.log(`✓ Campo ${baseId} poblado: "${v}" (${fieldsSet} elementos)`);
+      } else if (v) {
+        console.warn(`⚠️ Campo ${baseId} no encontrado en el DOM`);
+      }
   };
   
   // Personal info
   if (personalInfo) {
+      console.log('📋 Poblando información personal:', personalInfo);
+      
       setField('firstName', personalInfo.firstName);
       setField('lastName', personalInfo.lastName);
       setField('email', personalInfo.email);
@@ -366,6 +397,7 @@ function populateForm(profile) {
       setField('address', personalInfo.address);
       setField('linkedin', personalInfo.linkedin);
       setField('portfolio', personalInfo.portfolio);
+      setField('github', personalInfo.github);
       setField('summary', personalInfo.summary);
       
        // Remote preference
@@ -375,21 +407,34 @@ function populateForm(profile) {
          const r2 = document.getElementById('verify-remoteOnlyPref');
          if(r2) r2.checked = true;
       }
+  } else {
+    console.warn('⚠️ No hay personalInfo en el perfil');
   }
   
   // Skills
-  skills = profile.skills || [];
-  renderSkills();
+  if (skills && Array.isArray(skills)) {
+    console.log(`📋 Poblando ${skills.length} habilidades`);
+    window.skills = skills;
+    renderSkills();
+  } else if (profile.skills) {
+    console.log(`📋 Poblando ${profile.skills.length} habilidades`);
+    window.skills = profile.skills || [];
+    renderSkills();
+  }
 
   // Experience
   const expContainer = document.getElementById('experienceContainer');
   if (expContainer) {
       expContainer.innerHTML = ''; // Limpiar
-      if (experience && Array.isArray(experience)) {
-          experience.forEach(exp => {
+      if (experience && Array.isArray(experience) && experience.length > 0) {
+          console.log(`📋 Poblando ${experience.length} experiencias`);
+          experience.forEach((exp, index) => {
+             console.log(`  - Experiencia ${index + 1}:`, exp.title, 'en', exp.company);
              // Crear campos y llenarlos
              if(window.CVProcessor) window.CVProcessor.addExperienceField(exp);
           });
+      } else {
+        console.log('ℹ️ No hay experiencias para poblar');
       }
   }
 
@@ -397,12 +442,25 @@ function populateForm(profile) {
   const eduContainer = document.getElementById('educationContainer');
   if (eduContainer) {
       eduContainer.innerHTML = ''; // Limpiar
-      if (education && Array.isArray(education)) {
-          education.forEach(edu => {
+      if (education && Array.isArray(education) && education.length > 0) {
+          console.log(`📋 Poblando ${education.length} educaciones`);
+          education.forEach((edu, index) => {
+             console.log(`  - Educación ${index + 1}:`, edu.degree, 'en', edu.school);
              if(window.CVProcessor) window.CVProcessor.addEducationField(edu);
           });
+      } else {
+        console.log('ℹ️ No hay educación para poblar');
       }
   }
+  
+  // Actualizar score de completitud si estamos en Step 2
+  if (window.Step2Completeness) {
+    setTimeout(() => {
+      window.Step2Completeness.update();
+    }, 500);
+  }
+  
+  console.log('✅ Formulario poblado completamente');
 }
 
 // Helper para crear inputs dinámicos de experiencia (Cyberpunk Style)
