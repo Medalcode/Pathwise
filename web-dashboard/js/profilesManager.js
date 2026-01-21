@@ -76,30 +76,46 @@ const ProfilesManager = {
    */
   async loadProfiles() {
     try {
-      const response = await window.auth.fetch('/api/profiles');
-      const data = await response.json();
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (data.success) {
-        this.profiles = data.profiles;
-        
-        // Encontrar perfil por defecto o usar el primero
-        this.currentProfile = this.profiles.find(p => p.isDefault) || this.profiles[0];
-        
-        // Actualizar UI
-        this.updateCurrentProfileDisplay();
-        this.renderProfileList();
-        
-        console.log('✅ Perfiles cargados:', this.profiles.length);
-      } else {
-        throw new Error(data.error || 'Error cargando perfiles');
-      }
-    } catch (error) {
-      console.error('❌ Error cargando perfiles:', error);
-      showToast(window.t('error_loading_profiles'), 'error');
+      const savedProfiles = localStorage.getItem('panoptes_profiles');
       
-      // Mostrar estado de error
-      this.showProfilesError();
+      if (savedProfiles) {
+        this.profiles = JSON.parse(savedProfiles);
+      } else {
+        // Crear perfil inicial por defecto si no existe
+        this.profiles = [{
+            id: 'default-profile',
+            name: 'Mi Perfil',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        }];
+        this.saveProfilesToLocal();
+      }
+
+      // Encontrar perfil por defecto o usar el primero
+      this.currentProfile = this.profiles.find(p => p.isDefault) || this.profiles[0];
+      
+      // Actualizar UI
+      this.updateCurrentProfileDisplay();
+      this.renderProfileList();
+      
+      console.log('✅ Perfiles cargados (Local):', this.profiles.length);
+      
+      // Emitir evento para que otros componentes sepan que el perfil cambió
+      if (this.currentProfile) {
+          window.dispatchEvent(new CustomEvent('profile:loaded', { detail: this.currentProfile }));
+      }
+
+    } catch (error) {
+      console.error('❌ Error cargando perfiles locales:', error);
+      showToast('Error cargando perfiles locales', 'error');
     }
+  },
+
+  saveProfilesToLocal() {
+      localStorage.setItem('panoptes_profiles', JSON.stringify(this.profiles));
   },
 
   /**
@@ -234,27 +250,32 @@ const ProfilesManager = {
   /**
    * Cargar datos de un perfil específico
    */
+  /**
+   * Cargar datos de un perfil específico (Local)
+   */
   async loadProfileData(profileId) {
     try {
-      const response = await window.auth.fetch(`/api/profiles/${profileId}`);
-      const data = await response.json();
+      // En modo local, los datos del perfil se guardan bajo 'panoptes_profile_data_[id]'
+      const savedData = localStorage.getItem(`panoptes_profile_data_${profileId}`);
+      let profileData = null;
 
-      if (data.success) {
-        // Actualizar datos en la aplicación
-        if (typeof populateForm === 'function') {
-          populateForm(data.profile.data);
-        }
-        
-        // Disparar evento personalizado
-        window.dispatchEvent(new CustomEvent('profileChanged', {
-          detail: { profile: data.profile }
-        }));
-      } else {
-        throw new Error(data.error || 'Error cargando datos del perfil');
+      if (savedData) {
+         profileData = JSON.parse(savedData);
       }
+      
+      // Actualizar datos en la aplicación si la función existe
+      if (typeof populateForm === 'function' && profileData) {
+         populateForm(profileData);
+      }
+      
+      // Disparar evento personalizado
+      window.dispatchEvent(new CustomEvent('profileChanged', {
+        detail: { profileId, data: profileData }
+      }));
+
     } catch (error) {
       console.error('❌ Error cargando datos del perfil:', error);
-      throw error;
+      // No re-lanzamos error para no bloquear la UI en modo local
     }
   },
 
@@ -306,30 +327,30 @@ const ProfilesManager = {
   /**
    * Crear nuevo perfil
    */
+  /**
+   * Crear nuevo perfil (Local)
+   */
   async createProfile(name, type = 'general', copyFromProfile = null) {
     try {
-      const response = await window.auth.fetch('/api/profiles', {
-        method: 'POST',
-        body: JSON.stringify({
-          name,
-          type,
-          copyFromProfile
-        })
-      });
+      const newProfile = {
+          id: Date.now(), // ID simple basado en timestamp
+          name: name,
+          type: type,
+          isDefault: false,
+          createdAt: new Date().toISOString()
+      };
 
-      const data = await response.json();
+      this.profiles.push(newProfile);
+      this.saveProfilesToLocal();
 
-      if (data.success) {
-        showToast(window.t('profile_created_success'), 'success');
-        
-        // Recargar perfiles
-        await this.loadProfiles();
-        
-        // Cambiar al nuevo perfil
-        await this.switchProfile(data.profile.id);
-      } else {
-        throw new Error(data.error || 'Error creando perfil');
-      }
+      showToast(window.t('profile_created_success'), 'success');
+      
+      // Recargar perfiles
+      await this.loadProfiles();
+      
+      // Cambiar al nuevo perfil
+      await this.switchProfile(newProfile.id);
+
     } catch (error) {
       console.error('❌ Error creando perfil:', error);
       showToast(window.t('error_creating_profile'), 'error');
