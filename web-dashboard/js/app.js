@@ -709,6 +709,13 @@ function removeEducation(index) {
 
 function renderExtractedSkills() {
   const skillsList = document.getElementById('extractedSkillsList');
+  if (!skillsList) return;
+  
+  if (!extractedSkills || extractedSkills.length === 0) {
+      skillsList.innerHTML = '<div class="empty-list">No se detectaron habilidades</div>';
+      return;
+  }
+
   skillsList.innerHTML = extractedSkills.map(skill => `
     <div class="extracted-skill" onclick="removeExtractedSkill('${skill}')">
       <span>${skill}</span>
