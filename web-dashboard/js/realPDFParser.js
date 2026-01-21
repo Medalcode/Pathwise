@@ -197,44 +197,68 @@ const RealPDFParser = {
     },
     
     /**
-     * Identificar secciones en el texto (Nuevo Helper)
+     * Identificar secciones en el texto (Nuevo Helper v2)
      */
     identifySections(text) {
         // Mapa de secciones y sus posibles cabeceras
         const sectionHeaders = {
-            experience: ['experiencia', 'experience', 'trabajo', 'work', 'historial', 'trayectoria'],
-            education: ['educación', 'education', 'formación', 'academic', 'estudios', 'antecedentes'],
-            skills: ['habilidades', 'skills', 'competencias', 'tecnologías', 'technologies', 'conocimientos'],
-            certifications: ['certificaciones', 'certifications', 'diplomas', 'cursos'],
+            experience: ['experiencia', 'experience', 'trabajo', 'work', 'historial', 'trayectoria', 'employment', 'history'],
+            education: ['educacion', 'education', 'formacion', 'academic', 'estudios', 'antecedentes', 'títulos', 'degrees'],
+            skills: ['habilidades', 'skills', 'competencias', 'tecnologias', 'technologies', 'conocimientos', 'apto', 'stack'],
+            certifications: ['certificaciones', 'certifications', 'diplomas', 'cursos', 'licencias'],
             projects: ['proyectos', 'projects', 'portafolio'],
             languages: ['idiomas', 'languages'],
-            summary: ['resumen', 'summary', 'perfil', 'profile', 'sobre mí', 'about']
+            summary: ['resumen', 'summary', 'perfil', 'profile', 'sobre', 'about']
         };
 
         const foundSections = [];
         const lines = text.split('\n');
         
+        console.log(`🔍 Analizando ${lines.length} líneas para estructura...`);
+        
+        // Función para normalizar texto (quitar acentos, etc)
+        const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        
         // Recorrer líneas buscando cabeceras
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim().toLowerCase();
-            // Criterios para ser cabecera: corta (<40 chars), sin números al inicio (excepto bullet points)
-            if (line.length < 40 && line.length > 3 && !/^\d/.test(line)) {
+            const rawLine = lines[i];
+            const line = normalize(rawLine);
+            
+            // Criterios para ser cabecera: corta (<50 chars), sin números al inicio (excepto bullet points o índices)
+            // Permitimos líneas un poco más largas si tienen palabras clave fuertes en mayúsculas en el original
+            const isUpperCase = rawLine.trim() === rawLine.trim().toUpperCase() && rawLine.trim().length > 3;
+            
+            if (line.length < 50 && line.length > 2 && !/^\d{4}/.test(line)) {
                 
                 // Chequear contra cada tipo
                 for (const [type, keywords] of Object.entries(sectionHeaders)) {
-                    if (keywords.some(k => line.includes(k))) {
-                        // Verificar que no sea parte de una oración larga
-                         if (keywords.some(k => line === k || line.startsWith(k + ' ') || line.endsWith(' ' + k) || line.includes(' ' + k + ' '))) {
-                            foundSections.push({ type, lineIndex: i, text: lines[i] });
-                            break; // Una línea solo puede ser un tipo de sección
-                         }
+                    // Buscar coincidencia exacta o "palabra clave" aislada
+                    if (keywords.some(k => line === k || line.startsWith(k + ' ') || line.endsWith(' ' + k) || line.includes(' ' + k + ' ') || line === k + ':')) {
+                         console.log(`📌 Cabecera detectada (${type}): "${rawLine}" (Línea ${i})`);
+                         foundSections.push({ type, lineIndex: i, text: rawLine });
+                         break;
+                    }
+                    
+                    // Si es mayúscula completa, somos más flexibles con la coincidencia
+                    if (isUpperCase && keywords.some(k => line.includes(k))) {
+                         console.log(`📌 Cabecera UPPERCASE detectada (${type}): "${rawLine}" (Línea ${i})`);
+                         foundSections.push({ type, lineIndex: i, text: rawLine });
+                         break;
                     }
                 }
             }
         }
         
-        // Ordenar por aparición
-        return foundSections.sort((a, b) => a.lineIndex - b.lineIndex);
+        // Eliminar duplicados cercanos (quedarse con el primero)
+        const uniqueSections = [];
+        foundSections.forEach(section => {
+            const prev = uniqueSections[uniqueSections.length - 1];
+            if (!prev || prev.type !== section.type || section.lineIndex - prev.lineIndex > 5) {
+                uniqueSections.push(section);
+            }
+        });
+        
+        return uniqueSections.sort((a, b) => a.lineIndex - b.lineIndex);
     },
 
     /**
@@ -242,18 +266,28 @@ const RealPDFParser = {
      */
     extractSectionText(text, sectionType) {
         const sections = this.identifySections(text);
-        const targetSection = sections.find(s => s.type === sectionType);
         
+        // Priorizar la primera ocurrencia de la sección
+        let targetSection = sections.find(s => s.type === sectionType);
+        
+        // Arreglo específico para EDUCATION vs EXPERIENCE
+        // Si no encontramos 'education' pero tenemos 'experience', intentar buscar en el resto del documento
+        if (!targetSection && sectionType === 'education') {
+             // Fallback regex específico mejorado
+             console.log('⚠️ Buscando educación con Regex Fallback...');
+             const match = text.match(/(?:educaci.n|education|formaci.n|estudios|academic)[^\n]*\n([\s\S]*?)(?=\n\s*(?:experiencia|experience|trabajo|habilidad|skill|certific|projects)|$)/i);
+             if (match) {
+                 console.log('✅ Educación encontrada por Regex Fallback');
+                 return match[1];
+             }
+        }
+
         if (!targetSection) {
             console.log(`ℹ️ Sección '${sectionType}' no identificada explícitamente.`);
-            // Fallback: usar regex simple si la detección por líneas falla
             if (sectionType === 'experience') {
-                 const match = text.match(/(?:experiencia|experience|trabajo)[^\n]*\n([\s\S]*?)(?=\n\s*(?:educaci|education|habilidad|skill|certific|projects)|$)/i);
-                 return match ? match[1] : '';
-            }
-            if (sectionType === 'education') {
-                 const match = text.match(/(?:educaci|education|formaci)[^\n]*\n([\s\S]*?)(?=\n\s*(?:experiencia|experience|trabajo|habilidad|skill|certific|projects)|$)/i);
-                 return match ? match[1] : '';
+                 // Si no hay headers, asumir que el bloque grande de texto con fechas es experiencia
+                 // Esto es peligroso pero mejor que nada
+                 return '';
             }
             return '';
         }
@@ -263,12 +297,27 @@ const RealPDFParser = {
         
         // Encontrar dónde termina: siguiente sección o fin del texto
         let endIdx = lines.length;
-        const nextSection = sections.find(s => s.lineIndex > targetSection.lineIndex);
-        if (nextSection) {
-            endIdx = nextSection.lineIndex;
+        
+        // Buscar la próxima sección que esté DESPUÉS de esta
+        const nextSections = sections.filter(s => s.lineIndex > targetSection.lineIndex);
+        if (nextSections.length > 0) {
+            // Tomar la más cercana
+            endIdx = nextSections[0].lineIndex;
+        } else {
+            // Si es la última sección, buscar si hay footprints visuales de fin (ej: línea vacía grande o footer)
+            // Por ahora hasta el final está bien
         }
         
-        return lines.slice(startIdx, endIdx).join('\n');
+        // Validar que no estemos extrayendo texto de otra sección erróneamente
+        const extracted = lines.slice(startIdx, endIdx).join('\n');
+        
+        // Sanity check: Si estamos extrayendo 'education' pero el texto parece ser 'experience' (por keywords), abortar
+        if (sectionType === 'education' && /experiencia|trabajo|cargo|responsab|job|work/i.test(extracted.substring(0, 100)) && !/insti|univ|school|degre|titu/i.test(extracted.substring(0, 100))) {
+            console.warn('⚠️ Alerta: La sección de educación extraída parece sospechosa. Posible falso positivo.');
+             // Check más estricto si es necesario
+        }
+
+        return extracted;
     },
 
     /**
