@@ -197,12 +197,12 @@ const RealPDFParser = {
     },
     
     /**
-     * Identificar secciones en el texto (Nuevo Helper v2)
+     * Identificar secciones en el texto (Nuevo Helper v3)
      */
     identifySections(text) {
-        // Mapa de secciones y sus posibles cabeceras
+        // Mapa de secciones
         const sectionHeaders = {
-            experience: ['experiencia', 'experience', 'trabajo', 'work', 'historial', 'trayectoria', 'employment', 'history'],
+            experience: ['experiencia', 'experience', 'trabajo', 'work', 'historial', 'trayectoria', 'employment', 'history', 'laboral'],
             education: ['educacion', 'education', 'formacion', 'academic', 'estudios', 'antecedentes', 'títulos', 'degrees'],
             skills: ['habilidades', 'skills', 'competencias', 'tecnologias', 'technologies', 'conocimientos', 'apto', 'stack'],
             certifications: ['certificaciones', 'certifications', 'diplomas', 'cursos', 'licencias'],
@@ -216,32 +216,24 @@ const RealPDFParser = {
         
         console.log(`🔍 Analizando ${lines.length} líneas para estructura...`);
         
-        // Función para normalizar texto (quitar acentos, etc)
         const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
         
-        // Recorrer líneas buscando cabeceras
         for (let i = 0; i < lines.length; i++) {
             const rawLine = lines[i];
             const line = normalize(rawLine);
-            
-            // Criterios para ser cabecera: corta (<50 chars), sin números al inicio (excepto bullet points o índices)
-            // Permitimos líneas un poco más largas si tienen palabras clave fuertes en mayúsculas en el original
             const isUpperCase = rawLine.trim() === rawLine.trim().toUpperCase() && rawLine.trim().length > 3;
             
-            if (line.length < 50 && line.length > 2 && !/^\d{4}/.test(line)) {
+            // Criterios relajados: Si la línea EMPIEZA con una keyword, es header
+            // Incluso si tiene texto después (ej: "Educación Instituto Profesional...")
+            if (line.length > 2 && !/^\d{4}/.test(line)) {
                 
-                // Chequear contra cada tipo
                 for (const [type, keywords] of Object.entries(sectionHeaders)) {
-                    // Buscar coincidencia exacta o "palabra clave" aislada
-                    if (keywords.some(k => line === k || line.startsWith(k + ' ') || line.endsWith(' ' + k) || line.includes(' ' + k + ' ') || line === k + ':')) {
-                         console.log(`📌 Cabecera detectada (${type}): "${rawLine}" (Línea ${i})`);
-                         foundSections.push({ type, lineIndex: i, text: rawLine });
-                         break;
-                    }
+                    // Check keyword al inicio
+                    const startsWithKeyword = keywords.some(k => line.startsWith(k + ' ') || line.startsWith(k + ':') || line === k);
+                    const containsIsolated = keywords.some(k => line.includes(' ' + k + ' ') || line.endsWith(' ' + k));
                     
-                    // Si es mayúscula completa, somos más flexibles con la coincidencia
-                    if (isUpperCase && keywords.some(k => line.includes(k))) {
-                         console.log(`📌 Cabecera UPPERCASE detectada (${type}): "${rawLine}" (Línea ${i})`);
+                    if (startsWithKeyword || containsIsolated || (isUpperCase && keywords.some(k => line.includes(k)))) {
+                         console.log(`📌 Cabecera detectada (${type}): "${rawLine}" (Línea ${i})`);
                          foundSections.push({ type, lineIndex: i, text: rawLine });
                          break;
                     }
@@ -249,7 +241,7 @@ const RealPDFParser = {
             }
         }
         
-        // Eliminar duplicados cercanos (quedarse con el primero)
+        // Deduplicar
         const uniqueSections = [];
         foundSections.forEach(section => {
             const prev = uniqueSections[uniqueSections.length - 1];
@@ -266,58 +258,50 @@ const RealPDFParser = {
      */
     extractSectionText(text, sectionType) {
         const sections = this.identifySections(text);
-        
-        // Priorizar la primera ocurrencia de la sección
-        let targetSection = sections.find(s => s.type === sectionType);
-        
-        // Arreglo específico para EDUCATION vs EXPERIENCE
-        // Si no encontramos 'education' pero tenemos 'experience', intentar buscar en el resto del documento
-        if (!targetSection && sectionType === 'education') {
-             // Fallback regex específico mejorado
-             console.log('⚠️ Buscando educación con Regex Fallback...');
-             const match = text.match(/(?:educaci.n|education|formaci.n|estudios|academic)[^\n]*\n([\s\S]*?)(?=\n\s*(?:experiencia|experience|trabajo|habilidad|skill|certific|projects)|$)/i);
-             if (match) {
-                 console.log('✅ Educación encontrada por Regex Fallback');
-                 return match[1];
-             }
-        }
+        const targetSection = sections.find(s => s.type === sectionType);
+        const lines = text.split('\n');
 
+        // FALLBACKS
         if (!targetSection) {
             console.log(`ℹ️ Sección '${sectionType}' no identificada explícitamente.`);
+            
+            // Si educación fue encontrada pero experiencia no, asumir que todo lo que no es educación/skills/etc podría ser experiencia si tiene fechas
             if (sectionType === 'experience') {
-                 // Si no hay headers, asumir que el bloque grande de texto con fechas es experiencia
-                 // Esto es peligroso pero mejor que nada
-                 return '';
+                 // Buscar cualquier bloque de texto que tenga formato de fecha "Mes Año - Mes Año" y que NO esté en educación
+                 const eduSection = sections.find(s => s.type === 'education');
+                 if (eduSection) {
+                     // Buscar ANTES o DESPUÉS de educación
+                     // Estrategia: Buscar patrón de fecha fuerte
+                     const datePattern = /(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}/i;
+                     
+                     for(let i=0; i<lines.length; i++) {
+                         // Si la línea tiene fecha y no está dentro de la sección de educación...
+                         if (datePattern.test(lines[i])) {
+                             const isInEdu = i >= eduSection.lineIndex && (sections.find(s => s.lineIndex > eduSection.lineIndex)?.lineIndex || Infinity) > i;
+                             if (!isInEdu) {
+                                 console.log(`⚠️ Posible experiencia detectada por fecha fuera de rango en línea ${i}`);
+                                 // Devolver un trozo grande de texto alrededor de esta línea
+                                 return lines.slice(Math.max(0, i-5), Math.min(lines.length, i+15)).join('\n');
+                             }
+                         }
+                     }
+                 }
             }
             return '';
         }
         
-        const lines = text.split('\n');
-        const startIdx = targetSection.lineIndex + 1;
+        // Lógica normal de extracción
+        // IMPORTANTE: Incluir la misma línea del header porque a veces tiene contenido pegado
+        // Ej: "Educación Instituto Profesional INACAP" -> Queremos "Instituto Profesional INACAP"
+        const startIdx = targetSection.lineIndex; 
         
-        // Encontrar dónde termina: siguiente sección o fin del texto
         let endIdx = lines.length;
-        
-        // Buscar la próxima sección que esté DESPUÉS de esta
         const nextSections = sections.filter(s => s.lineIndex > targetSection.lineIndex);
         if (nextSections.length > 0) {
-            // Tomar la más cercana
             endIdx = nextSections[0].lineIndex;
-        } else {
-            // Si es la última sección, buscar si hay footprints visuales de fin (ej: línea vacía grande o footer)
-            // Por ahora hasta el final está bien
         }
         
-        // Validar que no estemos extrayendo texto de otra sección erróneamente
-        const extracted = lines.slice(startIdx, endIdx).join('\n');
-        
-        // Sanity check: Si estamos extrayendo 'education' pero el texto parece ser 'experience' (por keywords), abortar
-        if (sectionType === 'education' && /experiencia|trabajo|cargo|responsab|job|work/i.test(extracted.substring(0, 100)) && !/insti|univ|school|degre|titu/i.test(extracted.substring(0, 100))) {
-            console.warn('⚠️ Alerta: La sección de educación extraída parece sospechosa. Posible falso positivo.');
-             // Check más estricto si es necesario
-        }
-
-        return extracted;
+        return lines.slice(startIdx, endIdx).join('\n');
     },
 
     /**
