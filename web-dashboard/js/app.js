@@ -578,6 +578,8 @@ function showExtractedDataPreview(data) {
 function renderExtractedExperience() {
   const experienceList = document.getElementById('extractedExperienceList');
   
+  if (!experienceList) return; // Guard clause
+
   if (!extractedData.experience || extractedData.experience.length === 0) {
     experienceList.innerHTML = '<div class="empty-list">No se detectó experiencia profesional</div>';
     return;
@@ -713,7 +715,8 @@ function removeExtractedSkill(skillName) {
 }
 
 function updateEditedCount() {
-  document.getElementById('fieldsEdited').textContent = editedFields.size;
+  const el = document.getElementById('fieldsEdited');
+  if(el) el.textContent = editedFields.size;
 }
 
 async function saveExtractedData() {
