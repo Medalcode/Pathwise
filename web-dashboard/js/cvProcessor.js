@@ -70,50 +70,46 @@ const CVProcessor = {
       if(uploadArea) uploadArea.classList.add('hidden');
       if(uploadProgress) uploadProgress.classList.remove('hidden');
       
-      const formData = new FormData();
-      formData.append('cv', file);
-      
       try {
         // Simulate progress
-        this.animateProgress(0, 30, 500);
+        this.animateProgress(0, 100, 1500);
         
-        // Usar auth fetch si es posible (aunque upload suele ser público en algunos apps, aquí asumimos protegido)
-        const response = await fetch(`${API_URL}/upload/cv`, {
-          method: 'POST',
-          body: formData
-          // Nota: Fetch estándar no soporta headers manuales fáciles con FormData para Multipart
-          // Si el backend requiere auth, habría que agregar el token en headers
-          // headers: { 'Authorization': `Bearer ${window.auth.token}` } 
-        });
+        // Simular delay de procesamiento
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
-        this.animateProgress(30, 70, 500);
-        
-        if (!response.ok) {
-          throw new Error('Error al procesar el CV');
-        }
-        
-        const result = await response.json();
-        
-        this.animateProgress(70, 100, 300);
+        // MOCK RESULT (Ya que no hay backend activo)
+        // En una implementación real con PWA + IA Local, usaríamos pdf.js aquí
+        const result = {
+            data: {
+                personalInfo: {
+                    firstName: "Usuario",
+                    lastName: "Local",
+                    email: "usuario@local.dev",
+                    summary: "Perfil generado en modo local sin conexión a backend."
+                },
+                experience: [],
+                education: [],
+                skills: ["Modo Offline"]
+            }
+        };
         
         setTimeout(() => {
           // Hide progress
           if(uploadProgress) uploadProgress.classList.add('hidden');
           
           // Show extracted data preview
-          // Asumimos que showExtractedDataPreview es global por ahora, o migrarla también
           if(typeof showExtractedDataPreview === 'function') {
              showExtractedDataPreview(result.data);
           }
           
-          showToast(window.t('cv_processed_success'), 'success');
+          showToast(window.t('cv_processed_success') + " (Modo Offline)", 'success');
         }, 500);
         
       } catch (error) {
         console.error('Error:', error);
         if(uploadProgress) uploadProgress.classList.add('hidden');
         if(uploadArea) uploadArea.classList.remove('hidden');
-        showToast(window.t('error_processing_cv') + ': ' + error.message, 'error');
+        showToast(window.t('error_processing_cv'), 'error');
       }
     },
 
