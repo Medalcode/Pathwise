@@ -281,9 +281,15 @@
                         </div>
                      </div>
 
-                     <div class="flex justify-end gap-3">
-                         <button id="discardExtraction" class="px-4 py-2 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10" data-i18n="discard">Discard</button>
-                         <button id="saveExtractedData" class="px-6 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-[0_0_15px_rgba(147,89,248,0.4)]" data-i18n="save_verify_nexus">Save & Verify Nexus →</button>
+                     <div class="flex justify-between items-center gap-3">
+                         <button onclick="undoAllChanges()" class="px-4 py-2 rounded-lg border border-warning-orange/50 text-warning-orange hover:bg-warning-orange/10 flex items-center gap-2 transition-all" title="Deshacer todos los cambios">
+                             <span class="material-symbols-outlined text-sm">undo</span>
+                             <span>Deshacer Cambios</span>
+                         </button>
+                         <div class="flex gap-3">
+                             <button id="discardExtraction" class="px-4 py-2 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10" data-i18n="discard">Discard</button>
+                             <button id="saveExtractedData" class="px-6 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-[0_0_15px_rgba(147,89,248,0.4)]" data-i18n="save_verify_nexus">Save & Verify Nexus →</button>
+                         </div>
                      </div>
                  </div>
             </div>
@@ -482,6 +488,8 @@
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/cvQualityScore.js"></script>
+<script src="js/pdfValidator.js"></script>
+<script src="js/cvHistory.js"></script>
 <script src="js/cvProcessor.js"></script>
 <script src="js/jobSearch.js"></script>
 <script src="js/autoSave.js"></script>

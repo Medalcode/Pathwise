@@ -73,6 +73,19 @@ const CVProcessor = {
         return;
       }
       
+      // Validate PDF content
+      if (window.PDFValidator) {
+        showToast('Validando PDF...', 'info');
+        const validation = await window.PDFValidator.validatePDFContent(file);
+        
+        if (!window.PDFValidator.showValidationResults(validation)) {
+          return; // Stop if validation failed
+        }
+        
+        // Store validation info for later use
+        this.lastValidation = validation;
+      }
+      
       // Show progress
       const uploadArea = document.getElementById('uploadArea');
       const uploadProgress = document.getElementById('uploadProgress');

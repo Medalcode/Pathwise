@@ -518,11 +518,15 @@ window.removeSkill = removeSkill;
 let extractedData = null;
 let extractedSkills = [];
 let editedFields = new Set();
+let originalExtractedData = null; // Para deshacer cambios
 
 function showExtractedDataPreview(data) {
   extractedData = data;
   extractedSkills = data.skills || [];
   editedFields.clear();
+  
+  // Guardar copia original para deshacer
+  originalExtractedData = JSON.parse(JSON.stringify(data));
   
   // Show the preview section
   document.getElementById('extractedDataPreview').classList.remove('hidden');
@@ -951,6 +955,12 @@ async function saveExtractedData() {
         window.ProfilesManager.updateProfileUI(); // Update Header UI
     }
 
+    // Guardar en historial de CVs
+    if (window.CVHistory) {
+        const fileName = `CV_${profileData.personalInfo.firstName}_${profileData.personalInfo.lastName}.pdf`;
+        window.CVHistory.saveToHistory(profileData, fileName);
+    }
+
     showToast(window.t('data_saved'), 'success');
       
     // Update stats
@@ -976,9 +986,41 @@ function discardExtraction() {
     extractedData = null;
     extractedSkills = [];
     editedFields.clear();
+    originalExtractedData = null;
     showToast(window.t('data_discarded'), 'warning');
   }
 }
+
+/**
+ * Deshacer todos los cambios y restaurar datos originales
+ */
+function undoAllChanges() {
+  if (!originalExtractedData) {
+    showToast('No hay cambios para deshacer', 'info');
+    return;
+  }
+  
+  if (editedFields.size === 0) {
+    showToast('No has realizado cambios', 'info');
+    return;
+  }
+  
+  if (confirm(`¿Deshacer ${editedFields.size} cambio${editedFields.size > 1 ? 's' : ''}?`)) {
+    // Restaurar datos originales
+    extractedData = JSON.parse(JSON.stringify(originalExtractedData));
+    extractedSkills = [...(originalExtractedData.skills || [])];
+    editedFields.clear();
+    
+    // Re-renderizar todo
+    showExtractedDataPreview(extractedData);
+    
+    showToast('Cambios deshech os', 'success');
+  }
+}
+
+// Exponer globalmente
+window.undoAllChanges = undoAllChanges;
+
 
 // Add new experience
 function addNewExperience() {
