@@ -202,9 +202,18 @@
                              <input type="text" id="extracted-lastName" class="glass-input">
                          </div>
                          <div class="md:col-span-2">
+                             <label class="text-xs text-gray-500 uppercase" data-i18n="email_label">Email</label>
+                             <input type="email" id="extracted-email" class="glass-input">
+                         </div>
+                         <div class="md:col-span-2">
                              <label class="text-xs text-gray-500 uppercase" data-i18n="current_title">Current Title</label>
                              <input type="text" id="extracted-currentTitle" class="glass-input">
                          </div>
+                         <!-- Hidden fields required/optional for validation flow -->
+                         <input type="hidden" id="extracted-phone">
+                         <input type="hidden" id="extracted-city">
+                         <input type="hidden" id="extracted-country">
+                         <input type="hidden" id="extracted-linkedin">
                      </div>
 
                      <!-- Stats Row -->

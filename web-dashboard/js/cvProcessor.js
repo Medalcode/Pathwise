@@ -85,6 +85,11 @@ const CVProcessor = {
                     firstName: "Usuario",
                     lastName: "Local",
                     email: "usuario@local.dev",
+                    phone: "+56912345678",
+                    currentTitle: "Desarrollador Full Stack",
+                    city: "Santiago",
+                    country: "Chile",
+                    linkedin: "",
                     summary: "Perfil generado en modo local sin conexión a backend."
                 },
                 experience: [],
