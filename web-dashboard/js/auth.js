@@ -8,7 +8,7 @@ const USER_KEY = 'panoptes_user';
 // Detectar entorno (Docker vs Local)
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
     ? 'http://localhost:8080/api' 
-    : '/api';
+    : 'https://autoapply-wqov2qerrq-uc.a.run.app/api';
 
 class AuthManager {
     constructor() {
