@@ -18,22 +18,32 @@ const CVProcessor = {
         fileInput.click();
       });
       
-      // Drag and drop
-      uploadArea.addEventListener('dragover', (e) => {
+      // Drag and drop with enhanced visual feedback
+      let dragCounter = 0;
+      
+      uploadArea.addEventListener('dragenter', (e) => {
         e.preventDefault();
-        uploadArea.style.borderColor = 'var(--primary)';
-        uploadArea.style.background = 'var(--primary-light)';
+        dragCounter++;
+        uploadArea.classList.add('drag-active');
       });
       
-      uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.borderColor = '';
-        uploadArea.style.background = '';
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+      
+      uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter === 0) {
+          uploadArea.classList.remove('drag-active');
+        }
       });
       
       uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadArea.style.borderColor = '';
-        uploadArea.style.background = '';
+        dragCounter = 0;
+        uploadArea.classList.remove('drag-active');
         
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -71,11 +81,30 @@ const CVProcessor = {
       if(uploadProgress) uploadProgress.classList.remove('hidden');
       
       try {
-        // Simulate progress
-        this.animateProgress(0, 100, 1500);
+        // Processing steps with visual feedback
+        const steps = [
+          { name: 'Leyendo PDF', progress: 0, duration: 500 },
+          { name: 'Extrayendo texto', progress: 33, duration: 600 },
+          { name: 'Analizando estructura', progress: 66, duration: 400 },
+          { name: 'Completando datos', progress: 100, duration: 500 }
+        ];
         
-        // Simular delay de procesamiento
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Update progress text element if exists
+        const progressText = document.querySelector('#uploadProgress p');
+        
+        for (const step of steps) {
+          if (progressText) {
+            progressText.textContent = step.name + '...';
+            progressText.classList.add('animate-pulse');
+          }
+          
+          this.animateProgress(step.progress, step.progress + 25, step.duration);
+          await new Promise(resolve => setTimeout(resolve, step.duration));
+          
+          if (progressText) {
+            progressText.classList.remove('animate-pulse');
+          }
+        }
         
         // MOCK RESULT (Ya que no hay backend activo)
         // En una implementación real con PWA + IA Local, usaríamos pdf.js aquí
