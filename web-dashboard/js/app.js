@@ -598,6 +598,11 @@ function showExtractedDataPreview(data) {
   
   // Add edit icons to fields
   addEditIconsToFields();
+  
+  // Render export button
+  if (window.JSONResumeExporter) {
+    window.JSONResumeExporter.renderExportButton();
+  }
 }
 
 /**
