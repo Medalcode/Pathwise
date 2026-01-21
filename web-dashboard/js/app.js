@@ -66,17 +66,24 @@ async function init() {
   setupProfileForm();
   
   // Check Initial State to decide Step
+  // Check Initial State to decide Step (Offline Mode)
   try {
-    const response = await fetch(`${API_URL}/profile`);
-    if (response.ok) {
-        const profile = await response.json();
-        // Si tiene nombre, asumimos que ya pasó el paso 1
-        if (profile && profile.personalInfo && profile.personalInfo.firstName) {
-            console.log("Perfil detectado, saltando al paso 3");
-            currentProfile = profile;
+    // Usar el ProfilesManager para saber si hay perfil activo
+    if (window.ProfilesManager && window.ProfilesManager.currentProfile) {
+        // Simular perfil cargado
+        const profile = window.ProfilesManager.currentProfile;
+        
+        // Si tiene nombre (o datos básicos), asumimos que ya pasó el paso 1
+        // Nota: En modelo offline, los datos completos pueden estar en 'panoptes_profile_data_[id]'
+        const profileData = localStorage.getItem(`panoptes_profile_data_${profile.id}`);
+        
+        if (profileData) {
+            console.log("Perfil detectado (Local), saltando al paso 3");
+            const parsedData = JSON.parse(profileData);
+            currentProfile = parsedData;
             
             // Llenar vista previa
-            populateForm(profile);
+            populateForm(parsedData);
             
             goToStep(3); 
             return;
@@ -623,6 +630,8 @@ function renderExtractedExperience() {
 function renderExtractedEducation() {
   const educationList = document.getElementById('extractedEducationList');
   
+  if (!educationList) return; // Guard clause
+
   if (!extractedData.education || extractedData.education.length === 0) {
     educationList.innerHTML = '<div class="empty-list">No se detectó educación</div>';
     return;
