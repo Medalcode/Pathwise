@@ -736,17 +736,23 @@ function updateEditedCount() {
 }
 
 async function saveExtractedData() {
+  // Helper
+  const getVal = (id) => {
+      const el = document.getElementById(id);
+      return el ? el.value : '';
+  };
+
   // Gather edited data
   const profileData = {
     personalInfo: {
-      firstName: document.getElementById('extracted-firstName').value,
-      lastName: document.getElementById('extracted-lastName').value,
-      email: document.getElementById('extracted-email').value,
-      phone: document.getElementById('extracted-phone').value,
-      currentTitle: document.getElementById('extracted-currentTitle').value,
-      city: document.getElementById('extracted-city').value,
-      country: document.getElementById('extracted-country').value,
-      linkedin: document.getElementById('extracted-linkedin').value,
+      firstName: getVal('extracted-firstName'),
+      lastName: getVal('extracted-lastName'),
+      email: getVal('extracted-email'),
+      phone: getVal('extracted-phone'),
+      currentTitle: getVal('extracted-currentTitle'),
+      city: getVal('extracted-city'),
+      country: getVal('extracted-country'),
+      linkedin: getVal('extracted-linkedin'),
       address: extractedData.personalInfo.address || '',
       portfolio: extractedData.personalInfo.portfolio || '',
       summary: extractedData.personalInfo.summary || ''
