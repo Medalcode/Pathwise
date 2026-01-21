@@ -33,55 +33,167 @@ const RealPDFParser = {
         }
     },
     
+    
     /**
-     * Parsear información personal del texto
+     * Parsear información personal del texto (MEJORADO)
      */
     parsePersonalInfo(text) {
         const info = {};
         
+        console.log('📝 Parseando información personal...');
+        console.log('Texto extraído (primeros 500 chars):', text.substring(0, 500));
+        
         // Email (regex mejorado)
         const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-        if (emailMatch) info.email = emailMatch[1];
+        if (emailMatch) {
+            info.email = emailMatch[1];
+            console.log('✓ Email encontrado:', info.email);
+        }
         
         // Teléfono (múltiples formatos)
-        const phoneMatch = text.match(/(?:\+?[\d]{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?)?\d{3,4}[-.\s]?\d{3,4}/);
-        if (phoneMatch) info.phone = phoneMatch[0].trim();
+        const phonePatterns = [
+            /(?:\+?[\d]{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?)?[\d]{3,4}[-.\s]?[\d]{3,4}/,
+            /\+[\d\s\-()]{10,}/,
+            /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/
+        ];
+        
+        for (const pattern of phonePatterns) {
+            const phoneMatch = text.match(pattern);
+            if (phoneMatch) {
+                info.phone = phoneMatch[0].trim();
+                console.log('✓ Teléfono encontrado:', info.phone);
+                break;
+            }
+        }
         
         // LinkedIn
         const linkedinMatch = text.match(/(?:linkedin\.com\/in\/)([\w-]+)/i);
-        if (linkedinMatch) info.linkedin = `https://linkedin.com/in/${linkedinMatch[1]}`;
+        if (linkedinMatch) {
+            info.linkedin = `https://linkedin.com/in/${linkedinMatch[1]}`;
+            console.log('✓ LinkedIn encontrado:', info.linkedin);
+        }
         
         // GitHub
         const githubMatch = text.match(/(?:github\.com\/)([\w-]+)/i);
-        if (githubMatch) info.github = `https://github.com/${githubMatch[1]}`;
+        if (githubMatch) {
+            info.github = `https://github.com/${githubMatch[1]}`;
+            console.log('✓ GitHub encontrado:', info.github);
+        }
         
-        // Nombre (primera línea significativa, generalmente)
-        const lines = text.split('\n').filter(l => l.trim().length > 0);
-        if (lines.length > 0) {
-            const firstLine = lines[0].trim();
-            // Si la primera línea parece un nombre (2-4 palabras, sin números)
-            if (firstLine.split(' ').length <= 4 && !/\d/.test(firstLine)) {
-                const nameParts = firstLine.split(' ');
-                info.firstName = nameParts[0];
-                info.lastName = nameParts.slice(1).join(' ');
-            }
+        // Ciudad y País
+        const locationMatch = text.match(/(?:ubicación|location|ciudad|city)[:\s]*([^,\n]+),?\s*([^\n]+)/i);
+        if (locationMatch) {
+            info.city = locationMatch[1].trim();
+            info.country = locationMatch[2].trim();
+            console.log('✓ Ubicación encontrada:', info.city, info.country);
+        }
+        
+        // NOMBRE - Múltiples estrategias
+        const nameResult = this.extractName(text);
+        if (nameResult.firstName) {
+            info.firstName = nameResult.firstName;
+            info.lastName = nameResult.lastName || '';
+            console.log('✓ Nombre encontrado:', info.firstName, info.lastName);
         }
         
         // Título profesional (buscar patrones comunes)
         const titlePatterns = [
-            /(?:desarrollador|developer|ingeniero|engineer|programador|programmer|analista|analyst|diseñador|designer|arquitecto|architect)\s+(?:de\s+)?(?:software|web|frontend|backend|full\s*stack|mobile|datos|data|sistemas)/i,
-            /(?:senior|junior|mid|lead|principal|staff)\s+(?:developer|engineer|programmer)/i
+            // Español
+            /(?:desarrollador|ingeniero|programador|analista|diseñador|arquitecto|consultor|especialista|líder|gerente|director)\s+(?:de\s+)?(?:software|web|frontend|backend|full\s*stack|mobile|datos|data|sistemas|ti|it|tecnología|aplicaciones|soluciones)/i,
+            /(?:senior|junior|mid|semi\s*senior|ssr|jr|sr)\s+(?:desarrollador|developer|engineer|ingeniero|programmer|programador)/i,
+            // Inglés
+            /(?:software|web|frontend|backend|full\s*stack|mobile|data|systems)\s+(?:developer|engineer|programmer|analyst|designer|architect)/i,
+            /(?:senior|junior|mid|lead|principal|staff|chief)\s+(?:developer|engineer|programmer|architect|designer)/i,
+            // Títulos específicos
+            /(?:tech\s+lead|team\s+lead|scrum\s+master|product\s+owner|devops\s+engineer|qa\s+engineer|ux\/ui\s+designer)/i
         ];
         
         for (const pattern of titlePatterns) {
             const match = text.match(pattern);
             if (match) {
                 info.currentTitle = match[0];
+                console.log('✓ Título encontrado:', info.currentTitle);
                 break;
             }
         }
         
+        console.log('📊 Información personal parseada:', info);
         return info;
+    },
+    
+    /**
+     * Extraer nombre con múltiples estrategias
+     */
+    extractName(text) {
+        const result = { firstName: '', lastName: '' };
+        
+        // Estrategia 1: Primera línea (más común)
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        if (lines.length > 0) {
+            const firstLine = lines[0].trim();
+            
+            // Verificar que parece un nombre (2-4 palabras, sin números, sin símbolos raros)
+            const words = firstLine.split(/\s+/);
+            if (words.length >= 2 && words.length <= 4 && 
+                !/\d/.test(firstLine) && 
+                !/[@#$%^&*()_+=\[\]{}|\\:;"'<>,.?\/]/.test(firstLine)) {
+                
+                result.firstName = words[0];
+                result.lastName = words.slice(1).join(' ');
+                console.log('Estrategia 1 (primera línea):', result);
+                return result;
+            }
+        }
+        
+        // Estrategia 2: Buscar patrón "Nombre: X" o "Name: X"
+        const namePatternMatch = text.match(/(?:nombre|name|full\s+name)[:\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)/i);
+        if (namePatternMatch) {
+            const fullName = namePatternMatch[1].trim();
+            const words = fullName.split(/\s+/);
+            result.firstName = words[0];
+            result.lastName = words.slice(1).join(' ');
+            console.log('Estrategia 2 (patrón "Nombre:"):', result);
+            return result;
+        }
+        
+        // Estrategia 3: Buscar nombres propios (2-3 palabras capitalizadas seguidas)
+        const properNameMatch = text.match(/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})?)\b/);
+        if (properNameMatch) {
+            result.firstName = properNameMatch[1];
+            result.lastName = properNameMatch[2];
+            console.log('Estrategia 3 (nombres propios):', result);
+            return result;
+        }
+        
+        // Estrategia 4: Buscar antes del email (común en CVs)
+        const emailMatch = text.match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+)\s+[a-zA-Z0-9._-]+@/);
+        if (emailMatch) {
+            const fullName = emailMatch[1].trim();
+            const words = fullName.split(/\s+/);
+            result.firstName = words[0];
+            result.lastName = words.slice(1).join(' ');
+            console.log('Estrategia 4 (antes del email):', result);
+            return result;
+        }
+        
+        // Estrategia 5: Buscar en las primeras 5 líneas
+        for (let i = 0; i < Math.min(5, lines.length); i++) {
+            const line = lines[i].trim();
+            const words = line.split(/\s+/);
+            
+            // Si tiene 2-3 palabras, todas capitalizadas, sin números
+            if (words.length >= 2 && words.length <= 3 &&
+                words.every(w => /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/.test(w))) {
+                
+                result.firstName = words[0];
+                result.lastName = words.slice(1).join(' ');
+                console.log(`Estrategia 5 (línea ${i + 1}):`, result);
+                return result;
+            }
+        }
+        
+        console.warn('⚠️ No se pudo detectar el nombre con ninguna estrategia');
+        return result;
     },
     
     /**
