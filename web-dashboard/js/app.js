@@ -1244,19 +1244,45 @@ function setLoadingState(isLoading, errorMessage = null) {
 
 async function generateProfiles() {
   try {
-    // 1. UI State: Loading
     const intro = document.getElementById('aiIntroContainer');
     if(intro) intro.classList.add('hidden');
     
-    setLoadingState(true);
-    
-    console.log('🤖 Generando perfiles profesionales...');
-    
-    // Obtener API Key si existe en localStorage
+    // MODO OFFLINE/MOCK vs ONLINE
     const savedKey = localStorage.getItem('groqApiKey');
+    const isMock = !savedKey;
     
-    // MODO OFFLINE: Si no hay API key, generar perfiles mock
-    if (!savedKey) {
+    // 1. Mostrar animación de generación
+    const container = document.getElementById('wizardProfilesGrid') || document.getElementById('modalProfilesGrid');
+    if (container) {
+      container.parentElement.id = 'profileGenerationContainer'; // Asegurar ID para UI
+      if (window.ProfileGenerationUI) {
+        window.ProfileGenerationUI.showGenerating(isMock ? 'Mock' : 'AI');
+      } else {
+        setLoadingState(true);
+      }
+    }
+    
+    console.log(`🤖 Generando perfiles profesionales (${isMock ? 'MOCK' : 'AI'})...`);
+    
+    // 2. Verificar CACHÉ
+    if (window.ProfileCache && window.currentProfile) {
+      const cachedParams = isMock ? 'mock_profiles' : 'ai_profiles';
+      const cached = window.ProfileCache.get(window.currentProfile, cachedParams);
+      
+      if (cached) {
+        generatedProfiles = cached;
+        console.log('📦 Usando perfiles desde caché');
+        
+        // Simular pequeño delay para que se vea la animación (UX)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        finalizeGeneration(isMock);
+        return;
+      }
+    }
+    
+    // 3. Generar Perfiles (Mock o AI)
+    if (isMock) {
       console.log('⚠️ No hay API Key configurada, generando perfiles mock...');
       
       // Simular delay de procesamiento
@@ -1267,87 +1293,84 @@ async function generateProfiles() {
       const personalInfo = baseProfile.personalInfo || {};
       const skills = baseProfile.skills || ['JavaScript', 'React', 'Node.js'];
       
+      // Asegurar que skills sea un array de strings
+      const skillsArray = Array.isArray(skills) ? skills : [];
+      const topSkills = skillsArray.slice(0, 5);
+      
       generatedProfiles = [
         {
           title: `${personalInfo.currentTitle || 'Full Stack Developer'} - Tech Innovator`,
           experienceLevel: 'Senior',
           description: 'Perfil optimizado para startups tecnológicas y empresas innovadoras. Énfasis en stack moderno y metodologías ágiles.',
-          keySkills: skills.slice(0, 5),
+          keySkills: topSkills.length > 0 ? topSkills : ['JavaScript', 'React'],
           summary: `Profesional con experiencia en desarrollo full-stack, especializado en tecnologías modernas y arquitecturas escalables.`,
+          isMock: true,
           ...baseProfile
         },
         {
           title: `${personalInfo.currentTitle || 'Software Engineer'} - Enterprise Specialist`,
           experienceLevel: 'Mid-Senior',
           description: 'Perfil enfocado en grandes corporaciones. Destaca experiencia en sistemas enterprise y trabajo en equipo.',
-          keySkills: [...skills.slice(0, 3), 'Teamwork', 'Agile'],
+          keySkills: topSkills.length > 0 ? [...topSkills.slice(0, 3), 'Teamwork', 'Agile'] : ['Java', 'Spring', 'Agile'],
           summary: `Ingeniero de software con sólida experiencia en entornos corporativos y desarrollo de soluciones empresariales.`,
+          isMock: true,
           ...baseProfile
         },
         {
           title: `${personalInfo.currentTitle || 'Tech Lead'} - Remote Expert`,
           experienceLevel: 'Senior',
           description: 'Perfil optimizado para trabajo remoto. Resalta habilidades de comunicación y autonomía.',
-          keySkills: [...skills.slice(0, 3), 'Remote Work', 'Communication'],
+          keySkills: topSkills.length > 0 ? [...topSkills.slice(0, 3), 'Remote Work', 'Communication'] : ['Remote Work', 'Leadership'],
           summary: `Líder técnico con amplia experiencia en equipos distribuidos y gestión remota de proyectos.`,
+          isMock: true,
           ...baseProfile
         }
       ];
-      
-      console.log('✅ Perfiles mock generados:', generatedProfiles);
-      
-      // 2. UI State: Success
-      setLoadingState(false);
-      renderProfiles();
-      
-      const actions = document.getElementById('finalActions');
-      if(actions) actions.classList.remove('hidden');
-      
-      showToast('Perfiles generados (Modo Offline)', 'success');
-      
-      return;
-    }
-    
-    // MODO ONLINE: Llamar al backend con API Key
-    const headers = { 
-      'Content-Type': 'application/json',
-      'X-Groq-API-Key': savedKey
-    };
+    } else {
+      // Llamada API real
+      const headers = { 
+        'Content-Type': 'application/json',
+        'X-Groq-API-Key': savedKey
+      };
 
-    const response = await fetch(`${API_URL}/profile/generate-profiles`, {
-      method: 'POST',
-      headers: headers
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Error al generar perfiles');
+      const response = await fetch(`${API_URL}/profile/generate-profiles`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+           profileData: window.currentProfile
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al generar perfiles');
+      }
+      
+      const result = await response.json();
+      generatedProfiles = result.data;
     }
-    
-    const result = await response.json();
-    generatedProfiles = result.data;
     
     console.log('✅ Perfiles generados:', generatedProfiles);
     
-    // 2. UI State: Success
-    setLoadingState(false);
+    // 4. Guardar en CACHÉ
+    if (window.ProfileCache && window.currentProfile) {
+      const cachedParams = isMock ? 'mock_profiles' : 'ai_profiles';
+      window.ProfileCache.set(window.currentProfile, cachedParams, generatedProfiles);
+    }
     
-    renderProfiles();
-    
-    const actions = document.getElementById('finalActions');
-    if(actions) actions.classList.remove('hidden');
-    
-    showToast(window.t('profiles_generated'), 'success');
+    finalizeGeneration(isMock);
     
   } catch (error) {
     console.error('❌ Error:', error);
     
-    // UI State: Error
+    // Detener animación si existe
+    if (window.ProfileGenerationUI) {
+        window.ProfileGenerationUI.clearIntervals();
+    }
     setLoadingState(false, error.message);
     
     showToast(window.t('error_generating_profiles') + ': ' + error.message, 'error');
     
-    // Si es error de API Key, sugerir configuración
     if (error.message.includes('API key') || error.message.includes('401')) {
         setTimeout(() => {
           showToast('Configura tu API Key de Groq para usar IA', 'info');
@@ -1356,54 +1379,85 @@ async function generateProfiles() {
   }
 }
 
+function finalizeGeneration(isMock) {
+    // Restaurar UI
+    const container = document.getElementById('profileGenerationContainer');
+    if (container) {
+        // Necesitamos restaurar el grid container original si fue reemplazado
+        // En este caso, renderProfiles se encargará de inyectar el HTML correcto
+    } else {
+        setLoadingState(false);
+    }
+    
+    if (window.ProfileGenerationUI) {
+        window.ProfileGenerationUI.clearIntervals();
+    }
+
+    renderProfiles();
+    
+    const actions = document.getElementById('finalActions');
+    if(actions) actions.classList.remove('hidden');
+    
+    showToast(isMock ? 'Perfiles generados (Modo Offline)' : window.t('profiles_generated'), 'success');
+}
+
 function renderProfiles() {
-  const grids = [
-    document.getElementById('wizardProfilesGrid'),
-    document.getElementById('modalProfilesGrid')
-  ];
+  const container = document.getElementById('profileGenerationContainer') || document.getElementById('wizardProfilesGrid');
+  
+  if (!container) return;
+  
+  // Asegurarse de que el contenedor tenga la clase de grid
+  container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-[fadeIn_0.5s]";
+  container.id = 'profileGenerationContainer'; // Normalizar ID
   
   const content = generatedProfiles.map((profile, index) => `
-    <div class="holographic-border rounded-xl group relative p-[1px] cursor-pointer profile-card" data-index="${index}">
-        <div class="holographic-inner bg-[#131118]/80 backdrop-blur-md h-full rounded-xl p-5 flex flex-col gap-4 border border-white/10 hover:border-primary/50 transition-colors ${selectedProfileIndex === index ? 'border-primary bg-primary/5' : ''}">
-            <div class="flex justify-between items-start">
-                 <div class="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-gray-400 uppercase tracking-wider font-bold">ID-${index+1}</div>
-                 <span class="px-2 py-0.5 rounded text-[10px] bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/30 font-bold uppercase tracking-wide">${profile.experienceLevel}</span>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold text-white">${profile.title}</h3>
-                <p class="text-sm text-gray-400 mt-2 line-clamp-3">${profile.description}</p>
-            </div>
-            <div class="flex flex-wrap gap-2 mt-auto pt-2">
-                ${profile.keySkills.slice(0,3).map(skill => `<span class="px-2 py-1 rounded text-xs bg-white/5 border border-white/10 text-gray-300">${skill}</span>`).join('')}
-            </div>
-            
-            <div class="flex gap-2 mt-2">
-                 <button class="btn-select-profile flex-1 h-10 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-white border border-primary/50 hover:border-primary transition-all duration-300 flex items-center justify-center gap-2 text-sm font-bold shadow-[0_0_10px_rgba(147,89,248,0.1)] hover:shadow-glow-primary group-hover:translate-y-[-2px]" onclick="selectProfile(${index})">
-                    ${selectedProfileIndex === index ? '<span class="material-symbols-outlined text-[16px]">check_circle</span> SELECTED' : 'SELECT TARGET'}
-                </button>
-                <button class="w-10 h-10 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors" onclick="downloadProfilePDF(${index}); event.stopPropagation();" title="Download Resume PDF">
-                    <span class="material-symbols-outlined text-[18px]">download</span>
-                </button>
+    <div class="profile-card group ${selectedProfileIndex === index ? 'selected' : ''}" data-index="${index}" onclick="selectProfile(${index})">
+        <div class="profile-card-icon">
+             <span class="material-symbols-outlined text-white text-2xl">
+                ${index === 0 ? 'rocket_launch' : index === 1 ? 'business_center' : 'public'}
+             </span>
+        </div>
+        
+        <h3 class="profile-card-title">${profile.title}</h3>
+        <p class="profile-card-description line-clamp-3">${profile.description}</p>
+        
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-xs text-accent-cyan font-bold uppercase tracking-wider border border-accent-cyan/30 px-2 py-0.5 rounded bg-accent-cyan/10">
+                ${profile.experienceLevel}
+            </span>
+            <div class="profile-card-badges">
+                ${index === 0 ? '<span class="profile-badge badge-recommended">Recomendado</span>' : ''}
+                ${profile.isMock ? '<span class="px-2 py-0.5 rounded text-[10px] bg-white/10 text-gray-400 border border-white/20">MOCK</span>' : ''}
             </div>
         </div>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+            ${(profile.keySkills || []).slice(0,3).map(skill => 
+                `<span class="px-2 py-1 rounded text-xs bg-white/5 border border-white/10 text-gray-300">${skill}</span>`
+            ).join('')}
+        </div>
+        
+        <div class="flex gap-2 mt-auto pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button class="w-full h-9 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center gap-2 text-xs text-gray-300 hover:text-white transition-colors" 
+                onclick="event.stopPropagation(); window.ProfileGenerationUI.showPreview(generatedProfiles[${index}], '${profile.title}', ${!!window.ProfileCache?.hasCache(window.currentProfile, profile.isMock ? 'mock_profiles' : 'ai_profiles')})">
+                <span class="material-symbols-outlined text-[16px]">visibility</span>
+                Preview
+            </button>
+            <button class="w-9 h-9 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors" 
+                onclick="event.stopPropagation(); downloadProfilePDF(${index});" title="Download PDF">
+                <span class="material-symbols-outlined text-[18px]">download</span>
+            </button>
+        </div>
+        
+        ${selectedProfileIndex === index ? 
+            `<div class="absolute top-4 right-4 text-primary bg-primary/10 rounded-full p-1 border border-primary/50 shadow-[0_0_10px_rgba(147,89,248,0.3)]">
+                <span class="material-symbols-outlined text-xl">check</span>
+             </div>` : ''
+        }
     </div>
   `).join('');
 
-  grids.forEach(grid => {
-      if(grid) grid.innerHTML = content;
-  });
-  
-  // Add click handlers to cards
-  document.querySelectorAll('.profile-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-      // Don't trigger if clicking the button directly (managed by inline onclick)
-      // But we leave this here for card-area clicks if we want
-      if (!e.target.closest('button')) {
-        const index = parseInt(card.dataset.index);
-        selectProfile(index);
-      }
-    });
-  });
+  container.innerHTML = content;
 }
 
 async function downloadProfilePDF(index) {
