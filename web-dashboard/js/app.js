@@ -581,12 +581,93 @@ function showExtractedDataPreview(data) {
   document.getElementById('fieldsExtracted').textContent = countExtractedFields(data);
   updateEditedCount();
   
+  // Render quality score
+  if (window.CVQualityScore) {
+    window.CVQualityScore.renderScore(data);
+  }
+  
   // Setup buttons
   document.getElementById('saveExtractedData').addEventListener('click', saveExtractedData);
   document.getElementById('discardExtraction').addEventListener('click', discardExtraction);
   document.getElementById('addExperience').addEventListener('click', addNewExperience);
   document.getElementById('addEducation').addEventListener('click', addNewEducation);
+  
+  // Add edit icons to fields
+  addEditIconsToFields();
 }
+
+/**
+ * Agregar iconos de edición a los campos
+ */
+function addEditIconsToFields() {
+  const fields = document.querySelectorAll('.glass-input, .editable-item-field');
+  fields.forEach(field => {
+    if (field.parentElement && !field.parentElement.querySelector('.edit-icon')) {
+      const icon = document.createElement('span');
+      icon.className = 'edit-icon material-symbols-outlined';
+      icon.textContent = 'edit';
+      icon.style.cssText = 'position: absolute; right: 12px; top: 50%; transform: translateY(-50%); opacity: 0; transition: opacity 0.2s; color: var(--primary); font-size: 16px; pointer-events: none;';
+      
+      // Asegurar que el parent tenga position relative
+      if (field.parentElement.style.position !== 'relative') {
+        field.parentElement.style.position = 'relative';
+      }
+      
+      field.parentElement.appendChild(icon);
+      
+      // Show icon on hover
+      field.parentElement.addEventListener('mouseenter', () => {
+        icon.style.opacity = '1';
+      });
+      
+      field.parentElement.addEventListener('mouseleave', () => {
+        if (!field.matches(':focus')) {
+          icon.style.opacity = '0';
+        }
+      });
+      
+      // Keep icon visible when focused
+      field.addEventListener('focus', () => {
+        icon.style.opacity = '1';
+      });
+      
+      field.addEventListener('blur', () => {
+        icon.style.opacity = '0';
+      });
+    }
+  });
+}
+
+/**
+ * Toggle section collapse/expand
+ */
+function toggleSection(sectionCard) {
+  sectionCard.classList.toggle('collapsed');
+}
+
+/**
+ * Update section counters
+ */
+function updateSectionCounters() {
+  // Experience count
+  const expCount = extractedData.experience ? extractedData.experience.length : 0;
+  const expCountEl = document.getElementById('expCount');
+  if (expCountEl) expCountEl.textContent = `(${expCount})`;
+  
+  // Education count
+  const eduCount = extractedData.education ? extractedData.education.length : 0;
+  const eduCountEl = document.getElementById('eduCount');
+  if (eduCountEl) eduCountEl.textContent = `(${eduCount})`;
+  
+  // Skills count
+  const skillsCount = extractedSkills ? extractedSkills.length : 0;
+  const skillsCountEl = document.getElementById('skillsCount');
+  if (skillsCountEl) skillsCountEl.textContent = `(${skillsCount})`;
+}
+
+// Exponer globalmente
+window.toggleSection = toggleSection;
+
 
 function renderExtractedExperience() {
   const experienceList = document.getElementById('extractedExperienceList');
@@ -631,6 +712,9 @@ function renderExtractedExperience() {
   
   // Agregar event listeners
   attachItemFieldListeners();
+  
+  // Update counter
+  updateSectionCounters();
 }
 
 function renderExtractedEducation() {
