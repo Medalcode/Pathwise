@@ -197,70 +197,176 @@ const RealPDFParser = {
     },
     
     /**
-     * Parsear experiencia laboral
+     * Parsear experiencia laboral (MEJORADO)
      */
     parseExperience(text) {
         const experiences = [];
         
-        // Buscar secciones de experiencia
-        const expSectionMatch = text.match(/(?:experiencia|experience|trabajo|work\s+experience)[^\n]*\n([\s\S]*?)(?=\n(?:educaci[oó]n|education|habilidades|skills|certificaciones|certifications)|$)/i);
+        console.log('💼 Parseando experiencia laboral...');
         
-        if (!expSectionMatch) return experiences;
+        // Buscar sección de experiencia
+        const expSectionMatch = text.match(/(?:experiencia|experience|trabajo|work\s+experience|historial\s+laboral)[^\n]*\n([\s\S]*?)(?=\n(?:educaci[oó]n|education|habilidades|skills|certificaciones|certifications|proyectos|projects)|$)/i);
         
-        const expSection = expSectionMatch[1];
-        
-        // Patrones para detectar entradas de experiencia
-        // Formato: "Título en Empresa (Año - Año)"
-        const expPattern = /([^\n]+?)\s+(?:en|at|@)\s+([^\n]+?)\s+(?:\(|•|-)?\s*(\d{4})\s*[-–]\s*(\d{4}|presente|present|actual|current)/gi;
-        
-        let match;
-        while ((match = expPattern.exec(expSection)) !== null) {
-            experiences.push({
-                title: match[1].trim(),
-                company: match[2].trim(),
-                startDate: match[3],
-                endDate: match[4].toLowerCase().includes('present') || 
-                         match[4].toLowerCase().includes('actual') || 
-                         match[4].toLowerCase().includes('current') ? 'Presente' : match[4],
-                current: match[4].toLowerCase().includes('present') || 
-                        match[4].toLowerCase().includes('actual') ||
-                        match[4].toLowerCase().includes('current'),
-                description: ''
-            });
+        if (!expSectionMatch) {
+            console.log('ℹ️ No se encontró sección de experiencia');
+            return experiences;
         }
         
+        const expSection = expSectionMatch[1];
+        console.log('Sección de experiencia encontrada:', expSection.substring(0, 200));
+        
+        // Múltiples patrones para diferentes formatos
+        const patterns = [
+            // Patrón 1: "Empresa • Título. Mes Año – Mes Año"
+            /([^\n•]+?)\s*•\s*([^\n.]+)\.\s*([A-Z][a-z]{2,3})\s+(\d{4})\s*[–-]\s*([A-Z][a-z]{2,3})\s+(\d{4}|presente|present|actual)/gi,
+            
+            // Patrón 2: "Título en/at Empresa (Año - Año)"
+            /([^\n]+?)\s+(?:en|at|@)\s+([^\n(]+?)\s*(?:\(|•|-)?\s*(\d{4})\s*[-–]\s*(\d{4}|presente|present|actual|current)/gi,
+            
+            // Patrón 3: "Empresa - Título - Mes Año - Mes Año"
+            /([^\n-]+?)\s*-\s*([^\n-]+?)\s*-\s*([A-Z][a-z]{2,3})\s+(\d{4})\s*-\s*([A-Z][a-z]{2,3})\s+(\d{4}|presente|present)/gi,
+            
+            // Patrón 4: Solo con años "Título, Empresa, Año-Año"
+            /([^,\n]+?),\s*([^,\n]+?),\s*(\d{4})\s*[-–]\s*(\d{4}|presente|present|actual)/gi
+        ];
+        
+        for (const pattern of patterns) {
+            let match;
+            while ((match = pattern.exec(expSection)) !== null) {
+                let exp;
+                
+                // Determinar qué patrón coincidió y extraer datos accordingly
+                if (match[0].includes('•')) {
+                    // Patrón 1: Empresa • Título
+                    exp = {
+                        company: match[1].trim(),
+                        title: match[2].trim(),
+                        startDate: `${match[3]} ${match[4]}`,
+                        endDate: match[6] || match[5],
+                        current: /presente|present|actual/i.test(match[6] || match[5]),
+                        description: ''
+                    };
+                } else if (match[0].includes(' en ') || match[0].includes(' at ')) {
+                    // Patrón 2: Título en Empresa
+                    exp = {
+                        title: match[1].trim(),
+                        company: match[2].trim(),
+                        startDate: match[3],
+                        endDate: match[4],
+                        current: /presente|present|actual|current/i.test(match[4]),
+                        description: ''
+                    };
+                } else {
+                    // Otros patrones
+                    exp = {
+                        company: match[2]?.trim() || match[1].trim(),
+                        title: match[1]?.trim() || match[2].trim(),
+                        startDate: match[3],
+                        endDate: match[4] || match[6],
+                        current: /presente|present|actual/i.test(match[4] || match[6]),
+                        description: ''
+                    };
+                }
+                
+                // Validar que tenga datos mínimos
+                if (exp.company && exp.title) {
+                    experiences.push(exp);
+                    console.log(`✓ Experiencia encontrada: ${exp.title} en ${exp.company} (${exp.startDate} - ${exp.endDate})`);
+                }
+            }
+            
+            // Si encontramos experiencias, no seguir probando patrones
+            if (experiences.length > 0) break;
+        }
+        
+        console.log(`📊 Total experiencias encontradas: ${experiences.length}`);
         return experiences;
     },
     
     /**
-     * Parsear educación
+     * Parsear educación (MEJORADO)
      */
     parseEducation(text) {
         const education = [];
         
+        console.log('🎓 Parseando educación...');
+        
         // Buscar sección de educación
-        const eduSectionMatch = text.match(/(?:educaci[oó]n|education|formaci[oó]n|academic)[^\n]*\n([\s\S]*?)(?=\n(?:experiencia|experience|habilidades|skills|certificaciones|certifications)|$)/i);
+        const eduSectionMatch = text.match(/(?:educaci[oó]n|education|formaci[oó]n|academic|estudios)[^\n]*\n([\s\S]*?)(?=\n(?:experiencia|experience|habilidades|skills|certificaciones|certifications|proyectos|projects)|$)/i);
         
-        if (!eduSectionMatch) return education;
-        
-        const eduSection = eduSectionMatch[1];
-        
-        // Patrones para detectar entradas de educación
-        const eduPattern = /([^\n]+?)\s+(?:en|at|@|-)\s+([^\n]+?)\s+(?:\(|•|-)?\s*(\d{4})\s*[-–]\s*(\d{4}|presente|present|actual|current)/gi;
-        
-        let match;
-        while ((match = eduPattern.exec(eduSection)) !== null) {
-            education.push({
-                degree: match[1].trim(),
-                school: match[2].trim(),
-                startDate: match[3],
-                endDate: match[4].toLowerCase().includes('present') || 
-                        match[4].toLowerCase().includes('actual') ? 'Presente' : match[4],
-                current: match[4].toLowerCase().includes('present') || 
-                        match[4].toLowerCase().includes('actual')
-            });
+        if (!eduSectionMatch) {
+            console.log('ℹ️ No se encontró sección de educación');
+            return education;
         }
         
+        const eduSection = eduSectionMatch[1];
+        console.log('Sección de educación encontrada:', eduSection.substring(0, 200));
+        
+        // Múltiples patrones para diferentes formatos
+        const patterns = [
+            // Patrón 1: "Institución • Título. Mes Año – Mes Año"
+            /([^\n•]+?)\s*•\s*([^\n.]+)\.\s*([A-Z][a-z]{2,3})\s+(\d{4})\s*[–-]\s*([A-Z][a-z]{2,3})\s+(\d{4}|presente|present|actual)/gi,
+            
+            // Patrón 2: "Título en/at Institución (Año - Año)"
+            /([^\n]+?)\s+(?:en|at|@)\s+([^\n(]+?)\s*(?:\(|•|-)?\s*(\d{4})\s*[-–]\s*(\d{4}|presente|present|actual|current)/gi,
+            
+            // Patrón 3: "Institución - Título - Mes Año - Mes Año"
+            /([^\n-]+?)\s*-\s*([^\n-]+?)\s*-\s*([A-Z][a-z]{2,3})\s+(\d{4})\s*-\s*([A-Z][a-z]{2,3})\s+(\d{4}|presente|present)/gi,
+            
+            // Patrón 4: Solo con años "Título, Institución, Año-Año"
+            /([^,\n]+?),\s*([^,\n]+?),\s*(\d{4})\s*[-–]\s*(\d{4}|presente|present|actual)/gi
+        ];
+        
+        for (const pattern of patterns) {
+            let match;
+            while ((match = pattern.exec(eduSection)) !== null) {
+                let edu;
+                
+                // Determinar qué patrón coincidió
+                if (match[0].includes('•')) {
+                    // Patrón 1: Institución • Título
+                    edu = {
+                        school: match[1].trim(),
+                        degree: match[2].trim(),
+                        startDate: `${match[3]} ${match[4]}`,
+                        endDate: match[6] || match[5],
+                        current: /presente|present|actual/i.test(match[6] || match[5]),
+                        field: ''
+                    };
+                } else if (match[0].includes(' en ') || match[0].includes(' at ')) {
+                    // Patrón 2: Título en Institución
+                    edu = {
+                        degree: match[1].trim(),
+                        school: match[2].trim(),
+                        startDate: match[3],
+                        endDate: match[4],
+                        current: /presente|present|actual|current/i.test(match[4]),
+                        field: ''
+                    };
+                } else {
+                    // Otros patrones
+                    edu = {
+                        school: match[2]?.trim() || match[1].trim(),
+                        degree: match[1]?.trim() || match[2].trim(),
+                        startDate: match[3],
+                        endDate: match[4] || match[6],
+                        current: /presente|present|actual/i.test(match[4] || match[6]),
+                        field: ''
+                    };
+                }
+                
+                // Validar que tenga datos mínimos
+                if (edu.school && edu.degree) {
+                    education.push(edu);
+                    console.log(`✓ Educación encontrada: ${edu.degree} en ${edu.school} (${edu.startDate} - ${edu.endDate})`);
+                }
+            }
+            
+            // Si encontramos educación, no seguir probando patrones
+            if (education.length > 0) break;
+        }
+        
+        console.log(`📊 Total educación encontrada: ${education.length}`);
         return education;
     },
     
