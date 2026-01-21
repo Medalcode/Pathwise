@@ -498,7 +498,7 @@ document.getElementById('testExtension')?.addEventListener('click', () => {
 });
 
 // Make functions global for inline event handlers
-window.navigateTo = navigateTo;
+
 window.removeSkill = removeSkill;
 
 // Extracted Data Preview

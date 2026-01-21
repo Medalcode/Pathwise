@@ -123,10 +123,10 @@ const AutoSaveManager = {
    */
   collectCurrentData() {
     // Intentar obtener datos de extractedData si existe
-    if (typeof extractedData !== 'undefined' && extractedData) {
+    if (typeof window.extractedData !== 'undefined' && window.extractedData) {
       return {
         source: 'extracted',
-        data: extractedData
+        data: window.extractedData
       };
     }
 
