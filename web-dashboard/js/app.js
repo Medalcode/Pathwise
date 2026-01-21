@@ -411,8 +411,11 @@ function updateStats(profile) {
   const completeness = calculateCompleteness(profile);
   const fieldsCount = countExtractedFields(profile);
   
-  document.getElementById('profileCompleteness').textContent = completeness + '%';
-  document.getElementById('fieldsCount').textContent = fieldsCount;
+  const elCompleteness = document.getElementById('profileCompleteness');
+  if(elCompleteness) elCompleteness.textContent = completeness + '%';
+  
+  const elFields = document.getElementById('fieldsCount');
+  if(elFields) elFields.textContent = fieldsCount;
 }
 
 function calculateCompleteness(profile) {
