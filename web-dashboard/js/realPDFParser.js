@@ -15,13 +15,55 @@ const RealPDFParser = {
             let fullText = '';
             const totalPages = pdf.numPages;
             
-            // Extraer texto de todas las páginas
+            console.log(`📄 Procesando PDF de ${totalPages} páginas...`);
+            
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 const page = await pdf.getPage(pageNum);
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(' ');
-                fullText += pageText + '\n';
+                const items = textContent.items;
+                
+                if (!items || items.length === 0) continue;
+
+                // Ordenar items: Primero Y (arriba a abajo), luego X (izquierda a derecha)
+                items.sort((a, b) => {
+                    const yA = a.transform[5];
+                    const yB = b.transform[5];
+                    // Tolerancia de 5px para considerar misma línea
+                    if (Math.abs(yA - yB) > 5) { 
+                        return yB - yA; // Orden descendente en Y (PDF coord system)
+                    }
+                    return a.transform[4] - b.transform[4]; // Orden ascendente en X
+                });
+
+                let pageLines = [];
+                let currentLineItems = [];
+                let currentY = items[0].transform[5];
+
+                for (const item of items) {
+                    const y = item.transform[5];
+                    
+                    if (Math.abs(y - currentY) > 5) {
+                        // Nueva línea detectada (cambio significativo en Y)
+                        if (currentLineItems.length > 0) {
+                            // Unir items de la línea anterior con espacios
+                            pageLines.push(currentLineItems.map(i => i.str).join(' '));
+                        }
+                        currentLineItems = [];
+                        currentY = y;
+                    }
+                    currentLineItems.push(item);
+                }
+                
+                // Agregar la última línea del loop
+                if (currentLineItems.length > 0) {
+                    pageLines.push(currentLineItems.map(i => i.str).join(' '));
+                }
+
+                // Unir líneas con \n
+                fullText += pageLines.join('\n') + '\n';
             }
+            
+            console.log(`✅ Extracción robusta completada. ${fullText.split('\n').length} líneas detectadas.`);
             
             return {
                 text: fullText,
@@ -29,7 +71,7 @@ const RealPDFParser = {
             };
         } catch (error) {
             console.error('Error extracting PDF text:', error);
-            throw new Error('No se pudo extraer el texto del PDF');
+            throw new Error('No se pudo extraer el texto del PDF: ' + error.message);
         }
     },
     
