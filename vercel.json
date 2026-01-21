@@ -1,16 +1,27 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "https://autoapply-wqov2qerrq-uc.a.run.app/api/:path*"
+      "src": "backend/server.js",
+      "use": "@vercel/node"
     },
     {
-      "source": "/",
-      "destination": "/web-dashboard/index.html"
+      "src": "web-dashboard/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/server.js"
     },
     {
-      "source": "/:path*",
-      "destination": "/web-dashboard/:path*"
+      "src": "/",
+      "dest": "/web-dashboard/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/web-dashboard/$1"
     }
   ]
 }
