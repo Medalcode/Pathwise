@@ -42,35 +42,24 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
   console.log('🚀 AutoApply Wizard iniciado');
   
-  // Setup Wizard specific listeners
-  const fileInput = document.getElementById('cvUpload');
-  if (fileInput) { 
-      // Reemplazamos el listener original si existiera o agregamos uno nuevo
-      // Nota: handleFileUpload es la vieja funcion. Usamos handleFileUploadWizard
-      fileInput.addEventListener('change', (e) => handleFileUploadWizard(e.target.files[0]));
+  // Setup Auth UI
+  setupAuthUI();
+  
+  // Theme UI
+  if(window.UI && window.UI.initTheme) {
+      window.UI.initTheme();
   }
   
-  // Setup drag and drop for large area
-  const dropZone = document.getElementById('uploadArea');
-  if (dropZone) {
-       dropZone.addEventListener('dragover', (e) => {
-           e.preventDefault();
-           dropZone.style.borderColor = 'var(--primary-color)';
-           dropZone.style.backgroundColor = 'rgba(37, 99, 235, 0.05)';
-       });
-       dropZone.addEventListener('dragleave', (e) => {
-           e.preventDefault();
-           dropZone.style.borderColor = 'var(--border-color)';
-           dropZone.style.backgroundColor = 'var(--bg-secondary)';
-       });
-       dropZone.addEventListener('drop', (e) => {
-           e.preventDefault();
-           dropZone.style.borderColor = 'var(--border-color)';
-           dropZone.style.backgroundColor = 'var(--bg-secondary)';
-           if (e.dataTransfer.files.length) {
-               handleFileUploadWizard(e.dataTransfer.files[0]);
-           }
-       });
+  // Wait for auth before proceeding
+    if (!window.auth.isAuthenticated()) {
+        console.log('🔒 Esperando autenticación...');
+        return; // Stop init until logged in
+    }
+
+  // Setup Wizard specific listeners
+  // CV Upload Logic delegated to module
+  if(window.CVProcessor) {
+      window.CVProcessor.setupUpload();
   }
 
   // Setup Profile Logic (Modales, etc. para soporte legacy interno)
@@ -97,168 +86,104 @@ async function init() {
     console.log("Perfil no encontrado o error", e);
   }
   
-  // Default: Paso 1
+// Default: Paso 1
   goToStep(1);
 }
 
-// Navigation
-function setupNavigation() {
-  const navLinks = document.querySelectorAll('.nav-link');
-  const actionCards = document.querySelectorAll('.action-card[href]');
-  
-  navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const target = link.getAttribute('href').substring(1);
-      navigateTo(target);
-    });
-  });
-  
-  actionCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-      e.preventDefault();
-      const target = card.getAttribute('href').substring(1);
-      navigateTo(target);
-    });
-  });
+function setupAuthUI() {
+    const authModal = document.getElementById('authModal');
+    const authForm = document.getElementById('authForm');
+    const authError = document.getElementById('authError');
+    const toggleBtn = document.getElementById('toggleAuthMode');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    let isLoginMode = true;
+
+    // Check auth status
+    if (!window.auth.isAuthenticated()) {
+        if(authModal) authModal.classList.remove('hidden');
+    } else {
+        if(logoutBtn) logoutBtn.classList.remove('hidden');
+    }
+
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            window.auth.logout();
+        });
+    }
+
+    // Toggle Mode
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+             isLoginMode = !isLoginMode;
+             const title = document.getElementById('authTitle');
+             const subtitle = document.getElementById('authSubtitle');
+             
+             if (isLoginMode) {
+                 title.textContent = window.t('login');
+                 subtitle.textContent = window.t('please_login');
+                 submitBtn.textContent = window.t('login_button');
+                 toggleBtn.textContent = window.t('need_account');
+             } else {
+                 title.textContent = window.t('register');
+                 subtitle.textContent = window.t('need_account'); // Reusing prompt logic
+                 submitBtn.textContent = window.t('register_button');
+                 toggleBtn.textContent = window.t('have_account');
+             }
+             if(authError) authError.classList.add('hidden');
+        });
+    }
+
+    // Submit
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            
+            if(authError) authError.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.dataset.originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<div class="spinner !border-white/20 !w-5 !h-5 !border-l-white inline-block"></div>';
+
+            try {
+                if (isLoginMode) {
+                    await window.auth.login(email, password);
+                    showToast(window.t('login_success'), 'success');
+                } else {
+                    await window.auth.register(email, password);
+                    showToast(window.t('register_success'), 'success');
+                }
+                
+                if(authModal) authModal.classList.add('hidden');
+                if(logoutBtn) logoutBtn.classList.remove('hidden');
+                
+                // Recargar estado
+                 window.location.reload();
+
+            } catch (error) {
+                console.error(error);
+                if(authError) {
+                    authError.textContent = error.message;
+                    authError.classList.remove('hidden');
+                }
+                submitBtn.disabled = false;
+                submitBtn.textContent = submitBtn.dataset.originalText;
+            }
+        });
+    }
 }
 
-function navigateTo(sectionName) {
-  // Update nav
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.classList.remove('active');
-    if (link.getAttribute('href') === '#' + sectionName) {
-      link.classList.add('active');
-    }
-  });
-  
-  // Show section
-  document.querySelectorAll('.section').forEach(section => {
-    section.classList.add('hidden');
-  });
-  
-  const targetSection = document.getElementById(sectionName);
-  if (targetSection) {
-    targetSection.classList.remove('hidden');
-    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+// Navigation
+// Navigation logic delegated to UI module
+if (window.UI) {
+    window.UI.setupNavigation();
 }
 
 // Upload
-function setupUpload() {
-  const uploadArea = document.getElementById('uploadArea');
-  const fileInput = document.getElementById('cvFile');
-  
-  // Click to upload
-  uploadArea.addEventListener('click', () => {
-    fileInput.click();
-  });
-  
-  // Drag and drop
-  uploadArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = 'var(--primary)';
-    uploadArea.style.background = 'var(--primary-light)';
-  });
-  
-  uploadArea.addEventListener('dragleave', () => {
-    uploadArea.style.borderColor = '';
-    uploadArea.style.background = '';
-  });
-  
-  uploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = '';
-    uploadArea.style.background = '';
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  });
-  
-  // File input change
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      handleFileUpload(e.target.files[0]);
-    }
-  });
-}
-
-async function handleFileUpload(file) {
-  if (!file.type.includes('pdf')) {
-    showToast('Solo se permiten archivos PDF', 'error');
-    return;
-  }
-  
-  if (file.size > 10 * 1024 * 1024) {
-    showToast('El archivo es demasiado grande (máx 10MB)', 'error');
-    return;
-  }
-  
-  // Show progress
-  document.getElementById('uploadArea').classList.add('hidden');
-  document.getElementById('uploadProgress').classList.remove('hidden');
-  
-  const formData = new FormData();
-  formData.append('cv', file);
-  
-  try {
-    // Simulate progress
-    animateProgress(0, 30, 500);
-    
-    const response = await fetch(`${API_URL}/upload/cv`, {
-      method: 'POST',
-      body: formData
-    });
-    
-    animateProgress(30, 70, 500);
-    
-    if (!response.ok) {
-      throw new Error('Error al procesar el CV');
-    }
-    
-    const result = await response.json();
-    
-    animateProgress(70, 100, 300);
-    
-    setTimeout(() => {
-      // Hide progress
-      document.getElementById('uploadProgress').classList.add('hidden');
-      
-      // Show extracted data preview
-      showExtractedDataPreview(result.data);
-      
-      // Show success toast
-      showToast('CV procesado exitosamente', 'success');
-    }, 500);
-    
-  } catch (error) {
-    console.error('Error:', error);
-    document.getElementById('uploadProgress').classList.add('hidden');
-    document.getElementById('uploadArea').classList.remove('hidden');
-    showToast('Error al procesar el CV: ' + error.message, 'error');
-  }
-}
-
-function animateProgress(from, to, duration) {
-  const progressFill = document.getElementById('progressFill');
-  const startTime = Date.now();
-  
-  function update() {
-    const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const current = from + (to - from) * progress;
-    
-    progressFill.style.width = current + '%';
-    
-    if (progress < 1) {
-      requestAnimationFrame(update);
-    }
-  }
-  
-  update();
-}
+// Upload logic moved to js/cvProcessor.js
 
 function countExtractedFields(data) {
   let count = 0;
@@ -346,12 +271,12 @@ function setupProfileForm() {
   // Reset
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      if (confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
+      if (confirm(window.t('confirm_clear_data'))) {
         if(modalForm) modalForm.reset();
         if(verifyForm) verifyForm.reset();
         skills = [];
         renderSkills();
-        showToast('Formulario limpiado', 'warning');
+        showToast(window.t('data_cleared'), 'warning');
       }
     });
   }
@@ -453,7 +378,7 @@ function populateForm(profile) {
       if (experience && Array.isArray(experience)) {
           experience.forEach(exp => {
              // Crear campos y llenarlos
-             addExperienceField(exp);
+             if(window.CVProcessor) window.CVProcessor.addExperienceField(exp);
           });
       }
   }
@@ -464,168 +389,15 @@ function populateForm(profile) {
       eduContainer.innerHTML = ''; // Limpiar
       if (education && Array.isArray(education)) {
           education.forEach(edu => {
-             addEducationField(edu);
+             if(window.CVProcessor) window.CVProcessor.addEducationField(edu);
           });
       }
   }
 }
 
 // Helper para crear inputs dinámicos de experiencia (Cyberpunk Style)
-function addExperienceField(data = null) {
-    const container = document.getElementById('experienceContainer');
-    if (!container) return;
-
-    const id = Date.now() + Math.random().toString(36).substr(2, 5);
-    const item = document.createElement('div');
-    item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
-    item.id = `exp-${id}`;
-    
-    // Valores predeterminados
-    const title = data ? data.title || '' : '';
-    const company = data ? data.company || '' : '';
-    const startDate = data ? data.startDate || '' : '';
-    const endDate = data ? data.endDate || '' : '';
-    const current = data ? data.current || false : false;
-    const desc = data ? data.description || '' : '';
-
-    item.innerHTML = `
-        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button type="button" class="text-red-400 hover:text-red-300" onclick="removeDynamicItem('exp-${id}')">
-                <span class="material-symbols-outlined">delete</span>
-            </button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-                <label class="text-xs text-gray-500 uppercase">Cargo</label>
-                <input type="text" name="exp_title_${id}" value="${title}" placeholder="Ej: Senior Dev" class="glass-input">
-            </div>
-            <div>
-                <label class="text-xs text-gray-500 uppercase">Empresa</label>
-                <input type="text" name="exp_company_${id}" value="${company}" placeholder="Ej: Tech Corp" class="glass-input">
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-             <div>
-                <label class="text-xs text-gray-500 uppercase">Desde</label>
-                <input type="text" name="exp_start_${id}" value="${startDate}" placeholder="YYYY-MM" class="glass-input">
-            </div>
-            <div>
-                <label class="text-xs text-gray-500 uppercase">Hasta</label>
-                <div class="flex flex-col gap-2">
-                    <input type="text" name="exp_end_${id}" value="${endDate}" placeholder="YYYY-MM" class="glass-input" ${current ? 'disabled' : ''}>
-                    <label class="flex items-center gap-2 text-xs text-gray-400">
-                        <input type="checkbox" name="exp_current_${id}" ${current ? 'checked' : ''} onchange="toggleEndDate(this, 'exp_end_${id}')" class="rounded bg-gray-700 border-gray-600">
-                        Actualmente
-                    </label>
-                </div>
-            </div>
-        </div>
-        <div>
-            <label class="text-xs text-gray-500 uppercase">Descripción</label>
-            <textarea name="exp_desc_${id}" rows="2" class="glass-input">${desc}</textarea>
-        </div>
-    `;
-    
-    container.appendChild(item);
-}
-
-function toggleEndDate(checkbox, targetId) {
-    const input = document.querySelector(`input[name="${targetId}"]`);
-    if(input) {
-    input.disabled = checkbox.checked;
-        if(checkbox.checked) input.value = 'Presente';
-    }
-}
-
-function addNewCertification(data = null) {
-    const container = document.getElementById('certificationsContainer');
-    if (!container) return;
-    const id = Date.now() + Math.random().toString(36).substr(2, 5);
-    const item = document.createElement('div');
-    item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
-    item.id = `cert-${id}`;
-    const name = data ? data.name || '' : '';
-    const issuer = data ? data.issuer || '' : '';
-    const date = data ? data.date || '' : '';
-
-    item.innerHTML = `
-        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button type="button" class="text-red-400 hover:text-red-300" onclick="removeDynamicItem('cert-${id}')">
-                <span class="material-symbols-outlined">delete</span>
-            </button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-             <div>
-                <label class="text-xs text-gray-500 uppercase">Certificación</label>
-                 <input type="text" name="cert_name_${id}" value="${name}" class="glass-input">
-             </div>
-             <div>
-                <label class="text-xs text-gray-500 uppercase">Emisor</label>
-                 <input type="text" name="cert_issuer_${id}" value="${issuer}" class="glass-input">
-             </div>
-        </div>
-         <div>
-            <label class="text-xs text-gray-500 uppercase">Fecha</label>
-             <input type="text" name="cert_date_${id}" value="${date}" placeholder="YYYY-MM" class="glass-input">
-         </div>
-    `;
-    container.appendChild(item);
-}
-
-function addEducationField(data = null) {
-    const container = document.getElementById('educationContainer');
-    if (!container) return;
-
-    const id = Date.now() + Math.random().toString(36).substr(2, 5);
-    const item = document.createElement('div');
-    item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
-    item.id = `edu-${id}`;
-    
-    const degree = data ? data.degree || '' : '';
-    const school = data ? data.school || '' : '';
-    const start = data ? data.startDate || '' : '';
-    const end = data ? data.endDate || '' : '';
-
-    item.innerHTML = `
-        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button type="button" class="text-red-400 hover:text-red-300" onclick="removeDynamicItem('edu-${id}')">
-                <span class="material-symbols-outlined">delete</span>
-            </button>
-        </div>
-         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-                <label class="text-xs text-gray-500 uppercase">Título / Grado</label>
-                <input type="text" name="edu_degree_${id}" value="${degree}" class="glass-input">
-            </div>
-            <div>
-                <label class="text-xs text-gray-500 uppercase">Institución</label>
-                <input type="text" name="edu_school_${id}" value="${school}" class="glass-input">
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-             <div>
-                <label class="text-xs text-gray-500 uppercase">Inicio</label>
-                <input type="text" name="edu_start_${id}" value="${start}" class="glass-input">
-            </div>
-            <div>
-                <label class="text-xs text-gray-500 uppercase">Fin</label>
-                <input type="text" name="edu_end_${id}" value="${end}" class="glass-input">
-            </div>
-        </div>
-    `;
-    container.appendChild(item);
-}
-
-function removeDynamicItem(id) {
-    const el = document.getElementById(id);
-    if(el) el.remove();
-}
-
-// Hacer globales las funciones necesarias para onclick
-window.addExperienceField = addExperienceField;
-window.addEducationField = addEducationField;
-window.removeDynamicItem = removeDynamicItem;
-window.toggleEndDate = toggleEndDate;
+// Helper para crear inputs dinámicos de experiencia (Cyberpunk Style)
+// Helper functions moved to js/cvProcessor.js
 
 
 function updateStats(profile) {
@@ -699,7 +471,7 @@ async function saveProfile(formId = 'profileForm') {
     });
     
     if (response.ok) {
-      showToast('Perfil guardado exitosamente', 'success');
+      showToast(window.t('profile_saved_success'), 'success');
       currentProfile = profileData;
       updateStats(profileData);
     } else {
@@ -707,54 +479,22 @@ async function saveProfile(formId = 'profileForm') {
     }
   } catch (error) {
     console.error('Error:', error);
-    showToast('Error al guardar el perfil', 'error');
+    showToast(window.t('error_saving_profile'), 'error');
   }
 }
 
 // Toast Notifications
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toastContainer');
-  
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  
-  const icons = {
-    success: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#22c55e" stroke-width="2"/><path d="M9 12L11 14L15 10" stroke="#22c55e" stroke-width="2"/></svg>',
-    error: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#ef4444" stroke-width="2"/><path d="M15 9L9 15M9 9L15 15" stroke="#ef4444" stroke-width="2"/></svg>',
-    warning: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#f59e0b" stroke-width="2"/></svg>',
-    info: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#3b82f6" stroke-width="2"/><path d="M12 16V12M12 8H12.01" stroke="#3b82f6" stroke-width="2"/></svg>'
-  };
-  
-  toast.innerHTML = `
-    <div class="toast-icon">${icons[type] || icons.info}</div>
-    <div class="toast-content">
-      <div class="toast-title">${message}</div>
-    </div>
-    <button class="toast-close">&times;</button>
-  `;
-  
-  container.appendChild(toast);
-  
-  // Close button
-  toast.querySelector('.toast-close').addEventListener('click', () => {
-    toast.remove();
-  });
-  
-  // Auto remove
-  setTimeout(() => {
-    toast.remove();
-  }, 5000);
-}
+
 
 // Extension Installation
 document.getElementById('installExtension')?.addEventListener('click', () => {
-  showToast('Abre chrome://extensions/ y carga la carpeta "extension"', 'info');
+  showToast(window.t('install_extension_msg'), 'info');
 });
 
 // Test Extension
 document.getElementById('testExtension')?.addEventListener('click', () => {
   window.open('https://docs.google.com/forms/d/e/1FAIpQLSf-test/viewform', '_blank');
-  showToast('Abre la extensión en el formulario de prueba', 'success');
+  showToast(window.t('test_extension_msg'), 'success');
 });
 
 // Make functions global for inline event handlers
@@ -943,14 +683,14 @@ function attachItemFieldListeners() {
 function removeExperience(index) {
   extractedData.experience.splice(index, 1);
   renderExtractedExperience();
-  showToast('Experiencia eliminada', 'success');
+  showToast(window.t('exp_deleted'), 'success');
   updateEditedCount();
 }
 
 function removeEducation(index) {
   extractedData.education.splice(index, 1);
   renderExtractedEducation();
-  showToast('Educación eliminada', 'success');
+  showToast(window.t('edu_deleted'), 'success');
   updateEditedCount();
 }
 
@@ -969,7 +709,7 @@ function renderExtractedSkills() {
 function removeExtractedSkill(skillName) {
   extractedSkills = extractedSkills.filter(s => s !== skillName);
   renderExtractedSkills();
-  showToast(`Habilidad "${skillName}" eliminada`, 'info');
+  showToast(window.t('skill_deleted_with_name', {name: skillName}), 'info');
 }
 
 function updateEditedCount() {
@@ -1020,14 +760,14 @@ async function saveExtractedData() {
           }
         }
         
-        showToast(`Errores en información personal:\n${errorMessages.join('\n')}`, 'error');
+        showToast(window.t('personal_info_errors') + `:\n${errorMessages.join('\n')}`, 'error');
       }
       
       // Mostrar errores de experiencia
       if (validation.errors.experience && validation.errors.experience.length > 0) {
         const expErrors = validation.errors.experience.filter(e => e && Object.keys(e).length > 0);
         if (expErrors.length > 0) {
-          showToast(`Hay ${expErrors.length} experiencia(s) con errores. Por favor revisa las fechas y campos requeridos.`, 'error');
+          showToast(window.t('validation_errors_exp', {count: expErrors.length}), 'error');
         }
       }
       
@@ -1035,7 +775,7 @@ async function saveExtractedData() {
       if (validation.errors.education && validation.errors.education.length > 0) {
         const eduErrors = validation.errors.education.filter(e => e && Object.keys(e).length > 0);
         if (eduErrors.length > 0) {
-          showToast(`Hay ${eduErrors.length} educación(es) con errores. Por favor revisa las fechas y campos requeridos.`, 'error');
+          showToast(window.t('validation_errors_edu', {count: eduErrors.length}), 'error');
         }
       }
       
@@ -1055,7 +795,7 @@ async function saveExtractedData() {
     });
     
     if (response.ok) {
-      showToast('✅ Datos guardados exitosamente', 'success');
+      showToast(window.t('data_saved'), 'success');
       currentProfile = profileData;
       
       // Hide preview
@@ -1080,19 +820,19 @@ async function saveExtractedData() {
     }
   } catch (error) {
     console.error('Error:', error);
-    showToast('❌ Error al guardar los datos', 'error');
+    showToast(window.t('error_saving_data'), 'error');
   }
 }
 
 function discardExtraction() {
-  if (confirm('¿Estás seguro de que quieres descartar estos datos extraídos?')) {
+  if (confirm(window.t('confirm_discard_extracted'))) {
     document.getElementById('extractedDataPreview').classList.add('hidden');
     document.getElementById('uploadArea').classList.remove('hidden');
     document.getElementById('cvFile').value = '';
     extractedData = null;
     extractedSkills = [];
     editedFields.clear();
-    showToast('Datos descartados', 'warning');
+    showToast(window.t('data_discarded'), 'warning');
   }
 }
 
@@ -1112,7 +852,7 @@ function addNewExperience() {
   });
   
   renderExtractedExperience();
-  showToast('Nueva experiencia agregada', 'success');
+  showToast(window.t('new_exp_added'), 'success');
   
   // Scroll to the new item
   setTimeout(() => {
@@ -1138,7 +878,7 @@ function addNewEducation() {
   });
   
   renderExtractedEducation();
-  showToast('Nueva educación agregada', 'success');
+  showToast(window.t('new_edu_added'), 'success');
   
   // Scroll to the new item
   setTimeout(() => {
@@ -1293,7 +1033,7 @@ async function generateProfiles() {
     const actions = document.getElementById('finalActions');
     if(actions) actions.classList.remove('hidden');
     
-    showToast('Perfiles generados exitosamente', 'success');
+    showToast(window.t('profiles_generated'), 'success');
     
   } catch (error) {
     console.error('❌ Error:', error);
@@ -1306,7 +1046,7 @@ async function generateProfiles() {
     // const intro = document.getElementById('aiIntroContainer');
     // if(intro) intro.classList.remove('hidden');
     
-    showToast('Error al generar perfiles: ' + error.message, 'error');
+    showToast(window.t('error_generating_profiles') + ': ' + error.message, 'error');
     
     // Si es error de API Key, abrir modal de config
     if (error.message.includes('API key') || error.message.includes('401')) {
@@ -1371,7 +1111,7 @@ async function downloadProfilePDF(index) {
   const baseData = currentProfile || {};
   const personalInfo = baseData.personalInfo || {};
   
-  showToast('Generando PDF...', 'info');
+  showToast(window.t('generating_pdf'), 'info');
   
   // Create template
   const element = document.createElement('div');
@@ -1457,10 +1197,10 @@ async function downloadProfilePDF(index) {
   // Generate
   try {
       await html2pdf().from(element).set(opt).save();
-      showToast('PDF descargado exitosamente', 'success');
+      showToast(window.t('pdf_downloaded'), 'success');
   } catch (err) {
       console.error(err);
-      showToast('Error al generar PDF', 'error');
+      showToast(window.t('error_generating_pdf'), 'error');
   }
 }
 
@@ -1477,7 +1217,7 @@ function selectProfile(index) {
   localStorage.setItem('selectedProfile', JSON.stringify(selectedProfile));
   localStorage.setItem('selectedProfileIndex', index);
   
-  showToast(`Perfil "${selectedProfile.title}" seleccionado`, 'success');
+  showToast(window.t('profile_selected_with_name', {title: selectedProfile.title}), 'success');
   
   // Close modal after a short delay
   setTimeout(() => {
@@ -1485,7 +1225,7 @@ function selectProfile(index) {
     
     // Show next steps toast
     setTimeout(() => {
-      showToast('Ahora puedes buscar empleos con este perfil', 'info');
+      showToast(window.t('now_search_jobs'), 'info');
     }, 500);
   }, 1000);
 }
@@ -1576,12 +1316,12 @@ async function saveGroqApiKey() {
   const apiKey = document.getElementById('groqApiKeyInput').value.trim();
   
   if (!apiKey) {
-    showToast('Por favor ingresa una API key', 'warning');
+    showToast(window.t('enter_api_key'), 'warning');
     return;
   }
   
   if (!apiKey.startsWith('gsk_')) {
-    showToast('La API key de Groq debe comenzar con "gsk_"', 'warning');
+    showToast(window.t('api_key_format'), 'warning');
     return;
   }
   
@@ -1592,14 +1332,14 @@ async function saveGroqApiKey() {
     // Send to backend to save in .env (optional - requires backend endpoint)
     // For now, we'll just use it from localStorage
     
-    showToast('✅ API Key guardada exitosamente', 'success');
+    showToast(window.t('api_key_saved'), 'success');
     
     // Close modal
     closeApiKeyModal();
     
     // Show success message
     setTimeout(() => {
-      showToast('Ahora puedes generar perfiles profesionales', 'info');
+      showToast(window.t('now_generate_profiles'), 'info');
       
       // Reopen profiles modal and retry
       setTimeout(() => {
@@ -1609,7 +1349,7 @@ async function saveGroqApiKey() {
     
   } catch (error) {
     console.error('Error guardando API key:', error);
-    showToast('Error al guardar la API key', 'error');
+    showToast(window.t('error_saving_api_key'), 'error');
   }
 }
 
@@ -1625,122 +1365,24 @@ console.log('✅ Sistema de configuración de API Key listo');
 async function initJobSearch() {
     // 1. Validar que tengamos un perfil seleccionado del paso 3
     if (selectedProfileIndex === null || !generatedProfiles[selectedProfileIndex]) {
-        showToast('Por favor selecciona un Perfil IA primero', 'warning');
+        showToast(window.t('select_ai_profile_first'), 'warning');
         return;
     }
 
     const profile = generatedProfiles[selectedProfileIndex];
-    console.log('🔍 Iniciando búsqueda para perfil:', profile.title);
-
+    
     // 2. Ir al paso 4
     goToStep(4);
     
-    // 3. UI Loading
-    const loader = document.getElementById('jobSearchLoader');
-    const results = document.getElementById('jobResultsList');
-    if (loader) loader.classList.remove('hidden');
-    if (results) results.innerHTML = ''; // Limpiar
-
-    // Obtener ubicación y preferencias del usuario desde el formulario del Paso 2
-    // Leemos directo del DOM por si el usuario lo editó y no guardamos explícitamente en el objeto
-    const countryInput = document.getElementById('country');
-    const remoteInput = document.getElementById('remoteOnlyPref');
-    
-    // Fallback al objeto currentProfile si el input no existe (raro)
-    const userCountry = countryInput ? countryInput.value : (currentProfile?.personalInfo?.country || 'Chile');
-    const isRemoteOnly = remoteInput ? remoteInput.checked : false;
-    
-    try {
-        const response = await fetch(`${API_URL}/jobs/search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                profile,
-                preferences: { 
-                    location: userCountry,
-                    remoteOnly: isRemoteOnly
-                }
-            })
-        });
-
-        if (!response.ok) throw new Error('Error buscando empleos');
-
-        const { data } = await response.json();
-        
-        // 4. Renderizar
-        if (loader) loader.classList.add('hidden');
-        renderJobResults(data);
-
-    } catch (error) {
-        console.error(error);
-        if (loader) loader.classList.add('hidden');
-        showToast('Error buscando empleos', 'error');
-        if (results) results.innerHTML = `<div class="empty-state-search"><p class="text-danger">Error: ${error.message}</p></div>`;
+    // 3. Delegar al módulo
+    if (window.JobSearch) {
+        window.JobSearch.init(profile);
+    } else {
+        console.error("JobSearch module not loaded");
     }
 }
 
-function renderJobResults(jobs) {
-    const container = document.getElementById('jobResultsList');
-    if (!container) return;
 
-    if (!jobs || jobs.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state-search">
-                <h3>😕 No encontramos ofertas exactas</h3>
-                <p>Intenta ajustar las palabras clave de tu perfil o intenta más tarde.</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = jobs.map(job => {
-        // Determinar clase de badge según score
-        let badgeClass = 'low';
-        let matchText = 'Match Bajo';
-        
-        if (job.matchScore >= 70) { 
-            badgeClass = 'high'; 
-            matchText = '🔥 Super Match';
-        } else if (job.matchScore >= 40) { 
-            badgeClass = 'medium'; 
-            matchText = '✨ Buen Match';
-        }
-
-        return `
-            <div class="job-card" onclick="window.open('${job.url}', '_blank')">
-                <div class="job-header">
-                    <div>
-                        <div class="job-title">${job.title}</div>
-                        <div class="job-company">🏢 ${job.company} • 📍 ${job.location || 'Remoto'}</div>
-                    </div>
-                    <div class="match-badge ${badgeClass}">
-                        ${matchText} ${job.matchScore}%
-                    </div>
-                </div>
-                
-                <div class="job-details">
-                    <div class="job-detail-item">📅 ${new Date(job.date).toLocaleDateString()}</div>
-                    <div class="job-detail-item">💰 ${job.salary || 'N/A'}</div>
-                    <div class="job-detail-item">🌐 ${job.source}</div>
-                </div>
-
-                <p class="text-sm text-gray-600 mb-3">
-                    ${job.description ? stripHtml(job.description).substring(0, 150) + '...' : 'Ver detalles...'}
-                </p>
-
-                <div class="job-tags">
-                   ${(job.tags || []).slice(0, 5).map(tag => `<span class="job-tag">${tag}</span>`).join('')}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function stripHtml(html) {
-   let tmp = document.createElement("DIV");
-   tmp.innerHTML = html;
-   return tmp.textContent || tmp.innerText || "";
-}
 
 // Exponer globalmente
 window.initJobSearch = initJobSearch;
@@ -1749,22 +1391,7 @@ window.initJobSearch = initJobSearch;
 // WIZARD LOGIC ADDITIONS (Continuación)
 // ==========================================
 
-function attemptNavigation(step) {
-  // Siempre permitir ir al paso 1
-  if (step === 1) {
-    goToStep(1);
-    return;
-  }
-  
-  // Para avanzar, necesitamos datos
-  if (!currentProfile) {
-    showToast('⚠️ Primero debes subir un CV para continuar', 'error');
-    return;
-  }
-  
-  // Si quiere ir al paso 3 pero no hemos validado (opcional, por ahora permitimos saltar)
-  goToStep(step);
-}
+
 
 const STATE_KEY = 'panoptes_state_v2';
 
@@ -1826,39 +1453,7 @@ function loadState() {
     }
 }
 
-function goToStep(step) {
-  // Ocultar todos los contenidos de paso
-  document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-  
-  // Mostrar contenido objetivo
-  const targetContent = document.getElementById(`step${step}-content`);
-  if (targetContent) {
-    targetContent.classList.remove('hidden');
-  }
 
-  // Actualizar indicadores (New ID system)
-  for(let i=1; i<=4; i++) {
-        const el = document.getElementById(`stepIndicator${i}`);
-        if(el) {
-            if(i === step) {
-                el.className = "text-xs uppercase tracking-widest font-bold text-primary animate-pulse";
-            } else if (i < step) {
-                el.className = "text-xs uppercase tracking-widest text-success-green font-bold flex items-center gap-1";
-                if(!el.innerHTML.includes('✓')) el.innerHTML = `✓ ${el.innerHTML}`; // Add checkmark
-            } else {
-                el.className = "text-xs uppercase tracking-widest text-gray-500";
-                 // Remove checkmark if backtracking
-                 el.innerHTML = el.innerHTML.replace('✓ ', '');
-            }
-        }
-  }
-
-  // Save State
-  saveState(step);
-
-  // Scroll arriba
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
 
 // Auto-load on init
 document.addEventListener('DOMContentLoaded', loadState);
@@ -1894,7 +1489,7 @@ function updateStepperIndicators(currentStep) {
 }
 
 function resetWizard() {
-  if (confirm('¿Estás seguro? Se perderán los datos actuales no guardados.')) {
+  if (confirm(window.t('confirm_discard_unsaved'))) {
     goToStep(1);
     const fileInput = document.getElementById('cvUpload');
     if(fileInput) fileInput.value = '';
@@ -1905,7 +1500,7 @@ function resetWizard() {
 }
 
 function finishWizard() {
-  showToast('¡Proceso completado exitosamente!', 'success');
+  showToast(window.t('process_completed'), 'success');
   // Aquí podríamos redirigir o mostrar confeti
 }
 
@@ -1913,7 +1508,7 @@ function finishWizard() {
 async function handleFileUploadWizard(file) {
     if (!file) return;
     if (file.type !== 'application/pdf') {
-        showToast('Solo se permiten archivos PDF', 'error');
+        showToast(window.t('only_pdf_allowed'), 'error');
         return;
     }
 
@@ -1952,14 +1547,14 @@ async function handleFileUploadWizard(file) {
             populateForm(result.data);
             
             goToStep(2);
-            showToast('CV procesado correctamente', 'success');
+            showToast(window.t('cv_processed_correctly'), 'success');
             
             currentProfile = result.data; 
         }, 1000);
 
     } catch (error) {
         console.error(error);
-        showToast('Error procesando CV', 'error');
+        showToast(window.t('error_processing_cv_short'), 'error');
         document.getElementById('uploadProgress').classList.add('hidden');
         document.getElementById('uploadArea').classList.remove('hidden');
     }
@@ -2017,13 +1612,13 @@ function addNewCertification() {
     if (!extractedData.certifications) extractedData.certifications = [];
     extractedData.certifications.push({ name: '', issuer: '', date: '' });
     renderExtractedCertifications();
-    showToast('Nueva certificación agregada', 'success');
+    showToast(window.t('new_cert_added'), 'success');
 }
 
 function removeCertification(index) {
     extractedData.certifications.splice(index, 1);
     renderExtractedCertifications();
-    showToast('Certificación eliminada', 'success');
+    showToast(window.t('cert_deleted'), 'success');
     updateEditedCount();
 }
 
@@ -2068,13 +1663,13 @@ function addNewLanguage() {
     if (!extractedData.languages) extractedData.languages = [];
     extractedData.languages.push({ language: '', level: 'Intermedio' });
     renderExtractedLanguages();
-    showToast('Nuevo idioma agregado', 'success');
+    showToast(window.t('new_lang_added'), 'success');
 }
 
 function removeLanguage(index) {
     extractedData.languages.splice(index, 1);
     renderExtractedLanguages();
-    showToast('Idioma eliminado', 'success');
+    showToast(window.t('lang_deleted'), 'success');
     updateEditedCount();
 }
 
@@ -2119,13 +1714,13 @@ function addNewProject() {
     if (!extractedData.projects) extractedData.projects = [];
     extractedData.projects.push({ name: '', url: '', description: '' });
     renderExtractedProjects();
-    showToast('Nuevo proyecto agregado', 'success');
+    showToast(window.t('new_project_added'), 'success');
 }
 
 function removeProject(index) {
     extractedData.projects.splice(index, 1);
     renderExtractedProjects();
-    showToast('Proyecto eliminado', 'success');
+    showToast(window.t('project_deleted'), 'success');
     updateEditedCount();
 }
 

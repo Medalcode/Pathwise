@@ -11,6 +11,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <!-- Config -->
+    <link rel="stylesheet" href="css/dark-mode.css">
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -99,11 +100,17 @@
         <button class="w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all" onclick="location.reload()">
             <span class="material-symbols-outlined">home</span>
         </button>
+        <button id="themeToggle" class="w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all" title="Toggle Theme">
+            <span class="material-symbols-outlined">light_mode</span>
+        </button>
         <button class="w-12 h-12 flex items-center justify-center rounded-xl text-white bg-primary/20 border border-primary/50 shadow-[0_0_15px_rgba(147,89,248,0.3)]">
             <span class="material-symbols-outlined text-primary">smart_toy</span>
         </button>
          <button class="w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
             <span class="material-symbols-outlined">settings</span>
+        </button>
+        <button id="logoutBtn" class="hidden w-12 h-12 flex items-center justify-center rounded-xl text-red-400 hover:text-white hover:bg-red-500/20 transition-all mt-auto mb-4" title="Logout">
+            <span class="material-symbols-outlined">logout</span>
         </button>
     </nav>
 </aside>
@@ -112,14 +119,14 @@
     <!-- Header -->
     <header class="flex-shrink-0 px-8 py-6 flex justify-between items-center w-full border-b border-white/5">
         <div class="flex items-center gap-2 text-sm font-medium tracking-wide text-gray-400">
-            <span>HOME</span> / <span class="text-white">AGENT SEQUENCE</span>
+            <span data-i18n="home">HOME</span> / <span class="text-white" data-i18n="agent_sequence">AGENT SEQUENCE</span>
         </div>
         <div class="glass-panel pl-3 pr-4 py-1.5 rounded-full flex items-center gap-3">
             <div class="relative flex h-2.5 w-2.5">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-green opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-success-green"></span>
             </div>
-            <span class="text-xs font-bold tracking-widest text-gray-300 font-mono">SYSTEM: ONLINE</span>
+            <span class="text-xs font-bold tracking-widest text-gray-300 font-mono" data-i18n="system_online">SYSTEM: ONLINE</span>
         </div>
     </header>
 
@@ -132,16 +139,16 @@
                  <!-- Indicators -->
                  <div class="flex gap-4 w-full justify-between px-4">
                     <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(1)">
-                        <div class="text-xs uppercase tracking-widest font-bold text-primary" id="stepIndicator1">1. Upload</div>
+                        <div class="text-xs uppercase tracking-widest font-bold text-primary" id="stepIndicator1" data-i18n="step_upload">1. Upload</div>
                     </button>
                     <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(2)">
-                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator2">2. Verify</div>
+                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator2" data-i18n="step_verify">2. Verify</div>
                     </button>
                     <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(3)">
-                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator3">3. Optimize</div>
+                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator3" data-i18n="step_optimize">3. Optimize</div>
                     </button>
                     <button class="step-indicator hover:text-primary transition-colors" onclick="attemptNavigation(4)">
-                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator4">4. Apply</div>
+                        <div class="text-xs uppercase tracking-widest text-gray-500" id="stepIndicator4" data-i18n="step_apply">4. Apply</div>
                     </button>
                  </div>
             </div>
@@ -158,8 +165,8 @@
                             <span class="material-symbols-outlined text-6xl text-primary/80">cloud_upload</span>
                         </div>
                         <div class="text-center">
-                            <h3 class="text-2xl font-bold text-white mb-2">UPLINK CV DATA</h3>
-                            <p class="text-gray-400 text-sm font-mono">Drop PDF file here to initiate parsing.</p>
+                            <h3 class="text-2xl font-bold text-white mb-2" data-i18n="uplink_cv_data">UPLINK CV DATA</h3>
+                            <p class="text-gray-400 text-sm font-mono" data-i18n="drop_pdf_here">Drop PDF file here to initiate parsing.</p>
                         </div>
                     </div>
                 </div>
@@ -168,7 +175,7 @@
             
             <!-- Progress -->
             <div id="uploadProgress" class="hidden w-full max-w-md mx-auto mb-8 glass-panel p-4 rounded-xl">
-                 <p class="text-center text-primary font-mono animate-pulse mb-2">PROCESSING NEURAL NET...</p>
+                 <p class="text-center text-primary font-mono animate-pulse mb-2" data-i18n="processing_neural_net">PROCESSING NEURAL NET...</p>
                  <div class="w-full bg-gray-800 rounded-full h-2">
                     <div class="bg-primary h-2 rounded-full" style="width: 50%" id="progressFill"></div>
                  </div>
@@ -180,29 +187,29 @@
                      <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
                          <span class="material-symbols-outlined text-success-green text-3xl">check_circle</span>
                          <div>
-                             <h3 class="text-xl font-bold text-white">Extraction Complete</h3>
-                             <p class="text-gray-400 text-sm">Review raw data before proceeding.</p>
+                             <h3 class="text-xl font-bold text-white" data-i18n="extraction_complete">Extraction Complete</h3>
+                             <p class="text-gray-400 text-sm" data-i18n="review_raw_data">Review raw data before proceeding.</p>
                          </div>
                      </div>
                      
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                          <div>
-                             <label class="text-xs text-gray-500 uppercase">First Name</label>
+                             <label class="text-xs text-gray-500 uppercase" data-i18n="first_name">First Name</label>
                              <input type="text" id="extracted-firstName" class="glass-input">
                          </div>
                          <div>
-                             <label class="text-xs text-gray-500 uppercase">Last Name</label>
+                             <label class="text-xs text-gray-500 uppercase" data-i18n="last_name">Last Name</label>
                              <input type="text" id="extracted-lastName" class="glass-input">
                          </div>
                          <div class="md:col-span-2">
-                             <label class="text-xs text-gray-500 uppercase">Current Title</label>
+                             <label class="text-xs text-gray-500 uppercase" data-i18n="current_title">Current Title</label>
                              <input type="text" id="extracted-currentTitle" class="glass-input">
                          </div>
                      </div>
 
                      <div class="flex justify-end gap-3">
-                         <button id="discardExtraction" class="px-4 py-2 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10">Discard</button>
-                         <button id="saveExtractedData" class="px-6 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-[0_0_15px_rgba(147,89,248,0.4)]">Save & Verify Nexus →</button>
+                         <button id="discardExtraction" class="px-4 py-2 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10" data-i18n="discard">Discard</button>
+                         <button id="saveExtractedData" class="px-6 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-[0_0_15px_rgba(147,89,248,0.4)]" data-i18n="save_verify_nexus">Save & Verify Nexus →</button>
                      </div>
                  </div>
             </div>
@@ -213,40 +220,40 @@
             <div class="glass-panel p-8 rounded-2xl">
                 <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">verified_user</span>
-                    Verify Identity Matrix
+                    <span data-i18n="verify_identity_matrix">Verify Identity Matrix</span>
                 </h2>
                 
                 <form id="verificationForm" class="space-y-8">
                     <!-- Personal Info -->
                     <div>
-                        <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 border-b border-white/10 pb-2">Core Identity</h4>
+                        <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 border-b border-white/10 pb-2" data-i18n="core_identity">Core Identity</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <input type="text" id="verify-firstName" placeholder="First Name" class="glass-input">
-                             <input type="text" id="verify-lastName" placeholder="Last Name" class="glass-input">
-                             <input type="email" id="verify-email" placeholder="Email" class="glass-input">
-                             <input type="tel" id="verify-phone" placeholder="Phone" class="glass-input">
-                             <input type="text" id="verify-currentTitle" placeholder="Professional Title" class="glass-input md:col-span-2">
-                             <input type="text" id="verify-city" placeholder="City" class="glass-input">
-                             <input type="text" id="verify-country" placeholder="Country" class="glass-input">
-                             <input type="url" id="verify-linkedin" placeholder="LinkedIn URL" class="glass-input md:col-span-2">
-                             <textarea id="verify-summary" rows="3" placeholder="Professional Summary" class="glass-input md:col-span-2"></textarea>
+                             <input type="text" id="verify-firstName" placeholder="First Name" data-i18n-placeholder="first_name" class="glass-input">
+                             <input type="text" id="verify-lastName" placeholder="Last Name" data-i18n-placeholder="last_name" class="glass-input">
+                             <input type="email" id="verify-email" placeholder="Email" data-i18n-placeholder="email" class="glass-input">
+                             <input type="tel" id="verify-phone" placeholder="Phone" data-i18n-placeholder="phone" class="glass-input">
+                             <input type="text" id="verify-currentTitle" placeholder="Professional Title" data-i18n-placeholder="professional_title" class="glass-input md:col-span-2">
+                             <input type="text" id="verify-city" placeholder="City" data-i18n-placeholder="city" class="glass-input">
+                             <input type="text" id="verify-country" placeholder="Country" data-i18n-placeholder="country" class="glass-input">
+                             <input type="url" id="verify-linkedin" placeholder="LinkedIn URL" data-i18n-placeholder="linkedin_url" class="glass-input md:col-span-2">
+                             <textarea id="verify-summary" rows="3" placeholder="Professional Summary" data-i18n-placeholder="professional_summary" class="glass-input md:col-span-2"></textarea>
                         </div>
                         <!-- Remote Pref -->
                         <div class="mt-4 flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
                             <input type="checkbox" id="verify-remoteOnlyPref" class="w-5 h-5 rounded border-gray-600 text-primary focus:ring-primary bg-gray-700">
                             <div>
-                                <span class="block text-sm font-bold text-white">Remote Only Protocol</span>
-                                <span class="block text-xs text-gray-400">Filter out on-site positions automatically.</span>
+                                <span class="block text-sm font-bold text-white" data-i18n="remote_only_protocol">Remote Only Protocol</span>
+                                <span class="block text-xs text-gray-400" data-i18n="filter_onsite">Filter out on-site positions automatically.</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Skills -->
                     <div>
-                        <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 border-b border-white/10 pb-2">Neural Skills</h4>
+                        <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 border-b border-white/10 pb-2" data-i18n="neural_skills">Neural Skills</h4>
                         <div class="flex gap-2 mb-3">
-                            <input type="text" id="verify-skillInput" placeholder="Add skill (e.g. React)" class="glass-input">
-                            <button type="button" id="verify-addSkillBtn" class="px-4 rounded-lg bg-white/10 hover:bg-white/20 text-white">Add</button>
+                            <input type="text" id="verify-skillInput" placeholder="Add skill (e.g. React)" data-i18n-placeholder="add_skill_placeholder" class="glass-input">
+                            <button type="button" id="verify-addSkillBtn" class="px-4 rounded-lg bg-white/10 hover:bg-white/20 text-white" data-i18n="add">Add</button>
                         </div>
                         <div id="verify-skillsTagsContainer" class="flex flex-wrap gap-2 min-h-[40px] p-2 rounded-lg bg-black/20"></div>
                         <input type="hidden" id="verify-skillsHidden">
@@ -261,8 +268,8 @@
 
                     <!-- Actions -->
                     <div class="flex justify-between pt-6 border-t border-white/10">
-                        <button type="button" class="text-gray-400 hover:text-white" onclick="attemptNavigation(1)">← Back to Upload</button>
-                        <button type="button" id="confirmDataBtn" class="px-8 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-glow-primary" onclick="attemptNavigation(3)">CONFIRM DATA →</button>
+                        <button type="button" class="text-gray-400 hover:text-white" onclick="attemptNavigation(1)" data-i18n="back_to_upload">← Back to Upload</button>
+                        <button type="button" id="confirmDataBtn" class="px-8 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-glow-primary" onclick="attemptNavigation(3)" data-i18n="confirm_data">CONFIRM DATA →</button>
                     </div>
                 </form>
             </div>
@@ -271,26 +278,26 @@
         <!-- STEP 3: AI PROFILES -->
         <div id="step3-content" class="step-content hidden w-full max-w-6xl mx-auto">
              <div class="text-center mb-10">
-                 <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">STRATEGY GENERATION</h2>
-                 <p class="text-gray-400 mt-2">Neural Network is crafting optimized personas for infiltration.</p>
+                 <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400" data-i18n="strategy_generation">STRATEGY GENERATION</h2>
+                 <p class="text-gray-400 mt-2" data-i18n="neural_crafting">Neural Network is crafting optimized personas for infiltration.</p>
              </div>
 
              <!-- Intro -->
              <div id="aiIntroContainer" class="text-center py-10">
                  <div class="glass-panel inline-block p-10 rounded-2xl max-w-md">
                      <span class="material-symbols-outlined text-6xl text-primary mb-4">neurology</span>
-                     <h3 class="text-2xl font-bold text-white mb-2">Ready to Optimize?</h3>
-                     <p class="text-gray-400 mb-6">We will generate 3 variations of your profile to target specific market segments.</p>
-                     <button class="px-8 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-lg w-full" onclick="generateProfiles()">INITIATE SEQUENCE</button>
-                     <button class="mt-4 text-xs text-gray-500 hover:text-white" onclick="openApiKeyModal()">⚙️ Configure Neural Key (Groq)</button>
+                     <h3 class="text-2xl font-bold text-white mb-2" data-i18n="ready_to_optimize">Ready to Optimize?</h3>
+                     <p class="text-gray-400 mb-6" data-i18n="generate_variations">We will generate 3 variations of your profile to target specific market segments.</p>
+                     <button class="px-8 py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-lg w-full" onclick="generateProfiles()" data-i18n="initiate_sequence">INITIATE SEQUENCE</button>
+                     <button class="mt-4 text-xs text-gray-500 hover:text-white" onclick="openApiKeyModal()" data-i18n="configure_neural_key">⚙️ Configure Neural Key (Groq)</button>
                  </div>
              </div>
 
              <!-- Loading -->
              <div id="wizardProfilesLoading" class="loading-state hidden">
                  <div class="spinner"></div>
-                 <h3 class="text-xl font-bold text-white">Synthesizing Personas...</h3>
-                 <p class="text-gray-500">Analysing market data...</p>
+                 <h3 class="text-xl font-bold text-white" data-i18n="synthesizing_personas">Synthesizing Personas...</h3>
+                 <p class="text-gray-500" data-i18n="analyzing_market">Analysing market data...</p>
              </div>
 
              <!-- Results Grid -->
@@ -300,8 +307,8 @@
                  </div>
                  
                  <div class="flex justify-center mt-10 gap-4" id="finalActions">
-                     <button class="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white" onclick="attemptNavigation(2)">Modify Source Data</button>
-                     <button class="px-8 py-2 rounded-lg bg-success-green hover:bg-green-600 text-white font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)]" onclick="initJobSearch()">PROCEED TO TARGETING →</button>
+                     <button class="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white" onclick="attemptNavigation(2)" data-i18n="modify_source_data">Modify Source Data</button>
+                     <button class="px-8 py-2 rounded-lg bg-success-green hover:bg-green-600 text-white font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)]" onclick="initJobSearch()" data-i18n="proceed_targeting">PROCEED TO TARGETING →</button>
                  </div>
              </div>
         </div>
@@ -312,23 +319,23 @@
                  <div>
                      <h2 class="text-3xl font-bold text-white flex items-center gap-3">
                          <span class="material-symbols-outlined text-success-green animate-pulse">radar</span>
-                         Active Targets
+                         <span data-i18n="active_targets">Active Targets</span>
                      </h2>
                  </div>
                  <div class="flex gap-2">
-                     <button class="px-4 py-2 rounded-lg bg-glass-bg border border-white/10 text-xs text-gray-300">Remote Only</button>
+                     <button class="px-4 py-2 rounded-lg bg-glass-bg border border-white/10 text-xs text-gray-300" data-i18n="remote_only">Remote Only</button>
                  </div>
              </div>
              
              <div id="jobSearchLoader" class="text-center py-20 hidden">
                   <div class="spinner"></div>
-                  <p class="text-primary font-mono">SCANNING GLOBAL NETWORKS...</p>
+                  <p class="text-primary font-mono" data-i18n="scanning_networks">SCANNING GLOBAL NETWORKS...</p>
              </div>
 
              <div id="jobResultsList" class="flex flex-col gap-4">
                  <!-- Job Cards injected here -->
                  <div class="glass-panel p-8 text-center rounded-xl">
-                     <p class="text-gray-500">System idle. Initiate search protocol above.</p>
+                     <p class="text-gray-500" data-i18n="system_idle">System idle. Initiate search protocol above.</p>
                  </div>
              </div>
         </div>
@@ -339,31 +346,69 @@
     <div class="h-8 bg-black/95 border-t border-white/10 flex items-center px-4 gap-4 overflow-hidden z-20 shrink-0">
         <div class="flex items-center gap-2 text-xs font-mono text-gray-500 shrink-0">
             <span class="size-1.5 bg-accent-cyan rounded-full animate-ping"></span>
-            <span>PANOPTES_TERMINAL</span>
+            <span data-i18n="panoptes_terminal">PANOPTES_TERMINAL</span>
         </div>
         <div class="text-[10px] font-mono text-accent-cyan/80 flex-1 truncate" id="debugConsole">
-            > System Ready.
+            > <span data-i18n="system_ready">System Ready.</span>
         </div>
     </div>
     
     <!-- Modals -->
     <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
         <div class="glass-panel p-6 rounded-xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-white mb-4">Neural Link Configuration</h3>
-            <label class="block text-xs text-gray-400 mb-2 uppercase">Groq API Key</label>
+            <h3 class="text-xl font-bold text-white mb-4" data-i18n="neural_link_config">Neural Link Configuration</h3>
+            <label class="block text-xs text-gray-400 mb-2 uppercase" data-i18n="groq_api_key">Groq API Key</label>
             <input type="password" id="groqApiKeyInput" class="glass-input mb-4">
             <div class="flex justify-end gap-3">
-                <button id="cancelApiKey" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-                <button id="saveApiKey" class="px-4 py-2 bg-primary rounded-lg text-white font-bold">Save Key</button>
+                <button id="cancelApiKey" class="px-4 py-2 text-gray-400 hover:text-white" data-i18n="cancel">Cancel</button>
+                <button id="saveApiKey" class="px-4 py-2 bg-primary rounded-lg text-white font-bold" data-i18n="save_key">Save Key</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md relative animate-[fadeIn_0.3s_ease-out]">
+            <div class="text-center mb-8">
+                 <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 border border-primary/50 shadow-[0_0_15px_rgba(147,89,248,0.3)]">
+                     <span class="material-symbols-outlined text-3xl text-primary">lock</span>
+                 </div>
+                 <h2 class="text-2xl font-bold text-white mb-2" id="authTitle" data-i18n="login">Login</h2>
+                 <p class="text-gray-400 text-sm" id="authSubtitle" data-i18n="please_login">Please login to continue</p>
+            </div>
+            
+            <form id="authForm" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase block mb-1" data-i18n="email_label">Email</label>
+                    <input type="email" id="authEmail" class="glass-input" required placeholder="name@example.com">
+                </div>
+                <div>
+                     <label class="text-xs text-gray-500 uppercase block mb-1" data-i18n="password_label">Password</label>
+                     <input type="password" id="authPassword" class="glass-input" required placeholder="••••••••">
+                </div>
+                 <!-- Error Message -->
+                <div id="authError" class="hidden text-red-400 text-xs text-center bg-red-500/10 p-2 rounded border border-red-500/20"></div>
+    
+                <button type="submit" class="w-full py-3 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold shadow-glow-primary transition-all mt-2" id="authSubmitBtn" data-i18n="login_button">Sign In</button>
+            </form>
+    
+            <div class="mt-6 text-center">
+                <button id="toggleAuthMode" class="text-xs text-gray-500 hover:text-white transition-colors underline" data-i18n="need_account">Don't have an account? Register</button>
             </div>
         </div>
     </div>
 
 </main>
 
+<script src="js/translations.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/validators.js"></script>
 <script src="js/profilesManager.js"></script>
 <script src="js/profilesModals.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/cvProcessor.js"></script>
+<script src="js/jobSearch.js"></script>
 <script src="js/autoSave.js"></script>
 <script src="js/app.js?v=4.8"></script>
 </body>

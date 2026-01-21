@@ -14,8 +14,15 @@ const ProfilesManager = {
   async init() {
     console.log('🔄 Inicializando ProfilesManager...');
     
-    // Cargar perfiles
-    await this.loadProfiles();
+    // Escuchar login
+    window.addEventListener('auth:login', async () => {
+        await this.loadProfiles();
+    });
+
+    // Cargar perfiles si ya estamos logueados
+    if (window.auth.isAuthenticated()) {
+        await this.loadProfiles();
+    }
     
     // Setup event listeners
     this.setupEventListeners();
@@ -69,7 +76,7 @@ const ProfilesManager = {
    */
   async loadProfiles() {
     try {
-      const response = await fetch('/api/profiles?userId=1');
+      const response = await window.auth.fetch('/api/profiles');
       const data = await response.json();
 
       if (data.success) {
@@ -88,7 +95,7 @@ const ProfilesManager = {
       }
     } catch (error) {
       console.error('❌ Error cargando perfiles:', error);
-      showToast('Error cargando perfiles', 'error');
+      showToast(window.t('error_loading_profiles'), 'error');
       
       // Mostrar estado de error
       this.showProfilesError();
@@ -128,7 +135,7 @@ const ProfilesManager = {
             <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2"/>
             <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2"/>
           </svg>
-          <p>No hay perfiles creados</p>
+          <p>${window.t('no_profiles')}</p>
         </div>
       `;
       return;
@@ -145,7 +152,7 @@ const ProfilesManager = {
           <div class="profile-item-info">
             <div class="profile-item-name">
               ${profile.name}
-              ${profile.isDefault ? '<span class="profile-badge default">Default</span>' : ''}
+              ${profile.isDefault ? `<span class="profile-badge default">${window.t('default')}</span>` : ''}
             </div>
             <div class="profile-item-meta">
               ${typeLabel ? `<span class="profile-item-type">${typeLabel}</span>` : ''}
@@ -183,11 +190,11 @@ const ProfilesManager = {
    */
   getTypeLabel(type) {
     const labels = {
-      'frontend': 'Frontend',
-      'backend': 'Backend',
-      'fullstack': 'Full Stack',
-      'mobile': 'Mobile',
-      'devops': 'DevOps',
+      'frontend': window.t('frontend'),
+      'backend': window.t('backend'),
+      'fullstack': window.t('fullstack'),
+      'mobile': window.t('mobile'),
+      'devops': window.t('devops'),
       'general': ''
     };
     return labels[type] || type;
@@ -215,12 +222,12 @@ const ProfilesManager = {
       // Cargar datos del perfil
       await this.loadProfileData(profileId);
 
-      showToast(`Perfil cambiado a: ${profile.name}`, 'success');
+      showToast(window.t('profile_switched', {name: profile.name}), 'success');
       
       console.log('✅ Perfil cambiado:', profile.name);
     } catch (error) {
       console.error('❌ Error cambiando perfil:', error);
-      showToast('Error cambiando de perfil', 'error');
+      showToast(window.t('error_switching_profile'), 'error');
     }
   },
 
@@ -229,7 +236,7 @@ const ProfilesManager = {
    */
   async loadProfileData(profileId) {
     try {
-      const response = await fetch(`/api/profiles/${profileId}`);
+      const response = await window.auth.fetch(`/api/profiles/${profileId}`);
       const data = await response.json();
 
       if (data.success) {
@@ -289,7 +296,7 @@ const ProfilesManager = {
    */
   showCreateProfileModal() {
     // TODO: Implementar modal de creación
-    const name = prompt('Nombre del nuevo perfil:');
+    const name = prompt(window.t('prompt_profile_name'));
     
     if (name && name.trim()) {
       this.createProfile(name.trim());
@@ -301,11 +308,9 @@ const ProfilesManager = {
    */
   async createProfile(name, type = 'general', copyFromProfile = null) {
     try {
-      const response = await fetch('/api/profiles', {
+      const response = await window.auth.fetch('/api/profiles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 1,
           name,
           type,
           copyFromProfile
@@ -315,7 +320,7 @@ const ProfilesManager = {
       const data = await response.json();
 
       if (data.success) {
-        showToast('Perfil creado exitosamente', 'success');
+        showToast(window.t('profile_created_success'), 'success');
         
         // Recargar perfiles
         await this.loadProfiles();
@@ -327,7 +332,7 @@ const ProfilesManager = {
       }
     } catch (error) {
       console.error('❌ Error creando perfil:', error);
-      showToast('Error creando perfil', 'error');
+      showToast(window.t('error_creating_profile'), 'error');
     }
   },
 
@@ -336,7 +341,7 @@ const ProfilesManager = {
    */
   showManageProfilesModal() {
     // TODO: Implementar modal de gestión completo
-    showToast('Modal de gestión en desarrollo', 'info');
+    showToast(window.t('manage_modal_dev'), 'info');
   },
 
   /**
@@ -349,13 +354,13 @@ const ProfilesManager = {
     if (profileList) {
       profileList.innerHTML = `
         <div class="profile-empty">
-          <p style="color: var(--danger);">Error cargando perfiles</p>
+          <p style="color: var(--danger);">${window.t('error_loading_profiles')}</p>
         </div>
       `;
     }
 
     if (profileNameEl) {
-      profileNameEl.textContent = 'Error';
+      profileNameEl.textContent = window.t('error');
     }
   }
 };

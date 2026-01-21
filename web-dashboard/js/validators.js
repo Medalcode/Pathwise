@@ -11,12 +11,12 @@ const Validators = {
    */
   validateEmail(email) {
     if (!email || email.trim() === '') {
-      return { valid: false, error: 'El email es requerido' };
+      return { valid: false, error: window.t('email_required') };
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return { valid: false, error: 'Email inválido' };
+      return { valid: false, error: window.t('email_invalid') };
     }
     
     return { valid: true, error: null };
@@ -35,7 +35,7 @@ const Validators = {
     // Acepta: +56912345678, +1-234-567-8900, (123) 456-7890, etc.
     const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
     if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-      return { valid: false, error: 'Formato de teléfono inválido' };
+      return { valid: false, error: window.t('phone_format_invalid') };
     }
     
     return { valid: true, error: null };
@@ -57,17 +57,17 @@ const Validators = {
       
       if (type === 'linkedin') {
         if (!urlObj.hostname.includes('linkedin.com')) {
-          return { valid: false, error: 'Debe ser una URL de LinkedIn' };
+          return { valid: false, error: window.t('url_linkedin_invalid') };
         }
       } else if (type === 'github') {
         if (!urlObj.hostname.includes('github.com')) {
-          return { valid: false, error: 'Debe ser una URL de GitHub' };
+          return { valid: false, error: window.t('url_github_invalid') };
         }
       }
       
       return { valid: true, error: null };
     } catch (e) {
-      return { valid: false, error: 'URL inválida' };
+      return { valid: false, error: window.t('url_invalid') };
     }
   },
 
@@ -86,15 +86,15 @@ const Validators = {
     const currentYear = new Date().getFullYear();
     
     if (isNaN(yearNum)) {
-      return { valid: false, error: 'Debe ser un año válido' };
+      return { valid: false, error: window.t('year_invalid') };
     }
     
     if (yearNum < 1950 || yearNum > 2100) {
-      return { valid: false, error: 'Año fuera de rango (1950-2100)' };
+      return { valid: false, error: window.t('year_range_invalid') };
     }
     
     if (!allowFuture && yearNum > currentYear) {
-      return { valid: false, error: 'El año no puede ser futuro' };
+      return { valid: false, error: window.t('year_future_invalid') };
     }
     
     return { valid: true, error: null };
@@ -127,7 +127,7 @@ const Validators = {
     const end = parseInt(endYear);
     
     if (start > end) {
-      return { valid: false, error: 'Año de inicio debe ser menor que año de fin' };
+      return { valid: false, error: window.t('start_year_greater') };
     }
     
     return { valid: true, error: null };
@@ -143,15 +143,15 @@ const Validators = {
    */
   validateText(value, fieldName, minLength = 1, maxLength = 500) {
     if (!value || value.trim() === '') {
-      return { valid: false, error: `${fieldName} es requerido` };
+      return { valid: false, error: `${fieldName} ${window.t('is_required')}` };
     }
     
     if (value.length < minLength) {
-      return { valid: false, error: `${fieldName} debe tener al menos ${minLength} caracteres` };
+      return { valid: false, error: `${fieldName} ${window.t('min_length', {min: minLength})}` };
     }
     
     if (value.length > maxLength) {
-      return { valid: false, error: `${fieldName} no puede exceder ${maxLength} caracteres` };
+      return { valid: false, error: `${fieldName} ${window.t('max_length', {max: maxLength})}` };
     }
     
     return { valid: true, error: null };

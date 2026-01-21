@@ -89,7 +89,7 @@ const ProfilesModals = {
     grid.innerHTML = `
       <div class="profiles-loading">
         <div class="spinner"></div>
-        <p>Cargando perfiles...</p>
+        <p>${window.t('loading')}</p>
       </div>
     `;
 
@@ -105,7 +105,7 @@ const ProfilesModals = {
       console.error('Error cargando perfiles:', error);
       grid.innerHTML = `
         <div class="profiles-loading">
-          <p style="color: var(--danger);">Error cargando perfiles</p>
+          <p style="color: var(--danger);">${window.t('error_loading_profiles')}</p>
         </div>
       `;
     }
@@ -122,7 +122,7 @@ const ProfilesModals = {
     if (profiles.length === 0) {
       grid.innerHTML = `
         <div class="profiles-loading">
-          <p>No hay perfiles creados</p>
+          <p>${window.t('no_profiles')}</p>
         </div>
       `;
       return;
@@ -141,8 +141,8 @@ const ProfilesModals = {
             <div class="profile-card-info">
               <h3 class="profile-card-name">
                 ${profile.name}
-                ${isDefault ? '<span class="profile-badge default">Default</span>' : ''}
-                ${isCurrent ? '<span class="profile-badge" style="background: var(--primary);">Activo</span>' : ''}
+                ${isDefault ? `<span class="profile-badge default">${window.t('default')}</span>` : ''}
+                ${isCurrent ? `<span class="profile-badge" style="background: var(--primary);">${window.t('active')}</span>` : ''}
               </h3>
               <div class="profile-card-meta">
                 ${typeLabel ? `<span class="profile-item-type">${typeLabel}</span>` : ''}
@@ -156,14 +156,14 @@ const ProfilesModals = {
                 <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2"/>
                 <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2"/>
               </svg>
-              Editar
+              ${window.t('edit')}
             </button>
             <button class="profile-card-btn" onclick="ProfilesModals.duplicateProfile(${profile.id})">
               <svg viewBox="0 0 24 24" fill="none">
                 <path d="M16 4H18C18.5304 4 19.0391 4.21071 19.4142 4.58579C19.7893 4.96086 20 5.46957 20 6V20C20 20.5304 19.7893 21.0391 19.4142 21.4142C19.0391 21.7893 18.5304 22 18 22H6C5.46957 22 4.96086 21.7893 4.58579 21.4142C4.21071 21.0391 4 20.5304 4 20V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H8" stroke="currentColor" stroke-width="2"/>
                 <path d="M15 2H9C8.44772 2 8 2.44772 8 3V5C8 5.55228 8.44772 6 9 6H15C15.5523 6 16 5.55228 16 5V3C16 2.44772 15.5523 2 15 2Z" stroke="currentColor" stroke-width="2"/>
               </svg>
-              Duplicar
+              ${window.t('duplicate')}
             </button>
             ${!isDefault ? `
               <button class="profile-card-btn danger" onclick="ProfilesModals.deleteProfile(${profile.id})">
@@ -171,7 +171,7 @@ const ProfilesModals = {
                   <path d="M3 6H5H21" stroke="currentColor" stroke-width="2"/>
                   <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2"/>
                 </svg>
-                Eliminar
+                ${window.t('delete')}
               </button>
             ` : ''}
           </div>
@@ -208,7 +208,7 @@ const ProfilesModals = {
 
     if (profile) {
       // Modo edición
-      title.textContent = 'Editar Perfil';
+      title.textContent = window.t('edit_profile');
       document.getElementById('profileId').value = profile.id;
       document.getElementById('profileName').value = profile.name;
       document.getElementById('profileType').value = profile.type || 'general';
@@ -216,7 +216,7 @@ const ProfilesModals = {
       copyFromGroup.style.display = 'none';
     } else {
       // Modo creación
-      title.textContent = 'Crear Nuevo Perfil';
+      title.textContent = window.t('create_new_profile');
       document.getElementById('profileId').value = '';
       copyFromGroup.style.display = 'block';
     }
@@ -256,7 +256,7 @@ const ProfilesModals = {
 
     // Validar
     if (!name) {
-      showToast('El nombre del perfil es requerido', 'error');
+      showToast(window.t('profile_name_required'), 'error');
       document.getElementById('profileName').focus();
       return;
     }
@@ -278,7 +278,7 @@ const ProfilesModals = {
       this.closeManageModal();
     } catch (error) {
       console.error('Error guardando perfil:', error);
-      showToast('Error guardando perfil', 'error');
+      showToast(window.t('error_saving_profile'), 'error');
     }
   },
 
@@ -287,16 +287,15 @@ const ProfilesModals = {
    */
   async updateProfile(profileId, updates) {
     try {
-      const response = await fetch(`/api/profiles/${profileId}`, {
+      const response = await window.auth.fetch(`/api/profiles/${profileId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
 
       const data = await response.json();
 
       if (data.success) {
-        showToast('Perfil actualizado exitosamente', 'success');
+        showToast(window.t('profile_updated_success'), 'success');
         await ProfilesManager.loadProfiles();
         
         // Si estamos en el modal de gestión, actualizar
@@ -305,7 +304,7 @@ const ProfilesModals = {
           this.renderProfileCards(ProfilesManager.profiles);
         }
       } else {
-        throw new Error(data.error || 'Error actualizando perfil');
+        throw new Error(data.error || window.t('error_updating_profile'));
       }
     } catch (error) {
       console.error('Error actualizando perfil:', error);
@@ -330,29 +329,28 @@ const ProfilesModals = {
     const profile = ProfilesManager.profiles.find(p => p.id === profileId);
     if (!profile) return;
 
-    const newName = prompt(`Duplicar perfil "${profile.name}".\nNuevo nombre:`, `${profile.name} (Copia)`);
+    const newName = prompt(window.t('prompt_duplicate_profile', {name: profile.name}), `${profile.name} (Copia)`);
     
     if (!newName || !newName.trim()) return;
 
     try {
-      const response = await fetch(`/api/profiles/${profileId}/duplicate`, {
+      const response = await window.auth.fetch(`/api/profiles/${profileId}/duplicate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newName.trim() })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        showToast('Perfil duplicado exitosamente', 'success');
+        showToast(window.t('profile_duplicated_success'), 'success');
         await ProfilesManager.loadProfiles();
         this.renderProfileCards(ProfilesManager.profiles);
       } else {
-        throw new Error(data.error || 'Error duplicando perfil');
+        throw new Error(data.error || window.t('error_duplicating_profile'));
       }
     } catch (error) {
       console.error('Error duplicando perfil:', error);
-      showToast('Error duplicando perfil', 'error');
+      showToast(window.t('error_duplicating_profile'), 'error');
     }
   },
 
@@ -363,27 +361,27 @@ const ProfilesModals = {
     const profile = ProfilesManager.profiles.find(p => p.id === profileId);
     if (!profile) return;
 
-    if (!confirm(`¿Estás seguro de eliminar el perfil "${profile.name}"?\n\nEsta acción no se puede deshacer.`)) {
+    if (!confirm(window.t('confirm_delete_profile', {name: profile.name}))) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/profiles/${profileId}`, {
+      const response = await window.auth.fetch(`/api/profiles/${profileId}`, {
         method: 'DELETE'
       });
 
       const data = await response.json();
 
       if (data.success) {
-        showToast('Perfil eliminado exitosamente', 'success');
+        showToast(window.t('profile_deleted_success'), 'success');
         await ProfilesManager.loadProfiles();
         this.renderProfileCards(ProfilesManager.profiles);
       } else {
-        throw new Error(data.error || 'Error eliminando perfil');
+        throw new Error(data.error || window.t('error_deleting_profile'));
       }
     } catch (error) {
       console.error('Error eliminando perfil:', error);
-      showToast(error.message || 'Error eliminando perfil', 'error');
+      showToast(error.message || window.t('error_deleting_profile'), 'error');
     }
   }
 };

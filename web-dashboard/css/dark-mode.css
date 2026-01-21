@@ -1,0 +1,83 @@
+/* Dark Mode Variables Override */
+:root.dark {
+  --bg: #0a0a0a !important; /* background-dark */
+  --surface: #121212 !important;
+  --surface-hover: #1e1e1e !important;
+  --border: rgba(255, 255, 255, 0.1) !important;
+  --text: #ffffff !important;
+  --text-muted: #a1a1aa !important; /* gray-400 */
+}
+
+/* Base Dark Mode Styles */
+html.dark body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Dark Mode Components overrides */
+html.dark .glass-panel,
+html.dark .action-card,
+html.dark .upload-area,
+html.dark .extracted-data-preview,
+html.dark .data-section,
+html.dark .experience-item-editable,
+html.dark .education-item-editable,
+html.dark .editable-field,
+html.dark .editable-item-field {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+html.dark .glass-input {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Form Elements Dark Mode */
+html.dark .editable-field,
+html.dark .editable-item-field {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .editable-field:focus,
+html.dark .editable-item-field:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Toast Dark Mode */
+html.dark .toast {
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Scrollbar Dark Mode */
+html.dark ::-webkit-scrollbar-track {
+  background: #000;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+/* Specific text overrides usually handled by Tailwind 'text-white' */
+html.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+/* Smooth Transition for Theme Switch */
+body,
+.glass-panel,
+.action-card,
+.data-section,
+input,
+textarea {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+}

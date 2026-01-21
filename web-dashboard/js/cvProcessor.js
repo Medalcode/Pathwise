@@ -1,0 +1,265 @@
+/**
+ * CV Processor Module
+ * Maneja la lógica de carga, parseo y manipulación de datos del CV
+ */
+
+const CVProcessor = {
+    /**
+     * Inicializar listeners de carga
+     */
+    setupUpload() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('cvFile');
+      
+      if(!uploadArea || !fileInput) return;
+
+      // Click to upload
+      uploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = 'var(--primary)';
+        uploadArea.style.background = 'var(--primary-light)';
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          this.handleFileUpload(files[0]);
+        }
+      });
+      
+      // File input change
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          this.handleFileUpload(e.target.files[0]);
+        }
+      });
+    },
+
+    /**
+     * Manejar la subida de un archivo
+     */
+    async handleFileUpload(file) {
+      if (!file.type.includes('pdf')) {
+        showToast(window.t('only_pdf_allowed'), 'error');
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(window.t('file_too_large'), 'error');
+        return;
+      }
+      
+      // Show progress
+      const uploadArea = document.getElementById('uploadArea');
+      const uploadProgress = document.getElementById('uploadProgress');
+      
+      if(uploadArea) uploadArea.classList.add('hidden');
+      if(uploadProgress) uploadProgress.classList.remove('hidden');
+      
+      const formData = new FormData();
+      formData.append('cv', file);
+      
+      try {
+        // Simulate progress
+        this.animateProgress(0, 30, 500);
+        
+        // Usar auth fetch si es posible (aunque upload suele ser público en algunos apps, aquí asumimos protegido)
+        const response = await fetch(`${API_URL}/upload/cv`, {
+          method: 'POST',
+          body: formData
+          // Nota: Fetch estándar no soporta headers manuales fáciles con FormData para Multipart
+          // Si el backend requiere auth, habría que agregar el token en headers
+          // headers: { 'Authorization': `Bearer ${window.auth.token}` } 
+        });
+        
+        this.animateProgress(30, 70, 500);
+        
+        if (!response.ok) {
+          throw new Error('Error al procesar el CV');
+        }
+        
+        const result = await response.json();
+        
+        this.animateProgress(70, 100, 300);
+        
+        setTimeout(() => {
+          // Hide progress
+          if(uploadProgress) uploadProgress.classList.add('hidden');
+          
+          // Show extracted data preview
+          // Asumimos que showExtractedDataPreview es global por ahora, o migrarla también
+          if(typeof showExtractedDataPreview === 'function') {
+             showExtractedDataPreview(result.data);
+          }
+          
+          showToast(window.t('cv_processed_success'), 'success');
+        }, 500);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        if(uploadProgress) uploadProgress.classList.add('hidden');
+        if(uploadArea) uploadArea.classList.remove('hidden');
+        showToast(window.t('error_processing_cv') + ': ' + error.message, 'error');
+      }
+    },
+
+    animateProgress(from, to, duration) {
+      const progressFill = document.getElementById('progressFill');
+      if(!progressFill) return;
+
+      const startTime = Date.now();
+      
+      function update() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = from + (to - from) * progress;
+        
+        progressFill.style.width = current + '%';
+        
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+      
+      update();
+    },
+
+    /**
+     * Renderiza un campo de experiencia dinámico
+     */
+    addExperienceField(data = null) {
+        const container = document.getElementById('experienceContainer');
+        if (!container) return;
+    
+        const id = Date.now() + Math.random().toString(36).substr(2, 5);
+        const item = document.createElement('div');
+        item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
+        item.id = `exp-${id}`;
+        
+        // Valores predeterminados
+        const title = data ? data.title || '' : '';
+        const company = data ? data.company || '' : '';
+        const startDate = data ? data.startDate || '' : '';
+        const endDate = data ? data.endDate || '' : '';
+        const current = data ? data.current || false : false;
+        const desc = data ? data.description || '' : '';
+    
+        const t = window.t || (k => k); // Fallback
+    
+        item.innerHTML = `
+            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" class="text-red-400 hover:text-red-300" onclick="CVProcessor.removeDynamicItem('exp-${id}')">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('job_title')}</label>
+                    <input type="text" name="exp_title_${id}" value="${title}" placeholder="Ej: Senior Dev" class="glass-input">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('company')}</label>
+                    <input type="text" name="exp_company_${id}" value="${company}" placeholder="Ej: Tech Corp" class="glass-input">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                 <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('start_date')}</label>
+                    <input type="text" name="exp_start_${id}" value="${startDate}" placeholder="YYYY-MM" class="glass-input">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('end_date')}</label>
+                    <div class="flex flex-col gap-2">
+                        <input type="text" name="exp_end_${id}" value="${endDate}" placeholder="YYYY-MM" class="glass-input" ${current ? 'disabled' : ''}>
+                        <label class="flex items-center gap-2 text-xs text-gray-400">
+                            <input type="checkbox" name="exp_current_${id}" ${current ? 'checked' : ''} onchange="CVProcessor.toggleEndDate(this, 'exp_end_${id}')" class="rounded bg-gray-700 border-gray-600">
+                            ${t('currently')}
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 uppercase">${t('description')}</label>
+                <textarea name="exp_desc_${id}" rows="2" class="glass-input">${desc}</textarea>
+            </div>
+        `;
+        
+        container.appendChild(item);
+    },
+
+    addEducationField(data = null) {
+        const container = document.getElementById('educationContainer');
+        if (!container) return;
+    
+        const id = Date.now() + Math.random().toString(36).substr(2, 5);
+        const item = document.createElement('div');
+        item.className = 'glass-panel p-4 rounded-lg mb-4 border border-white/10 relative group';
+        item.id = `edu-${id}`;
+        
+        const degree = data ? data.degree || '' : '';
+        const school = data ? data.school || '' : '';
+        const start = data ? data.startDate || '' : '';
+        const end = data ? data.endDate || '' : '';
+    
+        const t = window.t || (k => k);
+    
+        item.innerHTML = `
+            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" class="text-red-400 hover:text-red-300" onclick="CVProcessor.removeDynamicItem('edu-${id}')">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('degree')}</label>
+                    <input type="text" name="edu_degree_${id}" value="${degree}" class="glass-input">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('institution')}</label>
+                    <input type="text" name="edu_school_${id}" value="${school}" class="glass-input">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                 <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('start_date')}</label>
+                    <input type="text" name="edu_start_${id}" value="${start}" class="glass-input">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">${t('end_date')}</label>
+                    <input type="text" name="edu_end_${id}" value="${end}" class="glass-input">
+                </div>
+            </div>
+        `;
+        container.appendChild(item);
+    },
+
+    removeDynamicItem(id) {
+        const el = document.getElementById(id);
+        if(el) el.remove();
+    },
+
+    toggleEndDate(checkbox, targetId) {
+        const input = document.querySelector(`input[name="${targetId}"]`);
+        if(input) {
+        input.disabled = checkbox.checked;
+            if(checkbox.checked) input.value = 'Presente';
+        }
+    }
+};
+
+// Exponer globalmente
+window.CVProcessor = CVProcessor;

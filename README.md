@@ -1,6 +1,6 @@
 # 🚀 Panoptes (AutoApply) - Sistema Inteligente de Búsqueda y Aplicación a Empleos con IA
 
-**Versión**: 4.8 (Enero 2026)
+**Versión**: 5.0 (Enero 2026)
 
 Panoptes es un ecosistema avanzado para automatizar la búsqueda de empleo que combina extensión Chrome, dashboard web y motor de IA.
 
@@ -9,10 +9,12 @@ Panoptes es un ecosistema avanzado para automatizar la búsqueda de empleo que c
 ## 🎯 Características Principales
 
 - 🔌 **Extensión Chrome**: Autocompletado de formularios de aplicación
-- 📊 **Dashboard Web**: Gestión de perfiles y aplicaciones
+- 📊 **Dashboard Web**: Gestión de perfiles y aplicaciones (Cyberpunk Aesthetics)
 - 🧠 **Motor IA (Groq + Llama 3)**: Generación de perfiles y cover letters
-- 📋 **Sistema Kanban**: Tracking de aplicaciones con estadísticas
-- 🔐 **Autenticación JWT**: Sistema multi-usuario seguro
+- 🔍 **Búsqueda Avanzada**: Sistema modular de búsqueda de empleos con scoring de match
+- 🔐 **Autenticación JWT**: Sistema multi-usuario seguro con UI dedicada
+- 🌎 **Internacionalización (i18n)**: Soporte nativo Inglés/Español
+- 🎨 **Temas Visuales**: Modo Oscuro/Claro persistente
 - 💾 **Persistencia Robusta**: Sync automático con Google Cloud Storage
 
 ---
@@ -28,7 +30,7 @@ cd Panoptes
 cd backend
 npm install
 cp .env.example .env
-# Editar .env con tu GROQ_API_KEY
+# Editar .env con tu GROQ_API_KEY y credenciales GCS
 
 # 3. Iniciar servidor
 npm run dev
@@ -46,37 +48,37 @@ npm run dev
 ## 📚 Documentación
 
 - **📖 [DOCUMENTATION.md](DOCUMENTATION.md)** - Documentación completa del proyecto
-- **📋 [ESTADO_Y_ROADMAP.md](.gemini/antigravity/brain/.../ESTADO_Y_ROADMAP.md)** - Estado actual y mejoras futuras
 - **🚀 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Guía de despliegue
 - **⚙️ [INSTALL.md](INSTALL.md)** - Instalación detallada
 
 ---
 
-## 🆕 Novedades v4.8
+## 🆕 Novedades v5.0
 
-### ✅ Implementado
+### ✅ Frontend Modular & UI Refactor
 
-- ✅ Persistencia robusta con reintentos y detección de cambios
-- ✅ Autenticación JWT + bcrypt
-- ✅ Sistema de tracking Kanban (5 estados)
-- ✅ Generador de cover letters IA (3 tonos)
+- **Arquitectura Modular**: Separación de lógica en módulos `auth.js`, `ui.js`, `cvProcessor.js`, `jobSearch.js`.
+- **CV Processor**: Nuevo motor de extracción de datos de PDF optimizado con feedback visual.
+- **UI System**: Sistema de utilidades de interfaz centralizado.
+- **Job Search**: Módulo independiente de búsqueda con tarjetas de resultados enriquecidas.
 
-### 📊 API Endpoints
+### ✅ Experiencia de Usuario
 
-- `POST /api/auth/register` - Registro
-- `POST /api/auth/login` - Login
-- `GET /api/applications` - Listar aplicaciones 🔒
-- `GET /api/applications/stats` - Estadísticas 🔒
-- `POST /api/cover-letter/generate` - Generar carta 🔒
+- **Auth UI**: Modal de login/registro con validaciones y animaciones.
+- **Dark/Light Mode**: Toggle de temas con persistencia y detección automática de preferencias.
+- **Multi-idioma**: Interfaz completamente traducida (EN/ES).
 
-🔒 = Requiere autenticación JWT
+### ✅ Backend Integration
+
+- **Persistencia**: Sync automático con reintentos y detección de cambios.
+- **Seguridad**: Autenticación vía JWT en todos los endpoints críticos.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
 **Backend**: Node.js, Express, SQLite, Google Cloud Storage, Groq SDK  
-**Frontend**: HTML/CSS/JS Vanilla (Diseño Cyberpunk)  
+**Frontend**: HTML5, CSS3 (Tailwind + Custom CSS Variables), Vanilla JS (ES6+ Modules)
 **Extensión**: Chrome Manifest V3  
 **IA**: Llama 3.3 70B (Groq)
 
@@ -86,17 +88,15 @@ npm run dev
 
 ### Alta Prioridad
 
-1. Tests automatizados (Jest + Playwright)
-2. Frontend de autenticación (login.html)
-3. UI del Kanban con drag & drop
-4. UI del generador de cover letters
+1.  Tests automatizados (Jest + Playwright)
+2.  UI del Kanban con drag & drop y estadísticas visuales
+3.  Resume Tailoring (generación de PDF adaptado por oferta)
 
 ### Media Prioridad
 
-5. Resume Tailoring (adaptar CV por oferta)
-6. Soporte multi-sitio extensión (LinkedIn, Indeed)
-7. Dark mode
-8. CI/CD pipeline
+4.  Soporte multi-sitio extensión (LinkedIn, Indeed explícito)
+5.  CI/CD pipeline completo
+6.  Análisis de salario de mercado con IA
 
 Ver roadmap completo en [DOCUMENTATION.md](DOCUMENTATION.md#roadmap-de-mejoras-futuras)
 
