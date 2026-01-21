@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://autoapply-wqov2qerrq-uc.a.run.app/api/:path*"
+    },
+    {
+      "source": "/",
+      "destination": "/web-dashboard/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/web-dashboard/:path*"
+    }
+  ]
+}
