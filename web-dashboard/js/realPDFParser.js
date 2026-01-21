@@ -533,16 +533,61 @@ const RealPDFParser = {
     },
     
     /**
+     * Preprocesar texto para arreglar saltos de línea faltantes
+     */
+    preprocessText(text) {
+        if (!text) return '';
+        
+        let processed = text;
+        
+        // 1. Insertar newlines antes de headers de sección comunes si no los tienen
+        const sections = [
+            'Educación', 'Experiencia', 'Experience', 'Education', 
+            'Habilidades', 'Skills', 'Certificaciones', 'Certifications',
+            'Proyectos', 'Projects', 'Idiomas', 'Languages', 'Resumen', 'Summary'
+        ];
+        
+        sections.forEach(sec => {
+            // Regex que busca la sección que NO esté precedida por newline
+            // Usamos replace con función para preservar el case original
+            const regex = new RegExp(`([^\\n])\\s+(${sec})`, 'g');
+            processed = processed.replace(regex, '$1\n$2');
+        });
+        
+        // 2. Insertar newlines después de patrones que sugieren fin de bloque
+        // Fechas al final de experiencia (ej: "Dic 2024 ") -> "Dic 2024 \n"
+        processed = processed.replace(/((?:19|20)\d{2})\s+([A-ZÁÉÍÓÚÑ])/g, '$1\n$2');
+        
+        // Emails
+        processed = processed.replace(/(\.com|\.org|\.net|\.cl)\s+([A-Z])/g, '$1\n$2');
+        
+        // Teléfonos
+        processed = processed.replace(/(\d{8,})\s+([A-Z])/g, '$1\n$2');
+
+        // Bullet points que quedaron pegados
+        processed = processed.replace(/([^\n])\s•\s/g, '$1\n• ');
+        
+        // 3. Normalizar espacios múltiples
+        processed = processed.replace(/[ \t]+/g, ' ');
+        
+        return processed;
+    },
+
+    /**
      * Parsear CV completo
      */
     async parseCV(file) {
         try {
             // Extraer texto
-            const { text, pageCount } = await this.extractTextFromPDF(file);
+            const { text: rawText, pageCount } = await this.extractTextFromPDF(file);
             
-            if (!text || text.trim().length < 100) {
+            if (!rawText || rawText.trim().length < 100) {
                 throw new Error('El PDF no contiene suficiente texto. Puede ser una imagen escaneada.');
             }
+            
+            // PREPROCESAR TEXTO (CRÍTICO)
+            const text = this.preprocessText(rawText);
+            console.log('📄 Texto preprocesado length:', text.length);
             
             // Parsear cada sección
             const personalInfo = this.parsePersonalInfo(text);
@@ -564,7 +609,7 @@ const RealPDFParser = {
                 metadata: {
                     pageCount,
                     textLength: text.length,
-                    processingMethod: 'pdf.js + AI parsing'
+                    processingMethod: 'pdf.js + AI parsing v2'
                 }
             };
             
