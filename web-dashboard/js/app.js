@@ -1061,14 +1061,69 @@ async function generateProfiles() {
     
     setLoadingState(true);
     
-    console.log('🤖 Generando perfiles profesionales con Groq AI...');
+    console.log('🤖 Generando perfiles profesionales...');
     
     // Obtener API Key si existe en localStorage
     const savedKey = localStorage.getItem('groqApiKey');
-    const headers = { 'Content-Type': 'application/json' };
-    if (savedKey) {
-        headers['X-Groq-API-Key'] = savedKey;
+    
+    // MODO OFFLINE: Si no hay API key, generar perfiles mock
+    if (!savedKey) {
+      console.log('⚠️ No hay API Key configurada, generando perfiles mock...');
+      
+      // Simular delay de procesamiento
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generar perfiles mock basados en currentProfile
+      const baseProfile = window.currentProfile || {};
+      const personalInfo = baseProfile.personalInfo || {};
+      const skills = baseProfile.skills || ['JavaScript', 'React', 'Node.js'];
+      
+      generatedProfiles = [
+        {
+          title: `${personalInfo.currentTitle || 'Full Stack Developer'} - Tech Innovator`,
+          experienceLevel: 'Senior',
+          description: 'Perfil optimizado para startups tecnológicas y empresas innovadoras. Énfasis en stack moderno y metodologías ágiles.',
+          keySkills: skills.slice(0, 5),
+          summary: `Profesional con experiencia en desarrollo full-stack, especializado en tecnologías modernas y arquitecturas escalables.`,
+          ...baseProfile
+        },
+        {
+          title: `${personalInfo.currentTitle || 'Software Engineer'} - Enterprise Specialist`,
+          experienceLevel: 'Mid-Senior',
+          description: 'Perfil enfocado en grandes corporaciones. Destaca experiencia en sistemas enterprise y trabajo en equipo.',
+          keySkills: [...skills.slice(0, 3), 'Teamwork', 'Agile'],
+          summary: `Ingeniero de software con sólida experiencia en entornos corporativos y desarrollo de soluciones empresariales.`,
+          ...baseProfile
+        },
+        {
+          title: `${personalInfo.currentTitle || 'Tech Lead'} - Remote Expert`,
+          experienceLevel: 'Senior',
+          description: 'Perfil optimizado para trabajo remoto. Resalta habilidades de comunicación y autonomía.',
+          keySkills: [...skills.slice(0, 3), 'Remote Work', 'Communication'],
+          summary: `Líder técnico con amplia experiencia en equipos distribuidos y gestión remota de proyectos.`,
+          ...baseProfile
+        }
+      ];
+      
+      console.log('✅ Perfiles mock generados:', generatedProfiles);
+      
+      // 2. UI State: Success
+      setLoadingState(false);
+      renderProfiles();
+      
+      const actions = document.getElementById('finalActions');
+      if(actions) actions.classList.remove('hidden');
+      
+      showToast('Perfiles generados (Modo Offline)', 'success');
+      
+      return;
     }
+    
+    // MODO ONLINE: Llamar al backend con API Key
+    const headers = { 
+      'Content-Type': 'application/json',
+      'X-Groq-API-Key': savedKey
+    };
 
     const response = await fetch(`${API_URL}/profile/generate-profiles`, {
       method: 'POST',
@@ -1101,17 +1156,13 @@ async function generateProfiles() {
     // UI State: Error
     setLoadingState(false, error.message);
     
-    // Si la intro estaba visible, y hubo error, quizás la mostramos de nuevo en main page
-    // pero en modal mostramos el error state
-    // const intro = document.getElementById('aiIntroContainer');
-    // if(intro) intro.classList.remove('hidden');
-    
     showToast(window.t('error_generating_profiles') + ': ' + error.message, 'error');
     
-    // Si es error de API Key, abrir modal de config
+    // Si es error de API Key, sugerir configuración
     if (error.message.includes('API key') || error.message.includes('401')) {
-        // Delay to allow user to see error msg briefly or click button
-        // openApiKeyModal(); 
+        setTimeout(() => {
+          showToast('Configura tu API Key de Groq para usar IA', 'info');
+        }, 2000);
     }
   }
 }
@@ -1340,6 +1391,9 @@ function openApiKeyModal() {
     document.getElementById('groqApiKeyInput').focus();
   }, 300);
 }
+
+// Exponer globalmente
+window.openApiKeyModal = openApiKeyModal;
 
 function closeApiKeyModal() {
   const modal = document.getElementById('apiKeyModal');
