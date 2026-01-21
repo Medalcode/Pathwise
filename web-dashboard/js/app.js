@@ -813,39 +813,65 @@ async function saveExtractedData() {
     console.log('✅ Validación exitosa');
   }
   
+  // Save Logic (Offline/Mode)
   try {
-    const response = await fetch(`${API_URL}/profile`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(profileData)
-    });
+    console.log('💾 Guardando perfil en modo offline...');
     
-    if (response.ok) {
-      showToast(window.t('data_saved'), 'success');
-      currentProfile = profileData;
-      
-      // Hide preview
-      document.getElementById('extractedDataPreview').classList.add('hidden');
-      
-      // Reset upload area
-      document.getElementById('uploadArea').classList.remove('hidden');
-      document.getElementById('cvFile').value = '';
-      
-      // Update stats
-      updateStats(profileData);
-      
-      // Populate form in profile section
-      populateForm(profileData);
-      
-      // Show navigation hint
-      setTimeout(() => {
-        showToast('Navega a \"Mi Perfil\" para ver y editar más detalles', 'info');
-      }, 2000);
+    // 1. Guardar en LocalStorage (Persistencia)
+    // Si ya existe un perfil cargado, actualizamos ese ID, si no, creamos uno nuevo.
+    let profileId;
+    if (currentProfile && currentProfile.id) {
+        profileId = currentProfile.id;
+        // Merge data
+        currentProfile = { ...currentProfile, ...profileData };
     } else {
-      throw new Error('Error al guardar');
+        profileId = 'local_' + Date.now();
+        currentProfile = { 
+            id: profileId,
+            ...profileData,
+            createdAt: new Date().toISOString()
+        };
     }
+    
+    // Guardar datos completos del perfil
+    localStorage.setItem(`panoptes_profile_data_${profileId}`, JSON.stringify(currentProfile));
+    
+    // Actualizar lista de perfiles si es nuevo
+    if (window.ProfilesManager) {
+        const profiles = window.ProfilesManager.profiles || [];
+        const existingIndex = profiles.findIndex(p => p.id === profileId);
+        
+        const summaryProfile = {
+            id: profileId,
+            name: `${profileData.personalInfo.firstName} ${profileData.personalInfo.lastName}`,
+            title: profileData.personalInfo.currentTitle,
+            isDefault: profiles.length === 0, // Make default if first
+            lastUpdated: new Date().toISOString()
+        };
+        
+        if (existingIndex >= 0) {
+            profiles[existingIndex] = { ...profiles[existingIndex], ...summaryProfile };
+        } else {
+            profiles.push(summaryProfile);
+        }
+        
+        window.ProfilesManager.profiles = profiles;
+        window.ProfilesManager.saveProfilesToLocal();
+        window.ProfilesManager.currentProfile = summaryProfile;
+        window.ProfilesManager.updateProfileUI(); // Update Header UI
+    }
+
+    showToast(window.t('data_saved'), 'success');
+      
+    // Update stats
+    updateStats(currentProfile);
+      
+    // Populate form in profile section (Step 2)
+    populateForm(currentProfile);
+    
+    // AVANZAR AL PASO 2 (Verificación)
+    goToStep(2);
+      
   } catch (error) {
     console.error('Error:', error);
     showToast(window.t('error_saving_data'), 'error');
