@@ -119,26 +119,31 @@ const CVProcessor = {
           }
         }
         
-        // MOCK RESULT (Ya que no hay backend activo)
-        // En una implementación real con PWA + IA Local, usaríamos pdf.js aquí
-        const result = {
-            data: {
-                personalInfo: {
-                    firstName: "Usuario",
-                    lastName: "Local",
-                    email: "usuario@local.dev",
-                    phone: "+56912345678",
-                    currentTitle: "Desarrollador Full Stack",
-                    city: "Santiago",
-                    country: "Chile",
-                    linkedin: "",
-                    summary: "Perfil generado en modo local sin conexión a backend."
-                },
-                experience: [],
-                education: [],
-                skills: ["Modo Offline"]
-            }
-        };
+        // REAL PDF PROCESSING con PDF.js
+        let result;
+        
+        if (window.RealPDFParser && typeof pdfjsLib !== 'undefined') {
+          try {
+            console.log('🤖 Procesando PDF con IA real...');
+            const parsedData = await window.RealPDFParser.parseCV(file);
+            
+            result = {
+              data: parsedData,
+              method: 'real'
+            };
+            
+            console.log('✅ PDF procesado con éxito:', parsedData);
+          } catch (error) {
+            console.warn('⚠️ Error en procesamiento real, usando fallback:', error);
+            // Fallback a mock si falla
+            result = this.getMockResult();
+            result.method = 'mock';
+          }
+        } else {
+          console.log('📝 Usando modo mock (PDF.js no disponible)');
+          result = this.getMockResult();
+          result.method = 'mock';
+        }
         
         setTimeout(() => {
           // Hide progress
@@ -149,7 +154,9 @@ const CVProcessor = {
              showExtractedDataPreview(result.data);
           }
           
-          showToast(window.t('cv_processed_success') + " (Modo Offline)", 'success');
+          const methodMsg = result.method === 'real' ? 
+            '(Procesado con IA)' : '(Modo Offline - Mock)';
+          showToast(window.t('cv_processed_success') + ' ' + methodMsg, 'success');
         }, 500);
         
       } catch (error) {
@@ -179,6 +186,30 @@ const CVProcessor = {
       }
       
       update();
+    },
+
+    /**
+     * Obtener resultado mock (fallback)
+     */
+    getMockResult() {
+      return {
+        data: {
+          personalInfo: {
+            firstName: "Usuario",
+            lastName: "Demo",
+            email: "usuario@demo.local",
+            phone: "+56912345678",
+            currentTitle: "Desarrollador Full Stack",
+            city: "Santiago",
+            country: "Chile",
+            linkedin: "",
+            summary: "Perfil generado en modo demo sin procesamiento real."
+          },
+          experience: [],
+          education: [],
+          skills: ["JavaScript", "React", "Node.js"]
+        }
+      };
     },
 
     /**
