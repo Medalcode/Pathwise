@@ -991,7 +991,7 @@ function openProfilesModal() {
 
 function closeProfilesModal() {
   const modal = document.getElementById('profilesModal');
-  modal.classList.add('hidden');
+  if (modal) modal.classList.add('hidden');
 }
 
 function setLoadingState(isLoading, errorMessage = null) {
