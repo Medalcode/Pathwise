@@ -1349,6 +1349,24 @@ async function generateProfiles() {
       const result = await response.json();
       generatedProfiles = result.data;
     }
+
+    // Enriquecer con Estimación Salarial (Mock & Real)
+    if (window.SalaryEstimator && generatedProfiles) {
+        generatedProfiles.forEach(profile => {
+            if (!profile.estimatedSalary) {
+                // Inferir nivel y ubicación del título o descripción
+                let location = 'remote';
+                if (profile.title.toLowerCase().includes('enterprise')) location = 'usa';
+                if (profile.title.toLowerCase().includes('startup')) location = 'latam';
+                
+                profile.estimatedSalary = window.SalaryEstimator.estimate(
+                    profile.title, 
+                    profile.experienceLevel || 'Senior',
+                    location
+                );
+            }
+        });
+    }
     
     console.log('✅ Perfiles generados:', generatedProfiles);
     
@@ -1421,13 +1439,21 @@ function renderProfiles() {
         <h3 class="profile-card-title">${profile.title}</h3>
         <p class="profile-card-description line-clamp-3">${profile.description}</p>
         
-        <div class="flex justify-between items-center mb-4">
-            <span class="text-xs text-accent-cyan font-bold uppercase tracking-wider border border-accent-cyan/30 px-2 py-0.5 rounded bg-accent-cyan/10">
-                ${profile.experienceLevel}
-            </span>
-            <div class="profile-card-badges">
-                ${index === 0 ? '<span class="profile-badge badge-recommended">Recomendado</span>' : ''}
-                ${profile.isMock ? '<span class="px-2 py-0.5 rounded text-[10px] bg-white/10 text-gray-400 border border-white/20">MOCK</span>' : ''}
+        <div class="flex flex-col gap-2 mb-4">
+            <div class="flex justify-between items-start">
+                <span class="text-xs text-accent-cyan font-bold uppercase tracking-wider border border-accent-cyan/30 px-2 py-0.5 rounded bg-accent-cyan/10">
+                    ${profile.experienceLevel}
+                </span>
+                <div class="profile-card-badges flex flex-col items-end gap-1">
+                    ${profile.estimatedSalary ? `
+                        <span class="text-xs text-green-400 font-mono font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[10px]">attach_money</span>
+                            ${profile.estimatedSalary}
+                        </span>
+                    ` : ''}
+                    ${index === 0 ? '<span class="profile-badge badge-recommended text-[10px] px-2 py-0.5">Recomendado</span>' : ''}
+                    ${profile.isMock ? '<span class="px-2 py-0.5 rounded text-[10px] bg-white/10 text-gray-400 border border-white/20">MOCK</span>' : ''}
+                </div>
             </div>
         </div>
         

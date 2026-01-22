@@ -63,6 +63,7 @@ cd Panoptes
 ### ✅ Generación de Perfiles Premium
 
 - **Glassmorphism UI**: Tarjetas holográficas con efectos de hover y feedback visual.
+- **Salary Market Value**: Estimación automática de rango salarial basada en rol, nivel y ubicación geográfica.
 - **Sistema de Caché**: Persistencia local de perfiles generados (7 días de retención).
 - **Preview Panel**: Vista detallada de perfiles generados antes de seleccionarlos.
 - **Acciones Rápidas**: Copiar, regenerar y descargar PDF directamente.
