@@ -53,10 +53,11 @@ cd Panoptes
 
 ### ✅ Motor de Parsing de PDF (Deep Extract)
 
-- **Preprocesamiento Inteligente**: Reconstruye la estructura de documentos PDF con formato roto (una sola línea).
-- **Detección Estructural**: Identifica secciones (Experiencia, Educación) basándose en cabeceras y contexto, no solo regex.
-- **Extracción de Precisión**: Separa limpiamente experiencia laboral de educación.
-- **Fallback Agresivo**: Capaz de encontrar experiencia laboral "oculta" que no tiene títulos explícitos.
+- **Layout Aware Engine**: Algoritmo que detecta automáticamente CVs de dos columnas y procesa el texto en orden lógico visual.
+- **Split View Interface**: Visor de PDF integrado junto al formulario de extracción para validación visual inmediata.
+- **ATS Compatbility Score**: Análisis en tiempo real de la legibilidad del CV para sistemas automáticos.
+- **Preprocesamiento Inteligente**: Reconstrucción estructural de PDFs con formato roto.
+- **Extracción de Precisión**: Lógica mejorada para separar Experiencia de Educación.
 
 ### ✅ Generación de Perfiles Premium
 

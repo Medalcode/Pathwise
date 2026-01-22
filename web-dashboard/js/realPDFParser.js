@@ -7,6 +7,9 @@ const RealPDFParser = {
     /**
      * Extraer texto completo del PDF
      */
+    /**
+     * Extraer texto del PDF con detección inteligente de Columnas (Layout Aware)
+     */
     async extractTextFromPDF(file) {
         try {
             const arrayBuffer = await file.arrayBuffer();
@@ -15,56 +18,57 @@ const RealPDFParser = {
             let fullText = '';
             const totalPages = pdf.numPages;
             
-            console.log(`📄 Procesando PDF de ${totalPages} páginas...`);
+            console.log(`📄 Procesando PDF de ${totalPages} páginas con Layout Aware Engine...`);
             
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.0 });
                 const textContent = await page.getTextContent();
                 const items = textContent.items;
                 
                 if (!items || items.length === 0) continue;
 
-                // Ordenar items: Primero Y (arriba a abajo), luego X (izquierda a derecha)
-                items.sort((a, b) => {
-                    const yA = a.transform[5];
-                    const yB = b.transform[5];
-                    // Tolerancia de 5px para considerar misma línea
-                    if (Math.abs(yA - yB) > 5) { 
-                        return yB - yA; // Orden descendente en Y (PDF coord system)
-                    }
-                    return a.transform[4] - b.transform[4]; // Orden ascendente en X
+                // 1. Detectar si la página tiene dos columnas
+                // Estrategia: Buscar si hay una zona central "vacía" de texto consistente
+                const pageWidth = viewport.width;
+                const centerZoneStart = pageWidth * 0.4;
+                const centerZoneEnd = pageWidth * 0.6;
+                
+                // Contar cuántos items cruzan la zona central
+                const itemsCrossingCenter = items.filter(item => {
+                    const x = item.transform[4];
+                    const width = item.width || 0;
+                    // Si el item empieza antes del centro y termina después del centro
+                    return (x < centerZoneStart && (x + width) > centerZoneEnd) ||
+                           (x > centerZoneStart && x < centerZoneEnd); 
                 });
 
-                let pageLines = [];
-                let currentLineItems = [];
-                let currentY = items[0].transform[5];
-
-                for (const item of items) {
-                    const y = item.transform[5];
-                    
-                    if (Math.abs(y - currentY) > 5) {
-                        // Nueva línea detectada (cambio significativo en Y)
-                        if (currentLineItems.length > 0) {
-                            // Unir items de la línea anterior con espacios
-                            pageLines.push(currentLineItems.map(i => i.str).join(' '));
-                        }
-                        currentLineItems = [];
-                        currentY = y;
-                    }
-                    currentLineItems.push(item);
-                }
+                // Si menos del 10% de los items cruzan el centro, probablemente es 2 columnas
+                const isTwoColumn = items.length > 20 && (itemsCrossingCenter.length / items.length) < 0.15;
                 
-                // Agregar la última línea del loop
-                if (currentLineItems.length > 0) {
-                    pageLines.push(currentLineItems.map(i => i.str).join(' '));
+                console.log(`Página ${pageNum}: ${isTwoColumn ? 'DETECTADO 2 COLUMNAS ║' : 'Detectado 1 Columna 📄'}`);
+
+                let pageText = '';
+
+                if (isTwoColumn) {
+                    // Estrategia 2 columnas: Dividir items y procesar Left -> Right
+                    const leftItems = items.filter(i => i.transform[4] < pageWidth / 2);
+                    const rightItems = items.filter(i => i.transform[4] >= pageWidth / 2);
+                    
+                    const leftText = this.processItemsToText(leftItems);
+                    const rightText = this.processItemsToText(rightItems);
+                    
+                    // Unir con doble salto para separar lógicamente
+                    pageText = leftText + '\n\n' + rightText;
+                } else {
+                    // Estrategia 1 columna: Procesamiento estándar robusto
+                    pageText = this.processItemsToText(items);
                 }
 
-                // Unir líneas con \n
-                fullText += pageLines.join('\n') + '\n';
+                fullText += pageText + '\n';
             }
             
-            console.log(`✅ Extracción robusta completada. ${fullText.split('\n').length} líneas detectadas.`);
-            
+            console.log(`✅ Extracción Layout-Aware completada.`);
             return {
                 text: fullText,
                 pageCount: totalPages
@@ -73,6 +77,43 @@ const RealPDFParser = {
             console.error('Error extracting PDF text:', error);
             throw new Error('No se pudo extraer el texto del PDF: ' + error.message);
         }
+    },
+
+    /**
+     * Helper: Convertir items de PDF.js a texto ordenado visualmente
+     */
+    processItemsToText(items) {
+        if (!items || items.length === 0) return '';
+        
+        // Ordenar principalmente por Y (descendente), luego por X (ascendente)
+        items.sort((a, b) => {
+            const yA = a.transform[5];
+            const yB = b.transform[5];
+            if (Math.abs(yA - yB) > 5) { 
+                return yB - yA; // Orden Y (arriba hacia abajo)
+            }
+            return a.transform[4] - b.transform[4]; // Orden X
+        });
+
+        let lines = [];
+        let currentLine = [];
+        let currentY = items[0].transform[5];
+
+        for (const item of items) {
+            const y = item.transform[5];
+            
+            if (Math.abs(y - currentY) > 5) {
+                if (currentLine.length > 0) {
+                    lines.push(currentLine.map(i => i.str).join(' '));
+                }
+                currentLine = [];
+                currentY = y;
+            }
+            currentLine.push(item);
+        }
+        if (currentLine.length > 0) lines.push(currentLine.map(i => i.str).join(' '));
+
+        return lines.join('\n');
     },
     
     
@@ -600,11 +641,72 @@ const RealPDFParser = {
     },
 
     /**
+     * Calcular Score de Compatibilidad ATS (Application Tracking System)
+     */
+    calculateATSScore(text, sections) {
+        let score = 0;
+        const details = [];
+
+        // 1. Longitud de Texto (Base Score: 30 pts)
+        if (text.length > 500) {
+            score += 30;
+            details.push({ passed: true, msg: "Longitud de texto adecuada (>500 chars)" });
+        } else {
+            const partial = Math.floor((text.length / 500) * 30);
+            score += partial;
+            details.push({ passed: false, msg: `Texto demasiado corto (${text.length} chars). Podría ser una imagen.` });
+        }
+
+        // 2. Estructura de Secciones (Base Score: 40 pts)
+        const requiredSections = ['experience', 'education', 'skills'];
+        let sectionsFound = 0;
+        
+        // Verificar si las secciones tienen contenido real
+        if (sections.experience && sections.experience.length > 0) sectionsFound++;
+        if (sections.education && sections.education.length > 0) sectionsFound++;
+        if (sections.skills && sections.skills.length > 0) sectionsFound++;
+
+        if (sectionsFound === 3) {
+            score += 40;
+            details.push({ passed: true, msg: "Estructura completa detectada (Exp, Edu, Skills)" });
+        } else {
+            const partial = Math.floor((sectionsFound / 3) * 40);
+            score += partial;
+            details.push({ passed: false, msg: `Estructura incompleta. Detectado: ${sectionsFound}/3 secciones principales.` });
+        }
+
+        // 3. Formato de Contacto (Base Score: 15 pts)
+        if (sections.personalInfo.email && sections.personalInfo.phone) {
+            score += 15;
+            details.push({ passed: true, msg: "Datos de contacto legibles" });
+        } else {
+            details.push({ passed: false, msg: "Faltan datos de contacto claros (Email/Tel)" });
+        }
+        
+        // 4. Legibilidad / Noise Ratio (Base Score: 15 pts)
+        // Check si hay demasiados caracteres raros o líneas muy cortas (indicador de mal parsing)
+        const lines = text.split('\n');
+        const avgLineLength = text.length / (lines.length || 1);
+        
+        if (avgLineLength > 20) {
+            score += 15;
+            details.push({ passed: true, msg: "Formato de texto limpio y legible" });
+        } else {
+             details.push({ passed: false, msg: "Posibles problemas de formato (líneas rotas)" });
+        }
+
+        return {
+            score: Math.min(100, score),
+            details
+        };
+    },
+    
+    /**
      * Parsear CV completo
      */
     async parseCV(file) {
         try {
-            // Extraer texto
+            // Extraer texto (Layout Aware)
             const { text: rawText, pageCount } = await this.extractTextFromPDF(file);
             
             if (!rawText || rawText.trim().length < 100) {
@@ -621,13 +723,13 @@ const RealPDFParser = {
             const education = this.parseEducation(text);
             const skills = this.parseSkills(text);
             
-            // Extraer resumen (primeros párrafos después del nombre)
+            // Extraer resumen
             const summaryMatch = text.match(/(?:resumen|summary|perfil|profile)[^\n]*\n([\s\S]{100,500}?)(?=\n\n|\n(?:experiencia|experience|educaci[oó]n|education))/i);
             if (summaryMatch) {
                 personalInfo.summary = summaryMatch[1].trim();
             }
-            
-            return {
+
+            const parsedData = {
                 personalInfo,
                 experience,
                 education,
@@ -635,9 +737,14 @@ const RealPDFParser = {
                 metadata: {
                     pageCount,
                     textLength: text.length,
-                    processingMethod: 'pdf.js + AI parsing v2'
+                    processingMethod: 'pdf.js + LayoutAware AI'
                 }
             };
+
+            // Calcular ATS Score en el mismo ciclo
+            parsedData.atsAnalysis = this.calculateATSScore(text, parsedData);
+
+            return parsedData;
             
         } catch (error) {
             console.error('Error parsing CV:', error);
