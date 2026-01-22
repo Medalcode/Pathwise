@@ -1242,6 +1242,25 @@ function setLoadingState(isLoading, errorMessage = null) {
     }
 }
 
+/**
+ * Forzar regeneración de perfiles (Bypassing/Clearing Cache)
+ */
+function forceRegenerateProfiles() {
+    if (window.ProfileCache && window.currentProfile) {
+        const savedKey = localStorage.getItem('groqApiKey');
+        const type = savedKey ? 'ai_profiles' : 'mock_profiles';
+        
+        console.log(`🗑️ Limpiando caché para regeneración (${type})...`);
+        window.ProfileCache.delete(window.currentProfile, type);
+    }
+    
+    // Si cambiamos de mock a real (o viceversa), puede que necesitemos limpiar ambos por si acaso
+    // para evitar confusión visual, aunque generateProfiles seleccionará uno.
+    
+    generateProfiles();
+}
+window.forceRegenerateProfiles = forceRegenerateProfiles;
+
 async function generateProfiles() {
   try {
     const intro = document.getElementById('aiIntroContainer');
