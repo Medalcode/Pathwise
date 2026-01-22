@@ -55,6 +55,7 @@ cd Panoptes
 
 - **Layout Aware Engine**: Algoritmo que detecta automáticamente CVs de dos columnas y procesa el texto en orden lógico visual.
 - **Split View Interface**: Visor de PDF integrado junto al formulario de extracción para validación visual inmediata.
+- **Visual Career Timeline**: Gráfico interactivo que visualiza la trayectoria laboral y detecta automáticamente huecos (gaps) temporales.
 - **ATS Compatbility Score**: Análisis en tiempo real de la legibilidad del CV para sistemas automáticos.
 - **Preprocesamiento Inteligente**: Reconstrucción estructural de PDFs con formato roto.
 - **Extracción de Precisión**: Lógica mejorada para separar Experiencia de Educación.

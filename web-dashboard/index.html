@@ -350,6 +350,14 @@
                     </div>
 
                     <!-- Dynamic Sections (Placeholders for JS injection) -->
+                    <!-- Visual Timeline -->
+                    <div id="careerTimelineContainer"></div>
+
+                    <!-- Experience Modules -->
+                    <h4 class="text-accent-cyan font-mono text-sm uppercase mb-4 mt-8 border-b border-white/10 pb-2 flex justify-between items-center">
+                        Experience Modules
+                        <button type="button" onclick="CVProcessor.addExperienceField()" class="text-xs bg-primary/20 hover:bg-primary/40 text-primary px-2 py-1 rounded transition-colors">+ Add Module</button>
+                    </h4>
                     <div id="experienceContainer"></div>
                     <div id="educationContainer"></div>
                     <div id="certificationsContainer"></div>
@@ -502,6 +510,7 @@
 <script src="js/cvHistory.js"></script>
 <script src="js/realPDFParser.js"></script>
 <script src="js/jsonResumeExporter.js"></script>
+<script src="js/careerTimeline.js"></script>
 <script src="js/step2Completeness.js"></script>
 <script src="js/step2Validator.js"></script>
 <script src="js/step2AutoSave.js"></script>
