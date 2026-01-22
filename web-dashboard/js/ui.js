@@ -222,3 +222,9 @@ window.UI = UI;
 window.showToast = UI.showToast.bind(UI);
 window.goToStep = UI.goToStep.bind(UI);
 window.attemptNavigation = UI.attemptNavigation.bind(UI);
+
+// Inicializar UI cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    UI.initTheme();
+    UI.setupNavigation();
+});

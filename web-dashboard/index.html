@@ -65,6 +65,20 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        /* Light Mode Overrides */
+        html:not(.dark) .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        html:not(.dark) .step-indicator .text-gray-500 {
+            color: #6b7280; /* Ensure visibility */
+        }
+        html:not(.dark) aside.glass-panel {
+            background: white;
+            border-right: 1px solid #e5e7eb;
         }
         .glass-input {
             background: rgba(0,0,0,0.3) !important;
@@ -81,6 +95,11 @@
             box-shadow: 0 0 10px rgba(147,89,248,0.2) !important;
             --tw-ring-color: transparent !important; /* Disable Tailwind Forms ring */
         }
+        html:not(.dark) .glass-input {
+            background: white !important;
+            border: 1px solid #d1d5db !important;
+            color: #1f2937 !important;
+        }
         /* Placeholder fix */
         .glass-input::placeholder {
             color: #9ca3af !important; /* gray-400 */
@@ -96,7 +115,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-background-dark text-white font-display overflow-hidden h-screen w-screen flex antialiased">
+<body class="bg-gray-100 dark:bg-background-dark text-gray-900 dark:text-white font-display overflow-hidden h-screen w-screen flex antialiased transition-colors duration-300">
 
 <!-- Sidebar -->
 <aside class="w-[80px] h-full glass-panel flex flex-col items-center py-8 z-50 border-r border-white/5 flex-shrink-0">
