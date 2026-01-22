@@ -412,29 +412,51 @@
         </div>
 
         <!-- STEP 4: JOB SEARCH -->
-        <div id="step4-content" class="step-content hidden w-full max-w-6xl mx-auto">
-             <div class="flex justify-between items-end mb-6">
+        <!-- STEP 4: JOB SEARCH & TRACKING -->
+        <div id="step4-content" class="step-content hidden w-full max-w-7xl mx-auto h-[calc(100vh-180px)] flex flex-col">
+             <!-- Header with Tabs -->
+             <div class="flex flex-col md:flex-row justify-between items-end mb-6 shrink-0 gap-4">
                  <div>
                      <h2 class="text-3xl font-bold text-white flex items-center gap-3">
                          <span class="material-symbols-outlined text-success-green animate-pulse">radar</span>
                          <span data-i18n="active_targets">Active Targets</span>
                      </h2>
+                     <!-- Tabs -->
+                     <div class="flex gap-6 mt-4 border-b border-white/10">
+                         <button id="tab-search" class="pb-2 text-primary border-b-2 border-primary font-bold transition-all hover:text-primary/80" onclick="ApplicationKanban.showSearch()">Search View</button>
+                         <button id="tab-kanban" class="pb-2 text-gray-400 hover:text-white transition-all flex items-center gap-2" onclick="ApplicationKanban.showBoard()">
+                            myTracking Board
+                            <span class="bg-white/10 text-[10px] px-1.5 py-0.5 rounded-full" id="kanbanCount">NEW</span>
+                         </button>
+                     </div>
                  </div>
-                 <div class="flex gap-2">
-                     <button class="px-4 py-2 rounded-lg bg-glass-bg border border-white/10 text-xs text-gray-300" data-i18n="remote_only">Remote Only</button>
+                 
+                 <!-- Filters (Only for Search) -->
+                 <div class="flex gap-2" id="jobFilters">
+                     <button class="px-4 py-2 rounded-lg bg-glass-bg border border-white/10 text-xs text-gray-300 hover:bg-white/5 transition-all" data-i18n="remote_only">Remote Only</button>
                  </div>
              </div>
              
-             <div id="jobSearchLoader" class="text-center py-20 hidden">
-                  <div class="spinner"></div>
-                  <p class="text-primary font-mono" data-i18n="scanning_networks">SCANNING GLOBAL NETWORKS...</p>
+             <!-- VIEW 1: Search Grid -->
+             <div id="jobSearchResultsView" class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                 <div id="jobSearchLoader" class="text-center py-20 hidden">
+                      <div class="spinner"></div>
+                      <p class="text-primary font-mono" data-i18n="scanning_networks">SCANNING GLOBAL NETWORKS...</p>
+                 </div>
+
+                 <div id="jobResultsList" class="flex flex-col gap-4">
+                     <!-- Job Cards injected here -->
+                     <div class="glass-panel p-8 text-center rounded-xl">
+                         <p class="text-gray-500" data-i18n="system_idle">System idle. Initiate search protocol above.</p>
+                     </div>
+                 </div>
              </div>
 
-             <div id="jobResultsList" class="flex flex-col gap-4">
-                 <!-- Job Cards injected here -->
-                 <div class="glass-panel p-8 text-center rounded-xl">
-                     <p class="text-gray-500" data-i18n="system_idle">System idle. Initiate search protocol above.</p>
-                 </div>
+             <!-- VIEW 2: Kanban Board (Hidden by default) -->
+             <div id="kanbanBoardView" class="hidden flex-1 overflow-hidden">
+                <div id="kanbanBoardContainer" class="flex gap-4 h-full overflow-x-auto pb-4 custom-scrollbar">
+                    <!-- Columns injected here -->
+                </div>
              </div>
         </div>
 
@@ -521,6 +543,7 @@
 <script src="js/jobApplicationUI.js"></script>
 <script src="js/cvProcessor.js"></script>
 <script src="js/jobSearch.js"></script>
+<script src="js/applicationKanban.js"></script>
 <script src="js/salaryEstimator.js"></script>
 <script src="js/autoSave.js"></script>
 <script src="js/app.js?v=4.8"></script>

@@ -68,12 +68,13 @@ cd Panoptes
 - **Preview Panel**: Vista detallada de perfiles generados antes de seleccionarlos.
 - **Acciones Rápidas**: Copiar, regenerar y descargar PDF directamente.
 
-### ✅ Demo de Búsqueda de Empleo ("Living Search")
+### ✅ Demo de Búsqueda y Tracking Empleo
 
+- **Application Kanban Tracker**: Tablero estilo Trello para gestionar el estado de tus postulaciones (Saved, Applied, Interview, Offer). Guardado automático al postular.
 - **Generador de Datos Mock**: Simulación realista de ofertas basada en el perfil del usuario.
 - **Análisis de Match**: Visualización de compatibilidad y habilidades faltantes.
 - **Cover Letter AI**: Generación instantánea de borradores de carta de presentación.
-- **Modal de Detalles**: Vista expandida con descripción rica y métricas.
+- **Modal de Detalles**: Vista expandida con descripción rica, métricas y acciones directas.
 
 ---
 

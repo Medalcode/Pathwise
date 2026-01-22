@@ -41,9 +41,15 @@ const JobSearch = {
     /**
      * Renderizar lista de resultados
      */
+    /**
+     * Renderizar lista de resultados
+     */
     renderResults(jobs) {
         const container = document.getElementById('jobResultsList');
         if (!container) return;
+
+        // Guardar referencia global para acceso por índice
+        window.currentSearchJobs = jobs;
 
         if (!jobs || jobs.length === 0) {
             container.innerHTML = `
@@ -55,18 +61,15 @@ const JobSearch = {
             return;
         }
 
-        container.innerHTML = jobs.map(job => {
+        container.innerHTML = jobs.map((job, index) => {
             let scoreColor = 'text-gray-400';
             if (job.matchScore >= 80) scoreColor = 'text-success-green';
             else if (job.matchScore >= 60) scoreColor = 'text-yellow-500';
 
-            // Escapar JSON para el onclick
-            const jobJson = JSON.stringify(job).replace(/"/g, '&quot;');
-            // Obtener perfil actual escapado también si es necesario, o pasarlo globalmente
-            
             return `
-                <div class="glass-panel p-6 rounded-xl hover:bg-white/5 transition-all group cursor-pointer border border-transparent hover:border-primary/30" 
-                     onclick='JobSearch.openDetails(${JSON.stringify(job)})'>
+                <div class="glass-panel p-6 rounded-xl hover:bg-white/5 transition-all group cursor-pointer border border-transparent hover:border-primary/30 relative"
+                     onclick="JobSearch.openDetails(${index})">
+                    
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex gap-4">
                              <div class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-white shrink-0">
@@ -106,9 +109,15 @@ const JobSearch = {
                              <span class="material-symbols-outlined text-sm">schedule</span>
                              Posted ${new Date(job.postedDate).toLocaleDateString()}
                         </span>
-                        <span class="px-4 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-bold group-hover:bg-primary group-hover:text-white transition-all">
-                            View Details
-                        </span>
+                        <div class="flex gap-2">
+                             <button class="p-2 rounded-lg border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                                     onclick="event.stopPropagation(); window.ApplicationKanban.addApplication(window.currentSearchJobs[${index}], 'saved')">
+                                <span class="material-symbols-outlined text-lg">bookmark_add</span>
+                             </button>
+                             <span class="px-4 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-bold group-hover:bg-primary group-hover:text-white transition-all">
+                                View Details
+                             </span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -116,15 +125,14 @@ const JobSearch = {
     },
 
     /**
-     * Abrir detalles usando el UI Manager
-     * NOTA: Hay que tener cuidado pasando objetos complejos por HTML onclick
-     * Una mejor manera sería guardar los jobs en memoria por ID
+     * Abrir detalles usando el índice
      */
-    openDetails(job) {
-        if (window.JobApplicationUI) {
+    openDetails(index) {
+        const job = window.currentSearchJobs ? window.currentSearchJobs[index] : null;
+        if (job && window.JobApplicationUI) {
             window.JobApplicationUI.showJobDetails(job, this.selectedProfile);
         } else {
-            console.error('JobApplicationUI not found');
+            console.error('Job or JobApplicationUI not found');
         }
     }
 };

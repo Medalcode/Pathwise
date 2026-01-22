@@ -9,6 +9,9 @@ const JobApplicationUI = {
      * Mostrar modal de detalles de empleo
      */
     showJobDetails(job, profile) {
+        // Guardar referencia
+        this.currentJob = job;
+
         // Crear modal dinámicamente si no existe
         let modal = document.getElementById('jobDetailsModal');
         if (!modal) {
@@ -53,7 +56,7 @@ const JobApplicationUI = {
                         <div class="bg-white/5 rounded-lg p-3 px-4 border border-white/10">
                             <div class="text-xs text-gray-400 uppercase tracking-wider mb-1">Match Score</div>
                             <div class="text-2xl font-bold text-success-green flex items-center gap-2">
-                                ${job.matchScore}% 
+                                ${job.matchScore || 85}% 
                                 <span class="material-symbols-outlined">verified</span>
                             </div>
                         </div>
@@ -89,7 +92,6 @@ const JobApplicationUI = {
                                     ${matchAnalysis.matchingSkills.map(s => `<span class="px-2 py-1 rounded bg-green-500/20 text-green-300 text-xs border border-green-500/30 font-mono">✓ ${s}</span>`).join('')}
                                 </div>
                             </div>
-                           
                         </div>
                     </div>
                     
@@ -100,12 +102,14 @@ const JobApplicationUI = {
                             Generate Cover Letter
                         </button>
                         
-                        <button class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-bold flex items-center justify-center gap-2 transition-all">
+                        <button onclick="window.ApplicationKanban.addApplication(window.JobApplicationUI.currentJob, 'saved')" class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-bold flex items-center justify-center gap-2 transition-all">
                             <span class="material-symbols-outlined">bookmark_border</span>
                             Save for Later
                         </button>
                         
-                        <a href="${job.url}" target="_blank" class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-bold flex items-center justify-center gap-2 transition-all">
+                        <a href="${job.url}" target="_blank" 
+                           onclick="window.ApplicationKanban.addApplication(window.JobApplicationUI.currentJob, 'applied')"
+                           class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-bold flex items-center justify-center gap-2 transition-all">
                             <span class="material-symbols-outlined">open_in_new</span>
                             Apply on Website
                         </a>
