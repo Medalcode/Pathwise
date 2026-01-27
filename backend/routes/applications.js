@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
+const applicationsRepo = require('../database/repos/applicationsRepo');
 
 /**
  * GET /api/applications
@@ -12,23 +13,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const { status, limit = 100, offset = 0 } = req.query;
     
-    let query = 'SELECT * FROM applications WHERE user_id = ?';
-    const params = [userId];
-    
-    if (status) {
-      query += ' AND status = ?';
-      params.push(status);
-    }
-    
-    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), parseInt(offset));
-    
-    const applications = await new Promise((resolve, reject) => {
-      db.all(query, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+    const applications = await applicationsRepo.listApplications(db, userId, { status, limit, offset });
     
     res.json({
       success: true,
@@ -54,19 +39,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     
     // Contar por estado
-    const stats = await new Promise((resolve, reject) => {
-      db.all(`
-        SELECT 
-          status,
-          COUNT(*) as count
-        FROM applications
-        WHERE user_id = ?
-        GROUP BY status
-      `, [userId], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+    const stats = await applicationsRepo.getStats(db, userId);
     
     // Total de aplicaciones
     const total = stats.reduce((sum, stat) => sum + stat.count, 0);
@@ -79,17 +52,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
     const responseRate = applied > 0 ? ((interview + offer) / applied * 100).toFixed(1) : 0;
     
     // Aplicaciones esta semana
-    const thisWeek = await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT COUNT(*) as count
-        FROM applications
-        WHERE user_id = ?
-        AND created_at >= datetime('now', '-7 days')
-      `, [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row?.count || 0);
-      });
-    });
+    const thisWeek = await applicationsRepo.countThisWeek(db, userId);
     
     res.json({
       success: true,
@@ -122,16 +85,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const applicationId = parseInt(req.params.id);
     
-    const application = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT * FROM applications WHERE id = ? AND user_id = ?',
-        [applicationId, userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const application = await applicationsRepo.getApplication(db, userId, applicationId);
     
     if (!application) {
       return res.status(404).json({
@@ -181,19 +135,8 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
     
-    const applicationId = await new Promise((resolve, reject) => {
-      db.run(`
-        INSERT INTO applications (
-          user_id, profile_id, job_title, company, url, status,
-          applied_date, salary_range, location, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        userId, profileId, jobTitle, company, url, status,
-        appliedDate, salaryRange, location, notes
-      ], function(err) {
-        if (err) reject(err);
-        else resolve(this.lastID);
-      });
+    const applicationId = await applicationsRepo.createApplication(db, userId, {
+      profileId, jobTitle, company, url, status, appliedDate, salaryRange, location, notes
     });
     
     res.status(201).json({
@@ -243,39 +186,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
     } = req.body;
     
     // Verificar que la aplicación pertenece al usuario
-    const existing = await new Promise((resolve, reject) => {
-      db.get(
-        'SELECT id FROM applications WHERE id = ? AND user_id = ?',
-        [applicationId, userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
+    const updated = await applicationsRepo.updateApplication(db, userId, applicationId, {
+      jobTitle, company, url, status, appliedDate, salaryRange, location, notes
     });
-    
-    if (!existing) {
-      return res.status(404).json({
-        success: false,
-        error: 'Aplicación no encontrada'
-      });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Aplicación no encontrada' });
     }
-    
-    await new Promise((resolve, reject) => {
-      db.run(`
-        UPDATE applications
-        SET job_title = ?, company = ?, url = ?, status = ?,
-            applied_date = ?, salary_range = ?, location = ?, notes = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND user_id = ?
-      `, [
-        jobTitle, company, url, status, appliedDate, salaryRange,
-        location, notes, applicationId, userId
-      ], (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
     
     res.json({
       success: true,
@@ -309,16 +226,7 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
       });
     }
     
-    const result = await new Promise((resolve, reject) => {
-      db.run(`
-        UPDATE applications
-        SET status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND user_id = ?
-      `, [status, applicationId, userId], function(err) {
-        if (err) reject(err);
-        else resolve(this.changes);
-      });
-    });
+    const result = await applicationsRepo.patchStatus(db, userId, applicationId, status);
     
     if (result === 0) {
       return res.status(404).json({
@@ -350,16 +258,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const applicationId = parseInt(req.params.id);
     
-    const result = await new Promise((resolve, reject) => {
-      db.run(
-        'DELETE FROM applications WHERE id = ? AND user_id = ?',
-        [applicationId, userId],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.changes);
-        }
-      );
-    });
+    const result = await applicationsRepo.deleteApplication(db, userId, applicationId);
     
     if (result === 0) {
       return res.status(404).json({

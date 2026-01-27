@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const config = require('../config');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
+const JWT_SECRET = config.JWT_SECRET;
 
 /**
  * Middleware para autenticar requests usando JWT

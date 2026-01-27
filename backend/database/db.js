@@ -1,10 +1,11 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const config = require('../config');
 
 // Variable para la conexión
 let db;
 
-const dbPath = process.env.DB_PATH || '/tmp/autoapply.db';
+const dbPath = config.DB_PATH || process.env.DB_PATH || '/tmp/autoapply.db';
 
 // Inicializar base de datos
 function initDB() {

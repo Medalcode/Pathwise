@@ -1,62 +1,101 @@
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 const fs = require('fs');
+const fsp = fs.promises;
 const crypto = require('crypto');
+const config = require('../config');
 
 // Configuración
-const BUCKET_NAME = process.env.GCS_BUCKET_NAME;
-const DB_FILENAME = 'autoapply.db';
-const LOCAL_DB_PATH = path.join(__dirname, '../database', DB_FILENAME);
-const LOCK_FILE = path.join(__dirname, '../database', '.upload.lock');
+const BUCKET_NAME = config.GCS_BUCKET_NAME;
+const DB_FILENAME = config.DB_FILENAME || 'autoapply.db';
+const LOCAL_DB_PATH = config.DB_PATH || path.join(__dirname, '../database', DB_FILENAME);
+const LOCK_FILE = path.join(path.dirname(LOCAL_DB_PATH), '.upload.lock');
 
 // Inicializar cliente GCS
 const storage = new Storage();
 
-// Estado de sincronización
+// Último hash conocido (memoria local)
 let lastUploadHash = null;
-let isSyncing = false;
 
-/**
- * Calcula el hash MD5 de un archivo
- */
-function getFileHash(filePath) {
+// TTL para lock stale (ms)
+const LOCK_TTL = 5 * 60 * 1000; // 5 minutos
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fileExists(filePath) {
+  try {
+    await fsp.access(filePath);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function hashStream(stream) {
   return new Promise((resolve, reject) => {
-    if (!fs.existsSync(filePath)) {
-      resolve(null);
-      return;
-    }
-
     const hash = crypto.createHash('md5');
-    const stream = fs.createReadStream(filePath);
-    
-    stream.on('data', (data) => hash.update(data));
+    stream.on('data', chunk => hash.update(chunk));
     stream.on('end', () => resolve(hash.digest('hex')));
     stream.on('error', reject);
   });
 }
 
-/**
- * Verifica si hay cambios en la base de datos
- */
+async function getFileHash(filePath) {
+  if (!await fileExists(filePath)) return null;
+  const stream = fs.createReadStream(filePath);
+  return hashStream(stream);
+}
+
 async function hasChanges() {
   const currentHash = await getFileHash(LOCAL_DB_PATH);
   return currentHash !== lastUploadHash;
 }
 
-/**
- * Función auxiliar para esperar (sleep)
- */
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+async function tryCreateLock() {
+  try {
+    const fh = await fsp.open(LOCK_FILE, 'wx');
+    const payload = JSON.stringify({ pid: process.pid, ts: Date.now() });
+    await fh.writeFile(payload, { encoding: 'utf8' });
+    await fh.close();
+    return true;
+  } catch (err) {
+    // If file exists, check age and remove if stale
+    if (err.code === 'EEXIST') {
+      try {
+        const st = await fsp.stat(LOCK_FILE);
+        const age = Date.now() - st.mtimeMs;
+        if (age > LOCK_TTL) {
+          // stale lock — remove and try again
+          await fsp.unlink(LOCK_FILE).catch(() => {});
+          // try once more
+          const fh2 = await fsp.open(LOCK_FILE, 'wx');
+          await fh2.writeFile(JSON.stringify({ pid: process.pid, ts: Date.now() }), 'utf8');
+          await fh2.close();
+          return true;
+        }
+      } catch (e) {
+        // ignore and return false
+      }
+    }
+    return false;
+  }
 }
 
-/**
- * Descarga la base de datos desde GCS al iniciar la aplicación.
- * Incluye reintentos con backoff exponencial.
- */
+async function releaseLock() {
+  try {
+    if (await fileExists(LOCK_FILE)) {
+      await fsp.unlink(LOCK_FILE);
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
 async function downloadDatabase(maxRetries = 3) {
   if (!BUCKET_NAME) {
-    console.log('⚠️  GCS_BUCKET_NAME no configurado. Persistencia en la nube desactivada.');
+    console.log('⚠️  GCS_BUCKET_NAME not set. Cloud persistence disabled.');
     return;
   }
 
@@ -67,118 +106,93 @@ async function downloadDatabase(maxRetries = 3) {
 
       const [exists] = await file.exists();
       if (exists) {
-        console.log(`📥 [${new Date().toISOString()}] Descargando base de datos desde GCS... (intento ${attempt}/${maxRetries})`);
-        
-        // Descargar a archivo temporal primero
+        console.log(`📥 [${new Date().toISOString()}] Downloading DB from GCS... (attempt ${attempt}/${maxRetries})`);
+
         const tempPath = `${LOCAL_DB_PATH}.tmp`;
         await file.download({ destination: tempPath });
-        
-        // Mover archivo temporal a ubicación final
-        fs.renameSync(tempPath, LOCAL_DB_PATH);
-        
-        // Actualizar hash después de descarga exitosa
+        await fsp.rename(tempPath, LOCAL_DB_PATH);
+
         lastUploadHash = await getFileHash(LOCAL_DB_PATH);
-        
-        console.log('✅ Base de datos restaurada exitosamente.');
+        console.log('✅ Database restored from GCS.');
         return;
       } else {
-        console.log('🆕 Base de datos no encontrada en GCS. Se creará una nueva localmente.');
+        console.log('🆕 No DB in GCS. Proceeding with local DB.');
         return;
       }
     } catch (error) {
-      console.error(`❌ Error descargando base de datos (intento ${attempt}/${maxRetries}):`, error.message);
-      
+      console.error(`❌ Error downloading DB (attempt ${attempt}/${maxRetries}):`, error.message);
       if (attempt < maxRetries) {
-        const waitTime = Math.pow(2, attempt) * 1000; // Backoff exponencial
-        console.log(`⏳ Reintentando en ${waitTime / 1000} segundos...`);
+        const waitTime = Math.pow(2, attempt) * 1000;
+        console.log(`⏳ Retrying in ${waitTime/1000}s...`);
         await sleep(waitTime);
       } else {
-        console.error('❌ Máximo de reintentos alcanzado. Continuando con base de datos local.');
-        // No lanzamos error para permitir que la app inicie
+        console.error('❌ Maximum retries reached. Using local DB.');
       }
     }
   }
 }
 
-/**
- * Sube la base de datos local a GCS con reintentos.
- */
 async function uploadDatabase(maxRetries = 3) {
-  if (!BUCKET_NAME) {
+  if (!BUCKET_NAME) return;
+
+  if (!await fileExists(LOCAL_DB_PATH)) {
+    console.warn('⚠️  Local DB not found to upload.');
     return;
   }
 
-  if (!fs.existsSync(LOCAL_DB_PATH)) {
-    console.warn('⚠️  No se encontró base de datos local para subir.');
+  if (!await hasChanges()) {
+    console.log('ℹ️  No DB changes detected. Skipping upload.');
     return;
   }
 
-  // Verificar si hay cambios
-  const changed = await hasChanges();
-  if (!changed) {
-    console.log('ℹ️  No hay cambios en la base de datos. Omitiendo upload.');
+  // Try to acquire lock
+  const locked = await tryCreateLock();
+  if (!locked) {
+    console.log('⏳ Another upload in progress (lock present). Skipping.');
     return;
   }
 
-  // Verificar lock file para prevenir uploads concurrentes
-  if (isSyncing) {
-    console.log('⏳ Upload ya en progreso. Omitiendo...');
-    return;
-  }
-
-  isSyncing = true;
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`📤 [${new Date().toISOString()}] Subiendo base de datos a GCS... (intento ${attempt}/${maxRetries})`);
-      
-      await storage.bucket(BUCKET_NAME).upload(LOCAL_DB_PATH, {
-        destination: DB_FILENAME,
-        metadata: {
-          cacheControl: 'no-cache',
+  try {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`📤 [${new Date().toISOString()}] Uploading DB to GCS... (attempt ${attempt}/${maxRetries})`);
+        await storage.bucket(BUCKET_NAME).upload(LOCAL_DB_PATH, {
+          destination: DB_FILENAME,
           metadata: {
-            lastSync: new Date().toISOString()
+            cacheControl: 'no-cache',
+            metadata: { lastSync: new Date().toISOString() }
           }
-        },
-      });
-      
-      // Actualizar hash después de upload exitoso
-      lastUploadHash = await getFileHash(LOCAL_DB_PATH);
-      
-      console.log('✅ Base de datos respaldada exitosamente en la nube.');
-      isSyncing = false;
-      return;
-    } catch (error) {
-      console.error(`❌ Error subiendo base de datos (intento ${attempt}/${maxRetries}):`, error.message);
-      
-      if (attempt < maxRetries) {
-        const waitTime = Math.pow(2, attempt) * 1000; // Backoff exponencial
-        console.log(`⏳ Reintentando en ${waitTime / 1000} segundos...`);
-        await sleep(waitTime);
-      } else {
-        console.error('❌ Máximo de reintentos alcanzado. Upload fallido.');
-        isSyncing = false;
-        throw error; // Lanzar error en el último intento
+        });
+
+        lastUploadHash = await getFileHash(LOCAL_DB_PATH);
+        console.log('✅ Database backed up to cloud.');
+        return;
+      } catch (err) {
+        console.error(`❌ Upload error (attempt ${attempt}):`, err.message || err);
+        if (attempt < maxRetries) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(`⏳ Retrying in ${waitTime/1000}s...`);
+          await sleep(waitTime);
+        } else {
+          console.error('❌ Upload failed after retries.');
+          throw err;
+        }
       }
     }
+  } finally {
+    await releaseLock();
   }
 }
 
-/**
- * Sincronización forzada (sin verificar cambios)
- */
 async function forceUpload() {
-  lastUploadHash = null; // Resetear hash para forzar upload
+  lastUploadHash = null;
   return uploadDatabase();
 }
 
-/**
- * Obtener estado de sincronización
- */
-function getSyncStatus() {
+async function getSyncStatus() {
   return {
     isEnabled: !!BUCKET_NAME,
-    isSyncing,
+    isSyncing: await fileExists(LOCK_FILE),
     lastUploadHash,
     dbPath: LOCAL_DB_PATH
   };

@@ -1,6 +1,7 @@
-const Groq = require('groq-sdk');
+const aiProvider = require('./aiProvider');
+const config = require('../config');
 
-// La inicialización del cliente se hace bajo demanda en generateProfessionalProfiles
+// La inicialización del cliente se delega a `aiProvider`
 
 /**
  * Genera 3 perfiles profesionales basados en los datos extraídos del CV
@@ -10,83 +11,34 @@ const Groq = require('groq-sdk');
  */
 async function generateProfessionalProfiles(cvData, apiKey = null) {
   try {
-    // Usar API key proporcionada o la del entorno
-    const groqApiKey = apiKey || process.env.GROQ_API_KEY;
-    
+    // Usar API key proporcionada o la del config
+    const groqApiKey = apiKey || config.GROQ_API_KEY || process.env.GROQ_API_KEY;
     if (!groqApiKey || groqApiKey === 'your_groq_api_key_here') {
       throw new Error('API key de Groq no configurada');
     }
-    
-    // Crear cliente con la API key
-    const groqClient = new Groq({ apiKey: groqApiKey });
-    
-    // Construir el prompt con los datos del CV
+
+    // Construir prompt y mensajes
     const prompt = buildPrompt(cvData);
-    
-    // Llamar a Groq API
-    const completion = await groqClient.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `Eres un experto en recursos humanos y orientación profesional. Tu tarea es analizar la información de un CV y generar 3 perfiles profesionales diferentes pero complementarios que maximicen las oportunidades de empleo del candidato.
+    const messages = [
+      { role: 'system', content: `Eres un experto en recursos humanos y orientación profesional. Tu tarea es analizar la información de un CV y generar 3 perfiles profesionales diferentes pero complementarios que maximicen las oportunidades de empleo del candidato. Responde únicamente con un JSON válido en el formato solicitado.` },
+      { role: 'user', content: prompt }
+    ];
 
-Cada perfil debe:
-1. Tener un título profesional claro y atractivo
-2. Incluir una descripción breve (2-3 líneas) del perfil
-3. Listar las habilidades clave relevantes para ese perfil
-4. Sugerir palabras clave para búsqueda de empleo
-5. Indicar el nivel de experiencia (Junior, Mid-level, Senior)
+    // Llamar al proveedor AI a través del adaptador
+    const completion = await aiProvider.chatCompletion({ messages, model: 'llama-3.3-70b-versatile', temperature: 0.7, max_tokens: 2048 }, groqApiKey);
 
-IMPORTANTE: Debes responder ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdown, sin explicaciones. El formato debe ser exactamente:
-
-{
-  "profiles": [
-    {
-      "title": "Título del perfil profesional",
-      "description": "Descripción breve del perfil",
-      "keySkills": ["skill1", "skill2", "skill3"],
-      "searchKeywords": ["keyword1", "keyword2", "keyword3"],
-      "experienceLevel": "Junior|Mid-level|Senior",
-      "targetRoles": ["rol1", "rol2", "rol3"]
+    const responseText = completion.choices?.[0]?.message?.content || '';
+    const parsed = aiProvider.parseJsonSafely(responseText);
+    if (!parsed.ok) {
+      throw new Error('No se pudo parsear la respuesta JSON del proveedor AI: ' + (parsed.error && parsed.error.message));
     }
-  ]
-}`
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
-      max_tokens: 2048,
-      top_p: 1,
-      stream: false
-    });
 
-    // Extraer la respuesta
-    const responseText = completion.choices[0]?.message?.content || '';
-    
-    // Limpiar la respuesta (remover markdown si existe)
-    let cleanedResponse = responseText.trim();
-    
-    // Remover bloques de código markdown si existen
-    if (cleanedResponse.startsWith('```')) {
-      cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    }
-    
-    // Parsear JSON
-    const result = JSON.parse(cleanedResponse);
-    
-    // Validar que tengamos 3 perfiles
+    const result = parsed.data;
     if (!result.profiles || !Array.isArray(result.profiles)) {
-      throw new Error('La respuesta de Groq no contiene perfiles válidos');
+      throw new Error('La respuesta AI no contiene perfiles válidos');
     }
-    
-    // Asegurar que tengamos exactamente 3 perfiles
+
     const profiles = result.profiles.slice(0, 3);
-    
-    // Validar estructura de cada perfil
     profiles.forEach((profile, index) => {
       if (!profile.title || !profile.description || !profile.keySkills || !profile.searchKeywords) {
         throw new Error(`Perfil ${index + 1} tiene estructura inválida`);
@@ -211,7 +163,7 @@ function buildPrompt(cvData) {
  * @returns {boolean}
  */
 function isConfigured() {
-  return !!process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here';
+  return !!config.GROQ_API_KEY && config.GROQ_API_KEY !== 'your_groq_api_key_here';
 }
 
 /**
@@ -223,14 +175,11 @@ function isConfigured() {
  */
 async function generateCoverLetter(profile, jobDescription, options = {}) {
   try {
-    const groqApiKey = process.env.GROQ_API_KEY;
-    
+    const groqApiKey = config.GROQ_API_KEY || process.env.GROQ_API_KEY;
     if (!groqApiKey || groqApiKey === 'your_groq_api_key_here') {
       throw new Error('API key de Groq no configurada');
     }
-    
-    const groqClient = new Groq({ apiKey: groqApiKey });
-    
+
     const { tone = 'professional', company = '', jobTitle = '' } = options;
     
     const tonePrompts = {
@@ -282,16 +231,16 @@ Requisitos:
 
 Genera SOLO la carta de presentación, sin comentarios adicionales, sin "Estimado/a", sin firma al final.`;
 
-    const completion = await groqClient.chat.completions.create({
+    const completion = await aiProvider.chatCompletion({
       messages: [{ role: 'user', content: prompt }],
       model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
       max_tokens: 800
-    });
-    
-    const coverLetter = completion.choices[0]?.message?.content || '';
-    const wordCount = coverLetter.split(/\s+/).length;
-    
+    }, groqApiKey);
+
+    const coverLetter = completion.choices?.[0]?.message?.content || '';
+    const wordCount = coverLetter ? coverLetter.split(/\s+/).length : 0;
+
     return {
       success: true,
       coverLetter,
@@ -324,79 +273,35 @@ module.exports = {
  */
 async function parseCVWithAI(rawText, apiKey = null) {
   try {
-    const groqApiKey = apiKey || process.env.GROQ_API_KEY;
-    
+    const groqApiKey = apiKey || config.GROQ_API_KEY || process.env.GROQ_API_KEY;
     if (!groqApiKey || groqApiKey === 'your_groq_api_key_here') {
       throw new Error('API key de Groq no configurada');
     }
-    
-    const groqClient = new Groq({ apiKey: groqApiKey });
-    
+
     // Limitar el texto si es muy largo para no exceder tokens (aprox 25k chars)
     const truncatedText = rawText.length > 25000 ? rawText.substring(0, 25000) : rawText;
 
-    const systemPrompt = `Eres un experto en extracción de datos de currículums (CV parsing). Tu tarea es extraer información estructurada de un texto plano de CV.
-    
-DEBES devolver ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
+    const systemPrompt = `Eres un experto en extracción de datos de currículums (CV parsing). Tu tarea es extraer información estructurada de un texto plano de CV.\n\nDEBES devolver ÚNICAMENTE un objeto JSON válido con la estructura solicitada. Si no hay dato, usa null o array vacío.`;
 
-{
-  "personalInfo": {
-    "firstName": "String",
-    "lastName": "String",
-    "email": "String",
-    "phone": "String",
-    "currentTitle": "String (título profesional actual)",
-    "city": "String (ciudad de residencia)",
-    "country": "String (país de residencia)",
-    "linkedin": "String (URL completa)",
-    "portfolio": "String (URL completa o GitHub)",
-    "summary": "String (resumen profesional/perfil si existe)"
-  },
-  "experience": [
-    {
-      "title": "String",
-      "company": "String",
-      "startDate": "String (formato flexible pero consistente)",
-      "endDate": "String (o 'Presente')",
-      "current": Boolean,
-      "description": "String (resumen de responsabilidades)"
-    }
-  ],
-  "education": [
-    {
-      "degree": "String",
-      "school": "String",
-      "startDate": "String",
-      "endDate": "String",
-      "current": Boolean
-    }
-  ],
-  "skills": ["String", "String", ...] (lista plana de tecnologías y habilidades técnicas)
-}
-
-REGLAS:
-1. Si un campo no se encuentra, usa null o array vacío [], no inventes datos.
-2. Normaliza los nombres de skills (ej. "NodeJS" -> "Node.js").
-3. Para 'current', deduce basado en las fechas o palabras como "Presente", "Actualidad".
-4. Extrae la mayor cantidad posible de items de experiencia y educación.
-5. NO incluyas markdown, ni bloques de código, solo el JSON raw.`;
-
-    const completion = await groqClient.chat.completions.create({
+    const completion = await aiProvider.chatCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `El texto del CV es:\n\n${truncatedText}` }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.1, // Baja temperatura para precisión
+      temperature: 0.1,
       max_tokens: 4096,
       top_p: 1,
-      stream: false,
-      response_format: { type: "json_object" }
-    });
+      stream: false
+    }, groqApiKey);
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const result = JSON.parse(responseText);
-    
+    const responseText = completion.choices?.[0]?.message?.content || '{}';
+    const parsed = aiProvider.parseJsonSafely(responseText);
+    if (!parsed.ok) {
+      throw new Error('No se pudo parsear la respuesta JSON del proveedor AI: ' + (parsed.error && parsed.error.message));
+    }
+
+    const result = parsed.data;
     return {
       success: true,
       data: result,

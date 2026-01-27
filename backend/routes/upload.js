@@ -3,7 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const pdfParse = require('pdf-parse');
+const fsp = require('fs').promises;
+const cvService = require('../services/cvService');
+const config = require('../config');
 const db = require('../database/db');
 const groqService = require('../services/groqService');
 
@@ -42,11 +44,10 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    const dataBuffer = fs.readFileSync(filePath);
-    
-    // Parsear PDF
-    const pdfData = await pdfParse(dataBuffer);
-    const extractedText = pdfData.text;
+    // Parsear PDF (async, delegando a cvService)
+    const parsed = await cvService.parsePdfFile(filePath);
+    const pdfData = parsed.raw || {};
+    const extractedText = parsed.text || '';
     
     // Intentar extracción con IA primero
     let parsedData = null;
@@ -81,7 +82,7 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
     await db.saveProfile(userId, parsedData);
     
     // Forzar respaldo inmediato a la nube si está habilitado
-    if (process.env.GCS_BUCKET_NAME) {
+    if (config.GCS_BUCKET_NAME) {
       try {
         const storageService = require('../services/storageService');
         // No esperamos (await) para no retrasar la respuesta al usuario
@@ -91,8 +92,12 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
       }
     }
     
-    // Eliminar archivo temporal (opcional)
-    fs.unlinkSync(filePath);
+    // Eliminar archivo temporal (opcional) de forma asíncrona
+    try {
+      await fsp.unlink(filePath);
+    } catch (e) {
+      console.warn('No se pudo eliminar archivo temporal:', e.message);
+    }
     
     res.json({
       success: true,

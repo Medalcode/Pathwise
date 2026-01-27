@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../database/db');
+const profilesRepo = require('../database/repos/profilesRepo');
 const {
   getAllProfiles,
   getProfileById,
@@ -58,7 +59,7 @@ router.get('/:id', async (req, res) => {
     }
 
     // Obtener datos del perfil
-    const profileData = await getProfileData(db, profileId);
+    const profileData = await profilesRepo.getProfileData(db, profileId);
     
     res.json({
       success: true,
@@ -221,85 +222,6 @@ router.post('/:id/duplicate', async (req, res) => {
   }
 });
 
-/**
- * Helper: Obtener datos completos de un perfil
- */
-function getProfileData(db, profileId) {
-  return new Promise((resolve, reject) => {
-    const profile = {
-      personalInfo: {},
-      experience: [],
-      education: [],
-      skills: []
-    };
-
-    // Información personal
-    db.get('SELECT * FROM personal_info WHERE profile_id = ?', [profileId], (err, row) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      
-      if (row) {
-        profile.personalInfo = {
-          firstName: row.first_name || '',
-          lastName: row.last_name || '',
-          email: row.email || '',
-          phone: row.phone || '',
-          address: row.address || '',
-          city: row.city || '',
-          country: row.country || '',
-          postalCode: row.postal_code || '',
-          currentTitle: row.current_title || '',
-          linkedin: row.linkedin || '',
-          portfolio: row.portfolio || '',
-          github: row.github || '',
-          summary: row.summary || ''
-        };
-      }
-
-      // Experiencia
-      db.all('SELECT * FROM experience WHERE profile_id = ? ORDER BY order_index', [profileId], (err, rows) => {
-        if (!err && rows) {
-          profile.experience = rows.map(row => ({
-            id: row.id,
-            title: row.title,
-            company: row.company,
-            location: row.location,
-            startDate: row.start_date,
-            endDate: row.end_date,
-            current: Boolean(row.current),
-            description: row.description
-          }));
-        }
-
-        // Educación
-        db.all('SELECT * FROM education WHERE profile_id = ? ORDER BY order_index', [profileId], (err, rows) => {
-          if (!err && rows) {
-            profile.education = rows.map(row => ({
-              id: row.id,
-              degree: row.degree,
-              school: row.school,
-              fieldOfStudy: row.field_of_study,
-              startDate: row.start_date,
-              endDate: row.end_date,
-              current: Boolean(row.current),
-              description: row.description
-            }));
-          }
-
-          // Skills
-          db.all('SELECT * FROM skills WHERE profile_id = ?', [profileId], (err, rows) => {
-            if (!err && rows) {
-              profile.skills = rows.map(row => row.name);
-            }
-
-            resolve(profile);
-          });
-        });
-      });
-    });
-  });
-}
+// profile data helper moved to backend/database/repos/profilesRepo.js
 
 module.exports = router;

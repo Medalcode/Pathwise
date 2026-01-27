@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database/db');
+const profilesRepo = require('../database/repos/profilesRepo');
 const groqService = require('../services/groqService');
+const config = require('../config');
 
 // GET - Obtener perfil del usuario
 router.get('/', async (req, res) => {
   try {
     const userId = 1; // Por ahora, solo un usuario
     
-    const profile = await db.getProfile(userId);
+    const profile = await profilesRepo.getProfile(userId);
     
     if (!profile) {
       return res.status(404).json({ error: 'Perfil no encontrado' });
@@ -27,11 +29,11 @@ router.post('/', async (req, res) => {
     const userId = 1;
     const profileData = req.body;
     
-    const success = await db.saveProfile(userId, profileData);
+    const success = await profilesRepo.saveProfile(userId, profileData);
     
     if (success) {
       // Backup automático inmediato
-      if (process.env.GCS_BUCKET_NAME) {
+      if (config.GCS_BUCKET_NAME) {
         try {
           const storageService = require('../services/storageService');
           storageService.uploadDatabase().catch(err => console.error('Error en backup post-guardado:', err));
@@ -60,7 +62,7 @@ router.put('/:section', async (req, res) => {
     const { section } = req.params;
     const data = req.body;
     
-    const success = await db.updateProfileSection(userId, section, data);
+    const success = await profilesRepo.updateProfileSection(userId, section, data);
     
     if (success) {
       res.json({ 
@@ -80,7 +82,7 @@ router.put('/:section', async (req, res) => {
 router.delete('/', async (req, res) => {
   try {
     const userId = 1;
-    const success = await db.deleteProfile(userId);
+    const success = await profilesRepo.deleteProfile(userId);
     
     if (success) {
       res.json({ 
@@ -113,7 +115,7 @@ router.post('/generate-profiles', async (req, res) => {
     const userId = 1;
     
     // Obtener datos del CV desde la base de datos
-    const profile = await db.getProfile(userId);
+    const profile = await profilesRepo.getProfile(userId);
     
     if (!profile) {
       return res.status(404).json({ 

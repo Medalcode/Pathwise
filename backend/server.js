@@ -3,14 +3,14 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+const config = require('./config');
 
 // Configuración de base de datos y almacenamiento
 const { initDB } = require('./database/db');
 const storageService = require('./services/storageService');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = config.PORT;
 
 
 // Middleware de logging global
@@ -119,12 +119,12 @@ async function startServer() {
       console.log('🚀 Panoptes (AutoApply) Server v4.5 [CLEAN REBUILD]');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log(`📡 Port: ${PORT}`);
-      console.log(`💾 Persistencia: ${process.env.GCS_BUCKET_NAME ? 'ACTIVADA (GCS)' : 'LOCAL ONLY'}`);
+      console.log(`💾 Persistencia: ${config.GCS_BUCKET_NAME ? 'ACTIVADA (GCS)' : 'LOCAL ONLY'}`);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     });
 
     // Configurar backup automático periódico (cada 5 minutos)
-    if (process.env.GCS_BUCKET_NAME) {
+    if (config.GCS_BUCKET_NAME) {
       setInterval(() => {
         storageService.uploadDatabase().catch(err => console.error('❌ Error en backup automático:', err));
       }, 5 * 60 * 1000); // 5 minutos
@@ -137,7 +137,7 @@ async function startServer() {
       server.close();
       
       // Subir base de datos antes de salir
-      if (process.env.GCS_BUCKET_NAME) {
+      if (config.GCS_BUCKET_NAME) {
         console.log('💾 Guardando estado final en GCS...');
         await storageService.uploadDatabase();
       }
