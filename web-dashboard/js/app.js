@@ -77,8 +77,8 @@ async function init() {
         const profile = window.ProfilesManager.currentProfile;
         
         // Si tiene nombre (o datos básicos), asumimos que ya pasó el paso 1
-        // Nota: En modelo offline, los datos completos pueden estar en 'panoptes_profile_data_[id]'
-        const profileData = localStorage.getItem(`panoptes_profile_data_${profile.id}`);
+        // Nota: En modelo offline, los datos completos pueden estar en 'pathwise_profile_data_[id]'
+        const profileData = localStorage.getItem(`pathwise_profile_data_${profile.id}`);
         
         if (profileData) {
             console.log("Perfil detectado (Local), saltando al paso 3");

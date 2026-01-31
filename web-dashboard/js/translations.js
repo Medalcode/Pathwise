@@ -1,6 +1,6 @@
 const translations = {
     "en": {
-        "title": "Panoptes AI Agent",
+        "title": "Pathwise AI Agent",
         "home": "HOME",
         "agent_sequence": "AGENT SEQUENCE",
         "system_online": "SYSTEM: ONLINE",
@@ -48,7 +48,7 @@ const translations = {
         "remote_only": "Remote Only",
         "scanning_networks": "SCANNING GLOBAL NETWORKS...",
         "system_idle": "System idle. Initiate search protocol above.",
-        "panoptes_terminal": "PANOPTES_TERMINAL",
+        "panoptes_terminal": "PATHWISE_TERMINAL",
         "system_ready": "System Ready.",
         "neural_link_config": "Neural Link Configuration",
         "groq_api_key": "Groq API Key",
@@ -180,7 +180,7 @@ const translations = {
         "please_login": "Please login to continue"
     },
     "es": {
-        "title": "Agente IA Panoptes",
+        "title": "Agente IA Pathwise",
         "home": "INICIO",
         "agent_sequence": "SECUENCIA DE AGENTE",
         "system_online": "SISTEMA: EN LÍNEA",
@@ -228,7 +228,7 @@ const translations = {
         "remote_only": "Solo Remoto",
         "scanning_networks": "ESCANEAANDO REDES GLOBALES...",
         "system_idle": "Sistema inactivo. Inicie el protocolo de búsqueda arriba.",
-        "panoptes_terminal": "TERMINAL_PANOPTES",
+        "panoptes_terminal": "TERMINAL_PATHWISE",
         "system_ready": "Sistema Listo.",
         "neural_link_config": "Configuración de Enlace Neuronal",
         "groq_api_key": "Llave API Groq",
