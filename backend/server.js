@@ -1,152 +1,51 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
-const fs = require('fs');
+const app = require('./app');
 const config = require('./config');
-
-// Configuración de base de datos y almacenamiento
 const { initDB } = require('./database/db');
 const storageService = require('./services/storageService');
 
-const app = express();
-const PORT = config.PORT;
+const PORT = config.PORT || 3000;
 
-
-// Middleware de logging global
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// Middleware de manejo global de errores
-app.use((err, req, res, next) => {
-  console.error('🌋 Error global:', err);
-  res.status(500).send('Error interno global');
-});
-
-// Servir archivos estáticos del dashboard (Lógica Adaptativa Local/Docker)
-// 1. Intenta estructura local (../web-dashboard)
-let staticPath = path.join(__dirname, '../web-dashboard');
-if (!fs.existsSync(staticPath)) {
-    // 2. Si falla, intenta estructura Docker/Prod (./web-dashboard)
-    staticPath = path.join(__dirname, 'web-dashboard');
-}
-
-console.log('🗂️ Servir estáticos desde:', staticPath);
-app.use(express.static(staticPath));
-
-// Rutas de la API
-const authRoutes = require('./routes/auth');
-const profileRoutes = require('./routes/profile');
-const uploadRoutes = require('./routes/upload');
-const jobsRoutes = require('./routes/jobs');
-const profilesRoutes = require('./routes/profiles');
-const applicationsRoutes = require('./routes/applications');
-const coverLetterRoutes = require('./routes/coverLetter');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/jobs', jobsRoutes);
-app.use('/api/profiles', profilesRoutes);
-app.use('/api/applications', applicationsRoutes);
-app.use('/api/cover-letter', coverLetterRoutes);
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'AutoApply API is running',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Sync status endpoint
-app.get('/api/sync/status', (req, res) => {
-  const syncStatus = storageService.getSyncStatus();
-  res.json({
-    success: true,
-    ...syncStatus
-  });
-});
-
-
-// Ruta principal - Servir el dashboard
-app.get('/', (req, res) => {
-  const indexPath = path.join(__dirname, 'web-dashboard/index.html');
-  console.log('➡️ Petición a /, intentando servir:', indexPath);
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('❌ Error enviando index.html:', err);
-      res.status(500).send('Error interno al servir el dashboard');
-    }
-  });
-});
-
-// Manejo de errores
-app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    message: err.message 
-  });
-});
-
-// 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not Found' });
-});
-
-// Función de inicio asíncrona
+/**
+ * Orquestador de Arranque del Sistema
+ * Responsable de:
+ * 1. Preparar persistencia (Sync)
+ * 2. Inicializar DB
+ * 3. Iniciar Servidor HTTP
+ * 4. Manejar señales de cierre (Graceful Shutdown)
+ */
 async function startServer() {
   try {
-    console.log('🔄 Iniciando secuencia de arranque...');
+    console.log('🔄 Iniciando secuencia de arranque Pathwise...');
     
-    // 1. Descargar base de datos desde GCS si existe
-    await storageService.downloadDatabase();
+    // 1. Fase de Persistencia: Descargar DB si aplica
+    // Esta es una dependencia crítica antes de conectar la DB
+    if (config.GCS_BUCKET_NAME) {
+      console.log('☁️  Modo Persistencia Cloud detectado');
+      await storageService.downloadDatabase();
+    } else {
+      console.log('💻 Modo Local (Sin persistencia cloud)');
+    }
     
-    // 2. Inicializar conexión a SQLite
+    // 2. Fase de Datos: Inicializar conexión SQLite
     await initDB();
     
-    // 3. Iniciar servidor Express
+    // 3. Fase de Servicio: Iniciar HTTP Server
     const server = app.listen(PORT, () => {
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🚀 Pathwise (AutoApply) Server Ready');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🚀 Panoptes (AutoApply) Server v4.5 [CLEAN REBUILD]');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`📡 Port: ${PORT}`);
-      console.log(`💾 Persistencia: ${config.GCS_BUCKET_NAME ? 'ACTIVADA (GCS)' : 'LOCAL ONLY'}`);
+      console.log(`📡 URL: http://localhost:${PORT}`);
+      console.log(`💾 Storage: ${config.GCS_BUCKET_NAME ? 'GCS Sync' : 'Local Disk'}`);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     });
 
-    // Configurar backup automático periódico (cada 5 minutos)
+    // Configurar backup automático en background
     if (config.GCS_BUCKET_NAME) {
-      setInterval(() => {
-        storageService.uploadDatabase().catch(err => console.error('❌ Error en backup automático:', err));
-      }, 5 * 60 * 1000); // 5 minutos
-      console.log('🔄 Backup automático configurado (cada 5 minutos)');
+      setupAutomaticBackup();
     }
 
-    // Manejo de cierre graceful
-    const shutdown = async () => {
-      console.log('\n🛑 Cerrando servidor...');
-      server.close();
-      
-      // Subir base de datos antes de salir
-      if (config.GCS_BUCKET_NAME) {
-        console.log('💾 Guardando estado final en GCS...');
-        await storageService.uploadDatabase();
-      }
-      
-      process.exit(0);
-    };
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+    // Registrar manejadores de cierre
+    registerShutdownHandlers(server);
 
   } catch (error) {
     console.error('❌ Error fatal iniciando servidor:', error);
@@ -154,7 +53,45 @@ async function startServer() {
   }
 }
 
+function setupAutomaticBackup() {
+  const BACKUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+  
+  setInterval(() => {
+    console.log('⏰ Ejecutando backup programado...');
+    storageService.uploadDatabase()
+      .catch(err => console.error('❌ Error en backup automático:', err));
+  }, BACKUP_INTERVAL_MS);
+  
+  console.log('🔄 Backup automático configurado (cada 5 minutos)');
+}
+
+function registerShutdownHandlers(server) {
+  const shutdown = async (signal) => {
+    console.log(`\n🛑 Recibida señal ${signal}. Cerrando servidor...`);
+    
+    // 1. Dejar de aceptar nuevas conexiones
+    server.close(async () => {
+      console.log('🔌 Servidor HTTP cerrado.');
+
+      // 2. Persistir estado final
+      if (config.GCS_BUCKET_NAME) {
+        console.log('💾 Guardando estado final en GCS antes de salir...');
+        try {
+          await storageService.uploadDatabase();
+          console.log('d✅ Estado guardado.');
+        } catch (err) {
+          console.error('❌ Error guardando estado final:', err);
+        }
+      }
+      
+      console.log('👋 Adios.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+}
+
 // Iniciar
 startServer();
-
-module.exports = app;

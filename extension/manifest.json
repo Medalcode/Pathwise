@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AutoApply - Job Application Assistant",
-  "version": "1.0.0",
-  "description": "Automatiza tus aplicaciones a trabajos llenando formularios con tu información almacenada",
+  "name": "Pathwise - Intelligent Career Navigation",
+  "version": "1.1.0",
+  "description": "Automate your job applications, track progress, and navigate your career path with AI assistance.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "http://localhost:3000/*",
