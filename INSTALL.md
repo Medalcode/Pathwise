@@ -1,49 +1,49 @@
-# 🚀 Guía de Instalación - AutoApply
+# 🚀 Installation Guide - Pathwise
 
-Sigue estos pasos para poner en marcha la extensión AutoApply completa.
+Follow these steps to get the full Pathwise ecosystem running.
 
-## ✅ Prerrequisitos
+## ✅ Prerequisites
 
-- Node.js (v16 o superior)
-- Google Chrome o Chromium
+- Node.js (v16 or higher)
+- Google Chrome or Chromium
 - Git
 
-## 📦 Paso 1: Instalar Dependencias del Backend
+## 📦 Step 1: Install Backend Dependencies
 
 ```bash
 cd backend
 npm install
 ```
 
-Esto instalará todas las dependencias necesarias:
+This will install all necessary dependencies:
 
-- Express (servidor web)
-- SQLite3 (base de datos)
-- Multer (manejo de archivos)
-- PDF-Parse (extracción de texto de PDFs)
-- CORS (seguridad)
+- Express (web server)
+- SQLite3 (database)
+- Multer (file handling)
+- PDF-Parse (PDF text extraction)
+- CORS (security)
 
-## 🗄️ Paso 2: Inicializar la Base de Datos
+## 🗄️ Step 2: Initialize Database
 
-La base de datos se inicializará automáticamente al iniciar el servidor por primera vez.
+The database will be initialized automatically when the server starts for the first time.
 
-## ▶️ Paso 3: Iniciar el Backend
+## ▶️ Step 3: Start the Backend
 
 ```bash
 npm start
 ```
 
-O para modo desarrollo con auto-reload:
+Or for development mode with auto-reload:
 
 ```bash
 npm run dev
 ```
 
-Deberías ver:
+You should see:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 AutoApply Backend Server
+🚀 Pathwise Backend Server
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📡 API running on: http://localhost:3000/api
 🌐 Dashboard: http://localhost:3000
@@ -51,113 +51,103 @@ Deberías ver:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## 🌐 Paso 4: Acceder al Dashboard Web
+## 🌐 Step 4: Access Web Dashboard
 
-Abre tu navegador y ve a:
+Open your browser and go to:
 
 ```
 http://localhost:3000
 ```
 
-Aquí podrás:
+Here you can:
 
-- ✅ Subir tu CV en PDF
-- ✅ Completar manualmente tu perfil
-- ✅ Ver estadísticas de completitud
+- ✅ Upload your CV in PDF
+- ✅ Manually complete your profile
+- ✅ View completeness statistics
+- ✅ Track applications
 
-## 🧩 Paso 5: Instalar la Extensión de Chrome
+## 🧩 Step 5: Install Chrome Extension
 
-### Método 1: Manual (Desarrollo)
+### Method 1: Manual (Development)
 
-1. Abre Chrome y ve a: `chrome://extensions/`
-2. Activa el **"Modo de desarrollador"** (toggle arriba a la derecha)
-3. Click en **"Cargar extensión sin empaquetar"**
-4. Selecciona la carpeta `/extension` de este proyecto
-5. ¡Listo! Verás el ícono de AutoApply en tu barra de extensiones
+1. Open Chrome and go to: `chrome://extensions/`
+2. Toggle **"Developer mode"** (top right)
+3. Click on **"Load unpacked"**
+4. Select the `/extension` folder of this project
+5. Done! You will see the Pathwise icon in your toolbar
 
-### Método 2: Desde el Dashboard
+### Method 2: From Dashboard
 
-1. En el dashboard web, click en **"Instalar Extensión"**
-2. Sigue las instrucciones que aparecen
+1. In the web dashboard, click on **"Install Extension"**
+2. Follow the instructions
 
-## 🎯 Paso 6: Configurar tu Perfil
+## 🎯 Step 6: Configure Your Profile
 
-### Opción A: Subir CV en PDF
+### Option A: Upload CV in PDF
 
-1. En el dashboard, ve a la sección **"Subir CV"**
-2. Arrastra tu CV o haz click para seleccionar
-3. El sistema extraerá automáticamente:
-   - Nombre y apellido
-   - Email y teléfono
+1. In the dashboard, go to **"Upload CV"**
+2. Drag and drop your CV or click to select
+3. The Deep Extract engine will automatically parse:
+   - Name and contact info
    - LinkedIn
-   - Skills técnicos
-   - Y más...
+   - Technical skills
+   - Experience and Education timelines
 
-### Opción B: Completar Manualmente
+### Option B: Manual Entry
 
-1. Ve a **"Mi Perfil"**
-2. Llena los campos:
+1. Go to **"My Profile"**
+2. Fill in the fields:
+   - **Personal Info**: Name, email, phone, etc.
+   - **Professional Info**: Title, LinkedIn, portfolio
+   - **Skills**: Add skills (press Enter after each)
+   - **Summary**: Brief professional summary
+3. Click **"Save Profile"**
 
-   - **Información Personal**: Nombre, email, teléfono, etc.
-   - **Información Profesional**: Título actual, LinkedIn, portfolio
-   - **Habilidades**: Agrega tus skills (presiona Enter después de cada uno)
-   - **Resumen**: Breve descripción profesional
+## 🚀 Step 7: Use the Extension!
 
-3. Click en **"Guardar Perfil"**
+1. Go to any job board (LinkedIn, Indeed, etc.)
+2. Open an application form
+3. Click on the **Pathwise** icon in the toolbar
+4. Click **"Fill Form"**
+5. ✨ Magic! The extension will autocomplete the fields
 
-## 🚀 Paso 7: ¡Usar la Extensión!
-
-1. Ve a cualquier sitio de búsqueda de empleos (LinkedIn, Indeed, etc.)
-2. Abre un formulario de aplicación
-3. Click en el ícono de **AutoApply** en la barra de extensiones
-4. Click en **"Llenar Formulario"**
-5. ✨ ¡Magia! La extensión completará automáticamente los campos
-
-### Sitios Probados
-
-La extensión funciona en la mayoría de sitios de empleo:
+### Tested Sites
 
 - ✅ LinkedIn
 - ✅ Indeed
-- ✅ GetOnBoard (Chile)
-- ✅ Trabajando.com
-- ✅ Computrabajo
-- ✅ Y muchos más...
+- ✅ GetOnBoard
+- ✅ Workday
+- ✅ Greenhouse
+- ✅ Lever
 
-## 🔧 Solución de Problemas
+## 🔧 Troubleshooting
 
-### El backend no inicia
+### Backend fails to start
 
 ```bash
-# Verifica que Node.js esté instalado
+# Verify Node.js version
 node --version
 
-# Reinstala dependencias
+# Reinstall dependencies
 cd backend
 rm -rf node_modules
 npm install
 ```
 
-### La extensión no se carga
+### Extension not loading
 
-1. Verifica que el **Modo de desarrollador** esté activado
-2. Revisa la consola de errores en `chrome://extensions/`
-3. Recarga la extensión (botón de refresh)
+1. Verify **Developer mode** is on
+2. Check errors console in `chrome://extensions/`
+3. Reload the extension
 
-### La extensión no llena los campos
+### Extension not filling fields
 
-1. Verifica que el backend esté corriendo
-2. Abre la extensión y verifica que muestre "Conectado"
-3. Asegúrate de haber guardado tu perfil en el dashboard
-4. Algunos campos muy personalizados pueden no detectarse
+1. Verify backend is running
+2. Check if extension shows "Connected"
+3. Ensure you have a saved profile
+4. Some custom fields might not be detected
 
-### El PDF no se procesa
-
-1. Verifica que el archivo sea realmente un PDF (no una imagen)
-2. Intenta con un PDF más simple (sin demasiado formato)
-3. Como alternativa, completa manualmente el perfil
-
-## 📊 Verificar que Todo Funciona
+## 📊 Verify Installation
 
 ### Test 1: Backend
 
@@ -165,36 +155,23 @@ npm install
 curl http://localhost:3000/api/health
 ```
 
-Debe responder: `{"status":"ok",...}`
+Should response: `{"status":"ok",...}`
 
 ### Test 2: Dashboard
 
-Abre: `http://localhost:3000`
-Debes ver el dashboard con diseño azul moderno
+Open: `http://localhost:3000`
+You should see the Pathwise Glassmorphism dashboard.
 
-### Test 3: Extensión
+### Test 3: Extension
 
-1. Click en el ícono de AutoApply
-2. Debe mostrar tu nombre y estadísticas
-3. El estado debe ser **"Conectado"** (punto verde)
+1. Click on the Pathwise icon
+2. Should show your name and stats
+3. Status must be **"Connected"** (green dot)
 
-## 🎨 Próximos Pasos
+## 🆘 Support
 
-1. ✏️ **Personaliza**: Edita tu perfil según tus necesidades
-2. 🔄 **Actualiza**: Mantén tu información sincronizada
-3. 💼 **Aplica**: Usa la extensión en tus aplicaciones
-4. 📈 **Mejora**: Agrega más campos según necesites
-
-## 💡 Tips Pro
-
-- **Múltiples Perfiles**: Puedes guardar diferentes versiones de tu información para diferentes tipos de trabajo
-- **Shortcuts**: Usa el menú contextual (click derecho en un campo) para llenar rápidamente
-- **Sincronización**: La extensión se sincroniza automáticamente cada 30 minutos
-
-## 🆘 Soporte
-
-¿Problemas? Abre un issue en GitHub o contacta al equipo de desarrollo.
+Issues? Open a ticket on GitHub.
 
 ---
 
-**¡Listo para automatizar tus aplicaciones! 🚀**
+**Pathwise is ready to navigate your career! 🚀**

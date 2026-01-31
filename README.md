@@ -1,102 +1,102 @@
-# 🚀 Panoptes (AutoApply) - Sistema Inteligente de Búsqueda y Aplicación a Empleos con IA
+# 🧭 Pathwise - Intelligent Career Navigation
 
-**Versión**: 5.2 (Enero 2026)
+**Formerly known as Panoptes (AutoApply)**
 
-Panoptes es un ecosistema avanzado para automatizar la búsqueda de empleo que combina extensión Chrome, dashboard web y motor de IA. Destaca por su capacidad de parsear CVs complejos y generar perfiles adaptados.
+**Version**: 1.0 (Reforged January 2026)
+
+Pathwise is an intelligent ecosystem designed to navigate the complexity of modern job searching. It combines a powerful Chrome Extension, a premium Web Dashboard, and an advanced AI Engine to automate, optimize, and track your career journey.
 
 ---
 
-## 🎯 Características Principales
+## 🎯 Core Capabilities
 
-- 🔌 **Extensión Chrome**: Autocompletado de formularios de aplicación
-- 📊 **Dashboard Web Premium**: Interfaz "Glassmorphism" con animaciones fluidas
-- 🧠 **Motor IA (Groq + Llama 3)**: Generación de perfiles y cover letters inteligentes
-- 📄 **Procesamiento de CV Avanzado**: Parser de PDF con preprocesamiento y detección estructural
-- ⚡ **Generación Instantánea**: Cacheo inteligente de resultados para velocidad extrema
-- 🔍 **Búsqueda Avanzada**: Sistema de búsqueda de empleos con scoring de match analítico
-- 🔐 **Autenticación JWT**: Sistema multi-usuario seguro con UI dedicada
-- 🌎 **Internacionalización (i18n)**: Soporte nativo Inglés/Español
-- 🎨 **Temas Visuales**: Modo Oscuro/Claro persistente
-- 💾 **Persistencia Robusta**: Sync automático con Google Cloud Storage
+- **🔌 Chrome Extension**: Intelligent form autofill and job data extraction.
+- **📊 Premium Web Dashboard**: Glassmorphism UI with fluid animations for a superior user experience.
+- **🧠 AI Engine (Groq + Llama 3)**: Resume optimization and tailored cover letter generation.
+- **📄 Deep Extract PDF Parser**: Visual analysis of CV structure, detecting gaps and skills automatically.
+- **⚡ Instant Generation**: Smart local caching for extreme performance.
+- **🔍 Advanced Search**: Distributed job search engine with analytical match scoring.
+- **🔐 Secure Identity**: Multi-user JWT authentication system.
+- **🌎 Global Ready**: Native English/Spanish support.
+- **🎨 Visual Themes**: Persistent Dark/Light modes.
+- **💾 Robust Persistence**: Automatic synchronization with Google Cloud Storage.
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Clonar repositorio
-git clone https://github.com/medalcode/Panoptes.git
-cd Panoptes
+# 1. Clone repository
+git clone https://github.com/medalcode/Panoptes.git Pathwise
+cd Pathwise
 
-# 2. Iniciar Web Dashboard (Local)
-# Simplemente abrir web-dashboard/index.html en un navegador
-# O usar Live Server
+# 2. Start Web Dashboard (Local)
+# Open web-dashboard/index.html in your browser
+# Or use Live Server
 ```
 
-**Extensión Chrome**:
+**Chrome Extension**:
 
-1. Ir a `chrome://extensions/`
-2. Activar "Developer mode"
-3. Click "Load unpacked" → Seleccionar carpeta `/extension`
-
----
-
-## 📚 Documentación
-
-- **📖 [DOCUMENTATION.md](DOCUMENTATION.md)** - Documentación completa del proyecto
-- **🚀 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Guía de despliegue
-- **⚙️ [INSTALL.md](INSTALL.md)** - Instalación detallada
+1. Go to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked" → Select `/extension` folder
 
 ---
 
-## 🆕 Novedades v5.2 (Parser & UI Overhaul)
+## 📚 Documentation
 
-### ✅ Motor de Parsing de PDF (Deep Extract)
-
-- **Layout Aware Engine**: Algoritmo que detecta automáticamente CVs de dos columnas y procesa el texto en orden lógico visual.
-- **Split View Interface**: Visor de PDF integrado junto al formulario de extracción para validación visual inmediata.
-- **Visual Career Timeline**: Gráfico interactivo que visualiza la trayectoria laboral y detecta automáticamente huecos (gaps) temporales.
-- **ATS Compatbility Score**: Análisis en tiempo real de la legibilidad del CV para sistemas automáticos.
-- **Preprocesamiento Inteligente**: Reconstrucción estructural de PDFs con formato roto.
-- **Extracción de Precisión**: Lógica mejorada para separar Experiencia de Educación.
-
-### ✅ Generación de Perfiles Premium
-
-- **Glassmorphism UI**: Tarjetas holográficas con efectos de hover y feedback visual.
-- **Salary Market Value**: Estimación automática de rango salarial basada en rol, nivel y ubicación geográfica.
-- **Sistema de Caché**: Persistencia local de perfiles generados (7 días de retención).
-- **Preview Panel**: Vista detallada de perfiles generados antes de seleccionarlos.
-- **Acciones Rápidas**: Copiar, regenerar y descargar PDF directamente.
-
-### ✅ Demo de Búsqueda y Tracking Empleo
-
-- **Application Kanban Tracker**: Tablero estilo Trello para gestionar el estado de tus postulaciones (Saved, Applied, Interview, Offer). Guardado automático al postular.
-- **Generador de Datos Mock**: Simulación realista de ofertas basada en el perfil del usuario.
-- **Análisis de Match**: Visualización de compatibilidad y habilidades faltantes.
-- **Cover Letter AI**: Generación instantánea de borradores de carta de presentación.
-- **Modal de Detalles**: Vista expandida con descripción rica, métricas y acciones directas.
+- **📖 [DOCUMENTATION.md](DOCUMENTATION.md)** - Complete System Documentation
+- **🚀 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment Guide
+- **⚙️ [INSTALL.md](INSTALL.md)** - Detailed Installation
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🆕 Pathwise Features (v1.0)
 
-**Backend**: Node.js, Express, SQLite, Google Cloud Storage, Groq SDK  
-**Frontend**: HTML5, CSS3 (Tailwind + Custom CSS Variables), Vanilla JS (ES6+ Modules)
-**Extensión**: Chrome Manifest V3  
-**IA**: Llama 3.3 70B (Groq)
+### ✅ Deep Extract Engine
+
+- **Layout Aware**: Detects 2-column layouts and processes text in visual logical order.
+- **Split View Interface**: Integrated PDF viewer for immediate visual validation.
+- **Visual Career Timeline**: Interactive chart visualizing career trajectory and gaps.
+- **ATS Compatibility Score**: Real-time analysis of resume machine-readability.
+
+### ✅ Premium Strategy Generation
+
+- **Career Personas**: Generate customized profiles for different market segments (e.g., "Senior Frontend" vs "Tech Lead").
+- **Salary Market Value**: AI-estimated salary ranges based on role and location.
+- **Smart Caching**: Local persistence of generated assets.
+
+### ✅ Job Tracking & Kanban
+
+- **Application Kanban**: Trello-style board to manage applications (Saved, Applied, Interview, Offer).
+- **Match Analysis**: Visual compatibility scoring.
+- **Cover Letter AI**: Instant generation of tone-adjusted cover letters.
+
+---
+
+## 🛠️ Technology Stack
+
+**Backend**: Node.js, Express, SQLite (Managed), Google Cloud Storage, Groq SDK  
+**Frontend**: HTML5, CSS3 (Tailwind + Custom Variables), Vanilla JS (ES6+ Modules)  
+**Extension**: Chrome Manifest V3  
+**AI**: Llama 3.3 70B (Groq)
 
 ---
 
 ## 🎯 Roadmap
 
-### Alta Prioridad
+### High Priority
 
-1.  Tests automatizados (Jest + Playwright)
-2.  Persistencia en Backend de postulaciones (Kanban real)
-3.  Resume Tailoring (generación de PDF adaptado por oferta)
+1. Automated Tests (Jest + Playwright)
+2. Backend Persistence for Kanban (Cloud Sync)
+3. Resume Tailoring (Job-specific PDF generation)
 
-### Media Prioridad
+### Medium Priority
 
-4.  Soporte multi-sitio extensión (LinkedIn, Indeed explícito)
-5.  CI/CD pipeline completo
-6.  Análisis de salario de mercado con IA
+4. Multi-site Extension Support (LinkedIn, Indeed)
+5. CI/CD Pipeline
+6. Market Salary Analysis with IA
+
+---
+
+© 2026 MedalCode. Built for the modern professional.

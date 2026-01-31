@@ -1,106 +1,106 @@
-# 🚀 Guía de Despliegue - AutoApply en Google Cloud Run
+# 🚀 Deployment Guide - Pathwise on Google Cloud Run
 
-## 📋 Tabla de Contenidos
+## 📋 Table of Contents
 
-1. [Requisitos Previos](#requisitos-previos)
-2. [Despliegue en Cloud Run](#despliegue-en-cloud-run)
-3. [Configuración de Variables de Entorno](#configuración-de-variables-de-entorno)
-4. [Instalación de la Extensión de Chrome](#instalación-de-la-extensión-de-chrome)
-5. [Publicación en Chrome Web Store](#publicación-en-chrome-web-store)
+1. [Prerequisites](#prerequisites)
+2. [Deploy to Cloud Run](#deploy-to-cloud-run)
+3. [Environment Configuration](#environment-configuration)
+4. [Chrome Extension Installation](#chrome-extension-installation)
+5. [Publish to Chrome Web Store](#publish-to-chrome-web-store)
 6. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 🔧 Requisitos Previos
+## 🔧 Prerequisites
 
-### 1. **Cuenta de Google Cloud**
+### 1. **Google Cloud Account**
 
-- Crea una cuenta en [Google Cloud](https://cloud.google.com/)
-- Crea un nuevo proyecto o usa uno existente
-- Habilita la facturación (Cloud Run tiene capa gratuita)
+- Create an account on [Google Cloud](https://cloud.google.com/)
+- Create a new project or use an existing one
+- Enable billing (Cloud Run has a free tier)
 
-### 2. **Herramientas Instaladas**
+### 2. **Installed Tools**
 
 ```bash
-# Verificar instalaciones
+# Verify installations
 gcloud --version  # Google Cloud SDK
 docker --version  # Docker
 ```
 
-### 3. **Instalar Google Cloud SDK** (si no está instalado)
+### 3. **Install Google Cloud SDK** (if not installed)
 
 ```bash
 # Linux/Mac
 curl https://sdk.cloud.google.com | bash
 exec -l $SHELL
 
-# Inicializar
+# Initialize
 gcloud init
 ```
 
 ---
 
-## 🚀 Despliegue en Cloud Run
+## 🚀 Deploy to Cloud Run
 
-### **Opción 1: Script Automático** (Recomendado)
-
-```bash
-# Ejecutar script de despliegue
-./deploy-cloud-run.sh TU_PROJECT_ID us-central1
-```
-
-**Ejemplo:**
+### **Option 1: Automatic Script** (Recommended)
 
 ```bash
-./deploy-cloud-run.sh autoapply-prod us-central1
+# Run deployment script
+./deploy-cloud-run.sh YOUR_PROJECT_ID us-central1
 ```
 
-El script hará automáticamente:
+**Example:**
 
-- ✅ Configurar el proyecto
-- ✅ Habilitar APIs necesarias
-- ✅ Construir la imagen Docker
-- ✅ Subir a Container Registry
-- ✅ Desplegar en Cloud Run
-- ✅ Mostrar la URL de tu aplicación
+```bash
+./deploy-cloud-run.sh pathwise-prod us-central1
+```
+
+The script will automatically:
+
+- ✅ Configure the project
+- ✅ Enable necessary APIs
+- ✅ Build the Docker image
+- ✅ Push to Container Registry
+- ✅ Deploy to Cloud Run
+- ✅ Show your application URL
 
 ---
 
-### **Opción 2: Despliegue Manual**
+### **Option 2: Manual Deployment**
 
-#### **Paso 1: Configurar Proyecto**
+#### **Step 1: Configure Project**
 
 ```bash
-# Configurar proyecto
-gcloud config set project TU_PROJECT_ID
+# Configure project
+gcloud config set project YOUR_PROJECT_ID
 
-# Habilitar APIs
+# Enable APIs
 gcloud services enable run.googleapis.com
 gcloud services enable containerregistry.googleapis.com
 gcloud services enable cloudbuild.googleapis.com
 ```
 
-#### **Paso 2: Autenticar Docker**
+#### **Step 2: Authenticate Docker**
 
 ```bash
 gcloud auth configure-docker
 ```
 
-#### **Paso 3: Build de la Imagen**
+#### **Step 3: Build Image**
 
 ```bash
-# Construir imagen
-docker build -t gcr.io/TU_PROJECT_ID/autoapply:latest .
+# Build image
+docker build -t gcr.io/YOUR_PROJECT_ID/pathwise:latest .
 
-# Subir imagen
-docker push gcr.io/TU_PROJECT_ID/autoapply:latest
+# Push image
+docker push gcr.io/YOUR_PROJECT_ID/pathwise:latest
 ```
 
-#### **Paso 4: Desplegar en Cloud Run**
+#### **Step 4: Deploy to Cloud Run**
 
 ```bash
-gcloud run deploy autoapply \
-  --image gcr.io/TU_PROJECT_ID/autoapply:latest \
+gcloud run deploy pathwise \
+  --image gcr.io/YOUR_PROJECT_ID/pathwise:latest \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
@@ -112,47 +112,47 @@ gcloud run deploy autoapply \
 
 ---
 
-### **Opción 3: Cloud Build Automático**
+### **Option 3: Automatic Cloud Build**
 
-#### **Conectar con GitHub**
+#### **Connect with GitHub**
 
 ```bash
-# Conectar repositorio
+# Connect repository
 gcloud builds submit --config cloudbuild.yaml
 ```
 
-#### **Configurar Trigger Automático**
+#### **Configure Automatic Trigger**
 
-1. Ve a [Cloud Build Triggers](https://console.cloud.google.com/cloud-build/triggers)
-2. Click en "Crear Trigger"
-3. Conecta tu repositorio de GitHub
-4. Configura el trigger para ejecutar en cada push a `main`
-5. Usa el archivo `cloudbuild.yaml`
+1. Go to [Cloud Build Triggers](https://console.cloud.google.com/cloud-build/triggers)
+2. Click "Create Trigger"
+3. Connect your GitHub repository
+4. Configure trigger to run on each push to `main`
+5. Use `cloudbuild.yaml` file
 
 ---
 
-## ⚙️ Configuración de Variables de Entorno
+## ⚙️ Environment Configuration
 
-### **Configurar GROQ_API_KEY**
+### **Configure GROQ_API_KEY**
 
 ```bash
-gcloud run services update autoapply \
+gcloud run services update pathwise \
   --region us-central1 \
-  --set-env-vars GROQ_API_KEY=gsk_tu_api_key_aqui
+  --set-env-vars GROQ_API_KEY=gsk_your_api_key_here
 ```
 
-### **Ver Variables Configuradas**
+### **View Configured Variables**
 
 ```bash
-gcloud run services describe autoapply \
+gcloud run services describe pathwise \
   --region us-central1 \
   --format="value(spec.template.spec.containers[0].env)"
 ```
 
-### **Configurar Múltiples Variables**
+### **Configure Multiple Variables**
 
 ```bash
-gcloud run services update autoapply \
+gcloud run services update pathwise \
   --region us-central1 \
   --set-env-vars \
     NODE_ENV=production,\
@@ -162,28 +162,28 @@ gcloud run services update autoapply \
 
 ---
 
-## 🌐 Obtener URL de la Aplicación
+## 🌐 Get Application URL
 
 ```bash
-gcloud run services describe autoapply \
+gcloud run services describe pathwise \
   --platform managed \
   --region us-central1 \
   --format 'value(status.url)'
 ```
 
-**Ejemplo de URL:**
+**URL Example:**
 
 ```
-https://autoapply-abc123xyz-uc.a.run.app
+https://pathwise-abc123xyz-uc.a.run.app
 ```
 
 ---
 
-## 📦 Instalación de la Extensión de Chrome
+## 📦 Chrome Extension Installation
 
-### **Paso 1: Actualizar Configuración**
+### **Step 1: Update Configuration**
 
-Edita `extension/config.js`:
+Edit `extension/config.js`:
 
 ```javascript
 const CONFIG = {
@@ -191,146 +191,142 @@ const CONFIG = {
 
   API_URLS: {
     development: "http://localhost:3000/api",
-    production: "https://TU-URL-DE-CLOUD-RUN.run.app/api", // ← Actualizar aquí
+    production: "https://YOUR-CLOUD-RUN-URL.run.app/api", // ← Update here
   },
 
   DASHBOARD_URLS: {
     development: "http://localhost:3000",
-    production: "https://TU-URL-DE-CLOUD-RUN.run.app", // ← Actualizar aquí
+    production: "https://YOUR-CLOUD-RUN-URL.run.app", // ← Update here
   },
 };
 ```
 
-### **Paso 2: Instalar en Chrome (Modo Desarrollador)**
+### **Step 2: Install in Chrome (Developer Mode)**
 
-1. Abre Chrome y ve a: `chrome://extensions/`
-2. Activa el **"Modo de desarrollador"** (esquina superior derecha)
-3. Click en **"Cargar extensión sin empaquetar"**
-4. Selecciona la carpeta `extension/`
-5. ¡Listo! La extensión aparecerá en tu barra de herramientas
+1. Open Chrome and go to: `chrome://extensions/`
+2. Toggle **"Developer mode"** (top right)
+3. Click **"Load unpacked"**
+4. Select `extension/` folder
+5. Done! The extension will appear in your toolbar
 
-### **Paso 3: Empaquetar para Distribución**
+### **Step 3: Package for Distribution**
 
 ```bash
-# Ejecutar script de empaquetado
+# Run package script
 ./package-extension.sh
 ```
 
-Esto creará: `dist/autoapply-extension-v1.0.0.zip`
+This will create: `dist/pathwise-extension-v1.0.0.zip`
 
 ---
 
-## 🏪 Publicación en Chrome Web Store
+## 🏪 Publish to Chrome Web Store
 
-### **Requisitos**
+### **Requirements**
 
-- Cuenta de Google
-- Pago único de **$5 USD** para registro de desarrollador
-- Extensión empaquetada (`.zip`)
+- Google Account
+- One-time **$5 USD** fee for developer registration
+- Packaged extension (`.zip`)
 
-### **Pasos**
+### **Steps**
 
-1. **Registrarse como Desarrollador**
+1. **Register as Developer**
+   - Go to: [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
+   - Pay registration fee ($5 USD)
 
-   - Ve a: [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
-   - Paga la tarifa de registro ($5 USD)
+2. **Upload Extension**
+   - Click "New Item"
+   - Upload `dist/pathwise-extension-v1.0.0.zip` file
 
-2. **Subir Extensión**
+3. **Complete Information**
+   - **Name:** Pathwise - Intelligent Career Navigation
+   - **Description:** Automate your job applications with AI
+   - **Category:** Productivity
+   - **Language:** English / Spanish
+   - **Screenshots:** Minimum 1, maximum 5 (1280x800 or 640x400)
+   - **Icon:** 128x128 px
 
-   - Click en "Nuevo elemento"
-   - Sube el archivo `dist/autoapply-extension-v1.0.0.zip`
+4. **Privacy**
+   - Declare permissions used and why
+   - Privacy Policy (required)
 
-3. **Completar Información**
-
-   - **Nombre:** AutoApply - Job Application Assistant
-   - **Descripción:** Automatiza tus aplicaciones a trabajos con IA
-   - **Categoría:** Productivity
-   - **Idioma:** Español / English
-   - **Capturas de pantalla:** Mínimo 1, máximo 5 (1280x800 o 640x400)
-   - **Ícono:** 128x128 px
-
-4. **Privacidad**
-
-   - Declara qué permisos usas y por qué
-   - Política de privacidad (requerida)
-
-5. **Enviar para Revisión**
-   - Click en "Enviar para revisión"
-   - Tiempo de revisión: 1-3 días hábiles
+5. **Submit for Review**
+   - Click "Submit for review"
+   - Review time: 1-3 business days
 
 ---
 
-## 🎨 Capturas de Pantalla Recomendadas
+## 🎨 Recommended Screenshots
 
-Para Chrome Web Store, incluye:
+For Chrome Web Store, include:
 
-1. **Dashboard principal** mostrando estadísticas
-2. **Modal de perfiles profesionales** con los 3 perfiles
-3. **Formulario autocompletado** en acción
-4. **Configuración de API Key**
-5. **Extensión en uso** en un sitio de empleo
+1. **Main Dashboard** showing statistics
+2. **Professional Profiles Modal**
+3. **Autofilled Form** in action
+4. **API Key Configuration**
+5. **Extension in Use** on a job site
 
-**Dimensiones:** 1280x800 px o 640x400 px
+**Dimensions:** 1280x800 px or 640x400 px
 
 ---
 
-## 📊 Monitoreo y Logs
+## 📊 Monitoring and Logs
 
-### **Ver Logs en Tiempo Real**
+### **View Real-Time Logs**
 
 ```bash
-gcloud run services logs read autoapply \
+gcloud run services logs read pathwise \
   --region us-central1 \
   --follow
 ```
 
-### **Ver Métricas**
+### **View Metrics**
 
 ```bash
-gcloud run services describe autoapply \
+gcloud run services describe pathwise \
   --region us-central1 \
   --format="value(status.traffic)"
 ```
 
-### **Dashboard de Cloud Run**
+### **Cloud Run Dashboard**
 
 [https://console.cloud.google.com/run](https://console.cloud.google.com/run)
 
 ---
 
-## 🔒 Seguridad
+## 🔒 Security
 
-### **Configurar Autenticación** (Opcional)
+### **Configure Authentication** (Optional)
 
 ```bash
-gcloud run services update autoapply \
+gcloud run services update pathwise \
   --region us-central1 \
   --no-allow-unauthenticated
 ```
 
-### **Configurar CORS** (Ya configurado en el código)
+### **Configure CORS** (Already configured in code)
 
-El servidor ya tiene CORS habilitado para permitir requests desde la extensión.
+The server already has CORS enabled to allow requests from the extension.
 
 ---
 
-## 💰 Costos Estimados
+## 💰 Estimated Costs
 
-### **Cloud Run - Capa Gratuita**
+### **Cloud Run - Free Tier**
 
-- 2 millones de requests/mes
-- 360,000 GB-segundos/mes
-- 180,000 vCPU-segundos/mes
+- 2 million requests/month
+- 360,000 GB-seconds/month
+- 180,000 vCPU-seconds/month
 
-### **Estimación para 1000 usuarios/mes:**
+### **Estimate for 1000 users/month:**
 
-- **Costo:** ~$0-5 USD/mes
-- **Tráfico:** Dentro de capa gratuita
+- **Cost:** ~$0-5 USD/month
+- **Traffic:** Within free tier
 
 ### **Chrome Web Store**
 
-- **Registro:** $5 USD (pago único)
-- **Publicación:** Gratis
+- **Registration:** $5 USD (one-time)
+- **Publishing:** Free
 
 ---
 
@@ -339,7 +335,7 @@ El servidor ya tiene CORS habilitado para permitir requests desde la extensión.
 ### **Error: "Permission denied"**
 
 ```bash
-# Verificar autenticación
+# Verify authentication
 gcloud auth login
 gcloud auth configure-docker
 ```
@@ -347,71 +343,71 @@ gcloud auth configure-docker
 ### **Error: "Service not found"**
 
 ```bash
-# Verificar región
+# Verify region
 gcloud run services list --platform managed
 ```
 
 ### **Error: "Build failed"**
 
 ```bash
-# Ver logs de build
+# View build logs
 gcloud builds list
 gcloud builds log [BUILD_ID]
 ```
 
-### **Extensión no se conecta al servidor**
+### **Extension not connecting to server**
 
-1. Verifica que la URL en `config.js` sea correcta
-2. Verifica que Cloud Run esté corriendo
-3. Revisa la consola del navegador (F12)
+1. Verify URL in `config.js` is correct
+2. Verify Cloud Run is running
+3. Check browser console (F12)
 
-### **Base de datos no persiste**
+### **Database not persisting**
 
-Cloud Run es stateless. Para persistencia:
+Cloud Run is stateless. For persistence:
 
-- Usa Cloud SQL
-- Usa Cloud Storage
-- Usa Firestore
-
----
-
-## 📝 Checklist de Despliegue
-
-- [ ] Cuenta de Google Cloud creada
-- [ ] Proyecto configurado
-- [ ] gcloud CLI instalado
-- [ ] Docker instalado
-- [ ] Imagen construida y subida
-- [ ] Servicio desplegado en Cloud Run
-- [ ] GROQ_API_KEY configurada
-- [ ] URL de producción obtenida
-- [ ] `extension/config.js` actualizado con URL de producción
-- [ ] Extensión probada localmente
-- [ ] Extensión empaquetada
-- [ ] Capturas de pantalla preparadas
-- [ ] Cuenta de Chrome Web Store Developer creada
-- [ ] Extensión publicada
+- Use Cloud SQL
+- Use Cloud Storage
+- Use Firestore
 
 ---
 
-## 🎯 Próximos Pasos
+## 📝 Deployment Checklist
 
-1. **Desplegar el backend** en Cloud Run
-2. **Actualizar la extensión** con la URL de producción
-3. **Probar** la aplicación completa
-4. **Publicar** en Chrome Web Store
-5. **Compartir** con usuarios
+- [ ] Google Cloud Account created
+- [ ] Project configured
+- [ ] gcloud CLI installed
+- [ ] Docker installed
+- [ ] Image built and pushed
+- [ ] Service deployed to Cloud Run
+- [ ] GROQ_API_KEY configured
+- [ ] Production URL obtained
+- [ ] `extension/config.js` updated with Production URL
+- [ ] Extension tested locally
+- [ ] Extension packaged
+- [ ] Screenshots prepared
+- [ ] Chrome Web Store Developer Account created
+- [ ] Extension published
 
 ---
 
-## 📞 Soporte
+## 🎯 Next Steps
 
-- **Documentación Cloud Run:** https://cloud.google.com/run/docs
+1. **Deploy backend** to Cloud Run
+2. **Update extension** with production URL
+3. **Test** full application
+4. **Publish** to Chrome Web Store
+5. **Share** with users
+
+---
+
+## 📞 Support
+
+- **Cloud Run Documentation:** https://cloud.google.com/run/docs
 - **Chrome Extensions:** https://developer.chrome.com/docs/extensions/
 - **Chrome Web Store:** https://developer.chrome.com/docs/webstore/
 
 ---
 
-**Desarrollado por:** MedalCode  
-**Fecha:** 2026-01-11  
-**Versión:** 1.0.0
+**Developed by:** MedalCode  
+**Date:** 2026-01-31  
+**Version:** 1.0.0
