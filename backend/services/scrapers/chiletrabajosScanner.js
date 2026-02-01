@@ -26,6 +26,12 @@ async function scanChileTrabajos(query, location = '') {
     });
 
     const $ = cheerio.load(response.data);
+    
+    // Validación básica de integridad: si no hay body, probablemente fuimos bloqueados o el sitio cayó
+    if ($('body').length === 0) {
+      throw new Error('Respuesta inválida: HTML sin body (Posible bloqueo WAF)');
+    }
+
     const jobs = [];
 
     // Iterar sobre los resultados. 

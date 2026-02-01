@@ -20,6 +20,24 @@
 
 ---
 
+## ✅ Fase 1.5: Fiabilidad del Sistema (HARDENING)
+
+### Implementado
+
+- [x] Contrato de API explícito (`API_CONTRACT_UPLOAD_CV.md`)
+- [x] Test de Integración para Upload CV
+- [x] Validación de "Peor Caso" en Upload
+- [x] Manejo de errores determinista (422 vs 500)
+- [x] Limpieza de recursos temporales (Anti-DoS)
+
+### Próximos pasos críticos
+
+- [ ] Migración a Base de Datos Externa (Postgres/MySQL)
+- [ ] Scraping asíncrono (Workers)
+- [ ] Blindaje de Endpoints de Perfil
+
+---
+
 ## 🚀 Fase 2: Múltiples Perfiles (EN PROGRESO)
 
 ### Objetivo
@@ -271,6 +289,7 @@ Permitir a los usuarios crear y gestionar múltiples perfiles de CV para diferen
 | Fase                       | Duración | Estado         |
 | -------------------------- | -------- | -------------- |
 | Fase 1: Validación         | 1 día    | ✅ COMPLETADO  |
+| Fase 1.5: Fiabilidad       | 1 día    | ✅ COMPLETADO  |
 | Fase 2: Múltiples Perfiles | 2-3 días | 🔄 EN PROGRESO |
 | Fase 3: Auto-guardado      | 1-2 días | ⏳ PENDIENTE   |
 | Fase 4: UX/UI              | 3-4 días | ⏳ PENDIENTE   |
@@ -313,6 +332,7 @@ Permitir a los usuarios crear y gestionar múltiples perfiles de CV para diferen
 
 ```
 Fase 1: ████████████████████ 100% ✅
+Fase 1.5:████████████████████ 100% ✅ (Upload CV Blindado)
 Fase 2: ████░░░░░░░░░░░░░░░░  20% 🔄
 Fase 3: ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 Fase 4: ░░░░░░░░░░░░░░░░░░░░   0% ⏳

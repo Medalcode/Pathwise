@@ -74,6 +74,16 @@ cd Pathwise
 
 ---
 
+## 🛡️ System Reliability (New in v1.1)
+
+We are obsessed with reliability. Critical flows like CV Upload are protected by explicit contracts and automated integration tests.
+
+- **Contract-First Development**: See [API_CONTRACT_UPLOAD_CV.md](API_CONTRACT_UPLOAD_CV.md).
+- **Resilient Architecture**: Anti-DoS protection and deterministic error handling.
+- **Automated Validation**: `npm test` runs rigorous integration scenarios including "Worst Case" validation.
+
+---
+
 ## 🛠️ Technology Stack
 
 **Backend**: Node.js, Express, SQLite (Managed), Google Cloud Storage, Groq SDK  

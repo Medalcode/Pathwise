@@ -37,18 +37,25 @@ const upload = multer({
 });
 
 // POST - Subir y parsear CV en PDF
+// POST - Subir y parsear CV en PDF
 router.post('/cv', upload.single('cv'), async (req, res) => {
+  const filePath = req.file?.path;
+  
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No se ha subido ningún archivo' });
     }
 
-    const filePath = req.file.path;
     // Parsear PDF (async, delegando a cvService)
     const parsed = await cvService.parsePdfFile(filePath);
     const pdfData = parsed.raw || {};
     const extractedText = parsed.text || '';
     
+    // Validación de entrada: Texto vacío
+    if (extractedText.length < 50) {
+      throw new Error('El PDF no contiene texto legible o es una imagen.');
+    }
+
     // Intentar extracción con IA primero
     let parsedData = null;
     let parsingMethod = 'REGEX_FALLBACK';
@@ -77,26 +84,25 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
       parsedData = parseCV(extractedText);
     }
     
+    // Validación de Calidad Mínima del Perfil
+    const hasContactInfo = parsedData.personalInfo.email || parsedData.personalInfo.phone;
+    
+    // Ser obsesivos con la info de contacto: Si no podemos contactarlo, el perfil es basura.
+    const hasName = parsedData.personalInfo.firstName || parsedData.personalInfo.lastName;
+    
+    // Contrato: Se requiere al menos Nombre O Contacto.
+    if (!hasContactInfo && !hasName) {
+      throw new Error('No se pudo extraer información de contacto válida del CV.');
+    }
+    
     // Guardar en la base de datos
     const userId = 1;
     await db.saveProfile(userId, parsedData);
     
-    // Forzar respaldo inmediato a la nube si está habilitado
+    // Forzar respaldo independiente del flujo principal
     if (config.GCS_BUCKET_NAME) {
-      try {
-        const storageService = require('../services/storageService');
-        // No esperamos (await) para no retrasar la respuesta al usuario
-        storageService.uploadDatabase().catch(err => console.error('Error en backup automático:', err));
-      } catch (e) {
-        console.error('No se pudo iniciar el backup:', e);
-      }
-    }
-    
-    // Eliminar archivo temporal (opcional) de forma asíncrona
-    try {
-      await fsp.unlink(filePath);
-    } catch (e) {
-      console.warn('No se pudo eliminar archivo temporal:', e.message);
+      const storageService = require('../services/storageService');
+      storageService.uploadDatabase().catch(err => console.error('⚠️ Advertencia: Error en backup background:', err.message));
     }
     
     res.json({
@@ -111,11 +117,18 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error procesando CV:', error);
-    res.status(500).json({ 
-      error: 'Error procesando el CV',
+    console.error('Error procesando CV:', error.message);
+    // Identificar errores de validación para retornar 422
+    const isValidationError = error.message.includes('No se pudo') || error.message.includes('texto legible');
+    res.status(isValidationError ? 422 : 500).json({ 
+      error: isValidationError ? 'Error de validación' : 'Error procesando el CV',
       details: error.message 
     });
+  } finally {
+    // Limpieza Garantizada (Finally Block)
+    if (filePath) {
+      await fsp.unlink(filePath).catch(e => console.warn('⚠️ No se pudo limpiar archivo temporal:', e.message));
+    }
   }
 });
 
