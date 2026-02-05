@@ -41,7 +41,11 @@ function getProfile(db, userId) {
 
       // Experiencia
       db.all('SELECT * FROM experience WHERE user_id = ? ORDER BY order_index', [userId], (err, rows) => {
-        if (!err && rows) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (rows) {
           profile.experience = rows.map(row => ({
             id: row.id,
             title: row.title,
@@ -56,7 +60,11 @@ function getProfile(db, userId) {
 
         // Educación
         db.all('SELECT * FROM education WHERE user_id = ? ORDER BY order_index', [userId], (err, rows) => {
-          if (!err && rows) {
+          if (err) {
+            reject(err);
+            return;
+          }
+          if (rows) {
             profile.education = rows.map(row => ({
               id: row.id,
               degree: row.degree,
@@ -71,7 +79,11 @@ function getProfile(db, userId) {
 
           // Skills
           db.all('SELECT * FROM skills WHERE user_id = ?', [userId], (err, rows) => {
-            if (!err && rows) {
+            if (err) {
+              reject(err);
+              return;
+            }
+            if (rows) {
               profile.skills = rows.map(row => row.name);
             }
 
@@ -86,14 +98,26 @@ function getProfile(db, userId) {
 // Guardar perfil completo
 function saveProfile(db, userId, data) {
   return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      // Crear usuario si no existe
-      db.run('INSERT OR IGNORE INTO users (id) VALUES (?)', [userId]);
+    const runAsync = (sql, params = []) => new Promise((res, rej) => {
+      db.run(sql, params, function (err) {
+        if (err) return rej(err);
+        res({ lastID: this.lastID, changes: this.changes });
+      });
+    });
+
+    const commitFlow = async () => {
+      // Crear usuario si no existe (schema requiere email/password_hash)
+      const safeEmail = `user-${userId}@local`;
+      const safePassword = 'local';
+      await runAsync(
+        'INSERT OR IGNORE INTO users (id, email, password_hash) VALUES (?, ?, ?)',
+        [userId, safeEmail, safePassword]
+      );
 
       // Guardar información personal
       if (data.personalInfo) {
         const info = data.personalInfo;
-        db.run(`
+        await runAsync(`
           INSERT OR REPLACE INTO personal_info 
           (user_id, first_name, last_name, email, phone, address, city, country, postal_code, current_title, linkedin, portfolio, github, summary)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -106,10 +130,10 @@ function saveProfile(db, userId, data) {
 
       // Guardar experiencia
       if (data.experience && Array.isArray(data.experience)) {
-        db.run('DELETE FROM experience WHERE user_id = ?', [userId]);
-        
-        data.experience.forEach((exp, index) => {
-          db.run(`
+        await runAsync('DELETE FROM experience WHERE user_id = ?', [userId]);
+        for (let index = 0; index < data.experience.length; index += 1) {
+          const exp = data.experience[index];
+          await runAsync(`
             INSERT INTO experience 
             (user_id, title, company, location, start_date, end_date, current, description, order_index)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -118,15 +142,15 @@ function saveProfile(db, userId, data) {
             exp.startDate, exp.endDate, exp.current ? 1 : 0,
             exp.description, index
           ]);
-        });
+        }
       }
 
       // Guardar educación
       if (data.education && Array.isArray(data.education)) {
-        db.run('DELETE FROM education WHERE user_id = ?', [userId]);
-        
-        data.education.forEach((edu, index) => {
-          db.run(`
+        await runAsync('DELETE FROM education WHERE user_id = ?', [userId]);
+        for (let index = 0; index < data.education.length; index += 1) {
+          const edu = data.education[index];
+          await runAsync(`
             INSERT INTO education 
             (user_id, degree, school, field_of_study, start_date, end_date, current, description, order_index)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -135,20 +159,33 @@ function saveProfile(db, userId, data) {
             edu.startDate, edu.endDate, edu.current ? 1 : 0,
             edu.description, index
           ]);
-        });
+        }
       }
 
       // Guardar skills
       if (data.skills && Array.isArray(data.skills)) {
-        db.run('DELETE FROM skills WHERE user_id = ?', [userId]);
-        
-        data.skills.forEach(skill => {
-          db.run('INSERT INTO skills (user_id, name) VALUES (?, ?)', [userId, skill]);
-        });
+        await runAsync('DELETE FROM skills WHERE user_id = ?', [userId]);
+        for (const skill of data.skills) {
+          await runAsync('INSERT INTO skills (user_id, name) VALUES (?, ?)', [userId, skill]);
+        }
       }
+    };
 
-      resolve(true);
-    });
+    (async () => {
+      try {
+        await runAsync('BEGIN TRANSACTION');
+        await commitFlow();
+        await runAsync('COMMIT');
+        resolve(true);
+      } catch (err) {
+        try {
+          await runAsync('ROLLBACK');
+        } catch (rollbackErr) {
+          // Prefer original error
+        }
+        reject(err);
+      }
+    })();
   });
 }
 

@@ -90,6 +90,21 @@ El backend garantiza los siguientes códigos de estado para permitir manejo gran
 
 ---
 
+### 3.1. Forma del Error (Contrato Estricto)
+
+Para **cualquier** error (400/422/500), el backend responde con este JSON:
+
+```json
+{
+  "error": "MISSING_FILE | INVALID_FILE_CONTENT | EXTRACTION_FAILED | INTERNAL_ERROR | MULTER_ERROR",
+  "message": "string"
+}
+```
+
+> `message` corresponde exactamente al “Mensaje UI Sugerido” de la tabla anterior.
+
+---
+
 ### 4. Edge Cases & Comportamiento
 
 1. **PDF Escaneado (Imagen)**
@@ -109,3 +124,30 @@ El backend garantiza los siguientes códigos de estado para permitir manejo gran
 4. **Bloqueo de Persistencia (Cloud Storage)**
    - **Backend:** La subida a Cloud Storage se dispara de forma "Fire & Forget" (no-blocking) tras la respuesta.
    - **Respuesta:** El usuario recibe `200 OK` rápido, aunque el backup tarde o falle silenciosamente (se loguea en backend).
+
+---
+
+### 5. Reintentos del Frontend (Contrato)
+
+El frontend **puede** implementar reintentos automáticos o manuales únicamente en estos casos:
+
+- **`500 INTERNAL_ERROR`**  
+  Retry sugerido con backoff (ej. 1s, 3s, 5s).  
+  Motivo: fallos transitorios en `pdf-parse`, `fs` o persistencia.
+
+El frontend **no debe** reintentar automáticamente en:
+
+- **`400 MISSING_FILE`** (error de usuario)
+- **`422 INVALID_FILE_CONTENT`** (error de contenido)
+- **`422 EXTRACTION_FAILED`** (error de calidad de datos)
+- **`500 MULTER_ERROR`** (error de validación de archivo)
+
+---
+
+### 6. Garantía de compatibilidad Frontend
+
+El frontend **no necesita** leer el código backend si respeta:
+
+- La **forma única de error** en 3.1.
+- El mapeo de **códigos HTTP ↔ mensaje** en la tabla de 3.
+- El comportamiento de **fallback IA** (200 OK, `stats.method = "REGEX_FALLBACK"`).

@@ -48,6 +48,7 @@ cd Pathwise
 - **📖 [DOCUMENTATION.md](DOCUMENTATION.md)** - Complete System Documentation
 - **🚀 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment Guide
 - **⚙️ [INSTALL.md](INSTALL.md)** - Detailed Installation
+- **🧯 [ISSUES.md](ISSUES.md)** - Known Issues and Technical Debt
 
 ---
 
@@ -81,6 +82,7 @@ We are obsessed with reliability. Critical flows like CV Upload are protected by
 - **Contract-First Development**: See [API_CONTRACT_UPLOAD_CV.md](API_CONTRACT_UPLOAD_CV.md).
 - **Resilient Architecture**: Anti-DoS protection and deterministic error handling.
 - **Automated Validation**: `npm test` runs rigorous integration scenarios including "Worst Case" validation.
+- **Upload Integration Coverage**: invalid PDF, technical parser failure, AI fallback, and DB partial-failure rollback.
 
 ---
 
