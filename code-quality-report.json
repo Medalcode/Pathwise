@@ -1,0 +1,64 @@
+{
+  "eslint": {
+    "note": "eslint not run or produced no JSON output",
+    "raw": {
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "depcheck": {
+    "note": "depcheck not available or produced no output",
+    "raw": {
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "madge": {
+    "note": "madge not available or produced no output",
+    "raw": {
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "todos": [
+    {
+      "file": "FLOW_DIAGRAM.md",
+      "line": 191,
+      "text": "│  ENDPOINT                              MÉTODO    STATUS       │"
+    },
+    {
+      "file": "backend/services/jobService.js",
+      "line": 93,
+      "text": "salary: normalizeSalary(job.salary), // TODO: Implementar parser de salario"
+    },
+    {
+      "file": "extension/popup/popup.js",
+      "line": 240,
+      "text": "// TODO: Implementar sistema de notificaciones visual"
+    },
+    {
+      "file": "skills/README.md",
+      "line": 29,
+      "text": "- `code-quality.js`: Run several static-analysis helpers (ESLint, depcheck, madge) and search for TODO/FIXME/DEPRECATED comments. Returns a consolidated JSON report with `eslint`, `depcheck`, `madge`, `todos` and `suggestions`."
+    },
+    {
+      "file": "skills/code-quality.js",
+      "line": 51,
+      "text": "if (/\\b(TODO|FIXME|DEPRECATED)\\b/.test(ln)) {"
+    },
+    {
+      "file": "web-dashboard/js/profilesManager.js",
+      "line": 319,
+      "text": "// TODO: Implementar modal de creación"
+    },
+    {
+      "file": "web-dashboard/js/profilesManager.js",
+      "line": 364,
+      "text": "// TODO: Implementar modal de gestión completo"
+    }
+  ],
+  "suggestions": []
+}

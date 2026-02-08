@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "init-db": "node scripts/init-db.js"
+    "init-db": "node scripts/init-db.js",
+    "lint": "eslint . --ext .js",
+    "test": "mocha --recursive",
+    "test:integration": "mocha tests/integration --recursive"
   },
   "keywords": [
     "chrome-extension",
@@ -38,6 +41,11 @@
     "user-agent-array": "^2.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "eslint": "^8.48.0",
+    "depcheck": "^1.4.0",
+    "madge": "^5.0.0",
+    "semgrep": "^1.39.0",
+    "mocha": "^10.2.0"
   }
 }

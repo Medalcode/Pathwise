@@ -355,11 +355,10 @@ const RealPDFParser = {
                  if (eduSection) {
                      // Buscar ANTES o DESPUÉS de educación
                      // Estrategia: Buscar patrón de fecha fuerte
-                     const datePattern = /(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}/i;
                      
                      for(let i=0; i<lines.length; i++) {
                          // Si la línea tiene fecha y no está dentro de la sección de educación...
-                         if (datePattern.test(lines[i])) {
+                         if (this.extractDateRange(lines[i])) {
                              const isInEdu = i >= eduSection.lineIndex && (sections.find(s => s.lineIndex > eduSection.lineIndex)?.lineIndex || Infinity) > i;
                              if (!isInEdu) {
                                  console.log(`⚠️ Posible experiencia detectada por fecha fuera de rango en línea ${i}`);
@@ -388,20 +387,56 @@ const RealPDFParser = {
     },
 
     /**
+     * Limpiar línea (quitar bullets y espacios extra)
+     */
+    cleanLine(line) {
+        if (!line) return '';
+        return line.replace(/^[-•·\u2022]+\s*/, '').replace(/\s+/g, ' ').trim();
+    },
+
+    /**
+     * Extraer rango de fechas desde una línea (mes/año o solo años)
+     */
+    extractDateRange(line) {
+        if (!line) return null;
+        const month = '(?:ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-záéíóúñ]*';
+        const year = '(?:19|20)\\d{2}';
+        const monthYear = `${month}\\.?\\s+${year}`;
+        const current = '(?:presente|present|actual(?:idad)?|current|hoy)';
+        const rangeRegex = new RegExp(`(${monthYear}|${year})\\s*(?:–|—|-|/|a|al|hasta|to)\\s*(${monthYear}|${year}|${current})`, 'i');
+        const match = line.match(rangeRegex);
+        if (!match) return null;
+        const matchIndex = typeof match.index === 'number' ? match.index : line.indexOf(match[0]);
+        return {
+            start: match[1].trim(),
+            end: match[2].trim(),
+            match,
+            index: matchIndex
+        };
+    },
+
+    /**
      * Parsear experiencia laboral (MEJORADO v3)
      */
     parseExperience(text) {
         const experiences = [];
         console.log('💼 Parseando experiencia laboral...');
-        
         const expSection = this.extractSectionText(text, 'experience');
-        
-        if (!expSection || expSection.length < 20) {
+
+        let expSource = expSection;
+        if (!expSource || expSource.length < 20) {
+            console.log('ℹ️ Texto de experiencia vacío o muy corto, buscando por heurísticas...');
+            const jobKeywords = /(developer|engineer|ingenier|analista|consultor|gerente|director|jefe|líder|lead|specialist|especialista|arquitecto|diseñador|programador|full\s*stack|frontend|backend|devops|qa|soporte|support|administrador|sysadmin)/i;
+            const dateLines = text.split('\n').filter(l => this.extractDateRange(l) || jobKeywords.test(l));
+            expSource = dateLines.join('\n');
+        }
+
+        if (!expSource || expSource.length < 20) {
             console.log('ℹ️ Texto de experiencia vacío o muy corto');
             return experiences;
         }
-        
-        console.log('Sección de experiencia extraída:', expSection.substring(0, 200));
+
+        console.log('Sección de experiencia extraída:', expSource.substring(0, 200));
 
         // Patrones mejorados
         const patterns = [
@@ -421,7 +456,7 @@ const RealPDFParser = {
             // Reiniciar lastIndex para regex global
             pattern.lastIndex = 0; 
             
-            while ((match = pattern.exec(expSection)) !== null) {
+            while ((match = pattern.exec(expSource)) !== null) {
                 // Manejar diferentes grupos de captura según el patrón
                 let company, title, start, end;
                 
@@ -463,31 +498,87 @@ const RealPDFParser = {
 
         // Si no encontró nada con regex complejos, intentar búsqueda simple de líneas con fechas
         if (experiences.length === 0) {
-            console.log('⚠️ Intentando fallback simple para experiencia...');
-            const lines = expSection.split('\n');
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                // Busca línea que tenga formato de fecha "Mar 2023 - Dic 2024"
-                if (/\b(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}\s*[–-]/i.test(line)) {
-                     // Asumir que la línea anterior o la misma tiene la empresa/título
-                    const parts = line.split(/[•,]/); // Intentar dividir por punto o coma
-                    if (parts.length >= 2) {
-                        experiences.push({
-                            company: parts[0].trim(),
-                            title: parts[1].split(/\d/)[0].trim().replace(/[.,]*$/, ''), // Quitar fecha del titulo si se pegó
-                            startDate: 'Date Found',
-                            endDate: '',
-                            current: false
-                        });
-                    } else if (i > 0) {
-                        // Mirar línea anterior
-                         experiences.push({
-                            company: lines[i-1].trim(),
-                            title: 'Unknown Role', // Difícil saber qué es qué sin formato claro
-                            startDate: 'Date Found',
-                            endDate: '',
-                            current: false
-                        });
+            console.log('⚠️ Intentando fallback heurístico para experiencia...');
+            const linesRaw = expSource.split('\n');
+            const lines = linesRaw.map(l => this.cleanLine(l)).filter(Boolean);
+            const headerLine = /^(experiencia|experience|historial|trayectoria|trabajo|laboral)/i;
+            const filtered = lines.filter(l => !headerLine.test(l));
+            const jobKeywords = /(developer|engineer|ingenier|analista|consultor|gerente|director|jefe|líder|lead|specialist|especialista|arquitecto|diseñador|programador|full\s*stack|frontend|backend|devops|qa|soporte|support|administrador|sysadmin)/i;
+            const companyHints = /(s\.a\.|s\.a|spa|srl|ltda|ltd|inc|corp|company|co\.|llc|gmbh|group|grupo|solutions|consulting|servicios|tecnolog[ií]a|tech)/i;
+
+            const decideFromParts = (a, b) => {
+                const aHasJob = jobKeywords.test(a);
+                const bHasJob = jobKeywords.test(b);
+                const aHasCompany = companyHints.test(a);
+                const bHasCompany = companyHints.test(b);
+                const aUpper = a === a.toUpperCase() && a.length <= 40;
+                const bUpper = b === b.toUpperCase() && b.length <= 40;
+                if ((aHasCompany && !bHasCompany) || (bHasJob && !aHasJob)) return { company: a, title: b };
+                if ((bHasCompany && !aHasCompany) || (aHasJob && !bHasJob)) return { company: b, title: a };
+                if (aUpper && !bUpper) return { company: a, title: b };
+                if (bUpper && !aUpper) return { company: b, title: a };
+                return { company: a, title: b };
+            };
+
+            const splitExperienceHeader = (primary, secondary) => {
+                const p = this.cleanLine(primary);
+                const s = this.cleanLine(secondary);
+                if (!p && s) return splitExperienceHeader(s, '');
+                if (!p) return { title: '', company: '' };
+
+                const enMatch = p.match(/(.+?)\s+(?:en|at|@)\s+(.+)/i);
+                if (enMatch) return { title: enMatch[1].trim(), company: enMatch[2].trim() };
+
+                const parts = p.split(/\s*[•·|\|]\s*/).filter(Boolean);
+                if (parts.length >= 2) return decideFromParts(parts[0], parts[1]);
+
+                const dashParts = p.split(/\s+[–—-]\s+/).filter(Boolean);
+                if (dashParts.length >= 2) return decideFromParts(dashParts[0], dashParts[1]);
+
+                if (s) return decideFromParts(p, s);
+                return { title: p, company: '' };
+            };
+
+            const seen = new Set();
+            for (let i = 0; i < filtered.length; i++) {
+                const line = filtered[i];
+                const dateInfo = this.extractDateRange(line);
+                if (!dateInfo) continue;
+
+                const pre = line.slice(0, dateInfo.index).trim();
+                const post = line.slice(dateInfo.index + dateInfo.match[0].length).trim();
+                const header = pre || post || filtered[i - 1] || '';
+                const secondary = pre || post ? (filtered[i - 1] || '') : (filtered[i - 2] || '');
+                const { title, company } = splitExperienceHeader(header, secondary);
+                if (!title && !company) continue;
+
+                const key = `${company}|${title}|${dateInfo.start}|${dateInfo.end}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                experiences.push({
+                    company,
+                    title,
+                    startDate: dateInfo.start,
+                    endDate: dateInfo.end,
+                    current: /presente|present|actual|current/i.test(dateInfo.end),
+                    description: ''
+                });
+            }
+
+            // Fallback sin fechas: pares título/empresa
+            if (experiences.length === 0) {
+                for (let i = 0; i < filtered.length - 1; i++) {
+                    const line = filtered[i];
+                    const next = filtered[i + 1];
+                    const looksTitle = jobKeywords.test(line);
+                    const looksCompany = companyHints.test(next) || (next === next.toUpperCase() && next.length <= 40);
+                    const looksTitleNext = jobKeywords.test(next);
+                    const looksCompanyLine = companyHints.test(line) || (line === line.toUpperCase() && line.length <= 40);
+                    if (looksTitle && looksCompany) {
+                        experiences.push({ company: next, title: line, startDate: '', endDate: '', current: false, description: '' });
+                    } else if (looksCompanyLine && looksTitleNext) {
+                        experiences.push({ company: line, title: next, startDate: '', endDate: '', current: false, description: '' });
                     }
                 }
             }
@@ -505,13 +596,22 @@ const RealPDFParser = {
         console.log('🎓 Parseando educación...');
         
         const eduSection = this.extractSectionText(text, 'education');
-        
-        if (!eduSection || eduSection.length < 20) {
-             console.log('ℹ️ Texto de educación vacío o muy corto');
+
+        let eduSource = eduSection;
+        if (!eduSource || eduSource.length < 20) {
+            console.log('ℹ️ Texto de educación vacío o muy corto, buscando por heurísticas...');
+            const degreeKeywords = /(ingenier|licenci|mag[ií]ster|master|mba|doctor|phd|t[eé]cnico|tecnicatura|diplom|curso|bootcamp|certific|bachelor|degree|diploma|especializ|formaci[oó]n|arquitectura|administraci[oó]n)/i;
+            const schoolHints = /(universidad|instituto|college|academy|inacap|duoc|udp|puc|usach|utem|ust|ucn|institute|school|politecnico|politécnico|tecnol[oó]gico|tec|\buc\b|\bu\.?c\.?\b)/i;
+            const dateLines = text.split('\n').filter(l => this.extractDateRange(l) || degreeKeywords.test(l) || schoolHints.test(l));
+            eduSource = dateLines.join('\n');
+        }
+
+        if (!eduSource || eduSource.length < 20) {
+            console.log('ℹ️ Texto de educación vacío o muy corto');
             return education;
         }
 
-        console.log('Sección de educación extraída:', eduSection.substring(0, 200));
+        console.log('Sección de educación extraída:', eduSource.substring(0, 200));
 
         // Patrones mejorados (Similares a experiencia pero adaptados)
         const patterns = [
@@ -524,7 +624,7 @@ const RealPDFParser = {
         for (const pattern of patterns) {
             let match;
              pattern.lastIndex = 0;
-            while ((match = pattern.exec(eduSection)) !== null) {
+            while ((match = pattern.exec(eduSource)) !== null) {
                 const school = match[1].trim();
                 const degree = match[2].trim().replace(/[.,]*$/, '');
                 
@@ -543,6 +643,93 @@ const RealPDFParser = {
                 }
             }
             if (education.length > 0) break;
+        }
+
+        if (education.length === 0) {
+            console.log('⚠️ Intentando fallback heurístico para educación...');
+            const linesRaw = eduSource.split('\n');
+            const lines = linesRaw.map(l => this.cleanLine(l)).filter(Boolean);
+            const headerLine = /^(educaci[oó]n|education|formaci[oó]n|estudios|academic)/i;
+            const filtered = lines.filter(l => !headerLine.test(l));
+            const degreeKeywords = /(ingenier|licenci|mag[ií]ster|master|mba|doctor|phd|t[eé]cnico|tecnicatura|diplom|curso|bootcamp|certific|bachelor|degree|diploma|especializ|formaci[oó]n|arquitectura|administraci[oó]n)/i;
+            const schoolHints = /(universidad|instituto|college|academy|inacap|duoc|udp|puc|usach|utem|ust|ucn|institute|school|politecnico|politécnico|tecnol[oó]gico|tec|\buc\b|\bu\.?c\.?\b)/i;
+
+            const decideFromParts = (a, b) => {
+                const aHasDegree = degreeKeywords.test(a);
+                const bHasDegree = degreeKeywords.test(b);
+                const aHasSchool = schoolHints.test(a);
+                const bHasSchool = schoolHints.test(b);
+                const aUpper = a === a.toUpperCase() && a.length <= 50;
+                const bUpper = b === b.toUpperCase() && b.length <= 50;
+                if ((aHasSchool && !bHasSchool) || (bHasDegree && !aHasDegree)) return { school: a, degree: b };
+                if ((bHasSchool && !aHasSchool) || (aHasDegree && !bHasDegree)) return { school: b, degree: a };
+                if (aUpper && !bUpper) return { school: a, degree: b };
+                if (bUpper && !aUpper) return { school: b, degree: a };
+                return { school: a, degree: b };
+            };
+
+            const splitEducationHeader = (primary, secondary) => {
+                const p = this.cleanLine(primary);
+                const s = this.cleanLine(secondary);
+                if (!p && s) return splitEducationHeader(s, '');
+                if (!p) return { school: '', degree: '' };
+
+                const parts = p.split(/\s*[•·|\|]\s*/).filter(Boolean);
+                if (parts.length >= 2) return decideFromParts(parts[0], parts[1]);
+
+                const dashParts = p.split(/\s+[–—-]\s+/).filter(Boolean);
+                if (dashParts.length >= 2) return decideFromParts(dashParts[0], dashParts[1]);
+
+                if (s) return decideFromParts(p, s);
+                return {
+                    school: schoolHints.test(p) ? p : '',
+                    degree: degreeKeywords.test(p) ? p : ''
+                };
+            };
+
+            const seen = new Set();
+            for (let i = 0; i < filtered.length; i++) {
+                const line = filtered[i];
+                const dateInfo = this.extractDateRange(line);
+                if (!dateInfo) continue;
+
+                const pre = line.slice(0, dateInfo.index).trim();
+                const post = line.slice(dateInfo.index + dateInfo.match[0].length).trim();
+                const header = pre || post || filtered[i - 1] || '';
+                const secondary = pre || post ? (filtered[i - 1] || '') : (filtered[i - 2] || '');
+                const { school, degree } = splitEducationHeader(header, secondary);
+                if (!school && !degree) continue;
+
+                const key = `${school}|${degree}|${dateInfo.start}|${dateInfo.end}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                education.push({
+                    school,
+                    degree,
+                    startDate: dateInfo.start,
+                    endDate: dateInfo.end,
+                    current: /presente|present|actual|current/i.test(dateInfo.end),
+                    field: ''
+                });
+            }
+
+            // Fallback sin fechas: pares institución/título
+            if (education.length === 0) {
+                for (let i = 0; i < filtered.length - 1; i++) {
+                    const line = filtered[i];
+                    const next = filtered[i + 1];
+                    const looksSchool = schoolHints.test(line) || (line === line.toUpperCase() && line.length <= 50);
+                    const looksDegree = degreeKeywords.test(next);
+                    const looksSchoolNext = schoolHints.test(next) || (next === next.toUpperCase() && next.length <= 50);
+                    const looksDegreeLine = degreeKeywords.test(line);
+                    if (looksSchool && looksDegree) {
+                        education.push({ school: line, degree: next, startDate: '', endDate: '', current: false, field: '' });
+                    } else if (looksSchoolNext && looksDegreeLine) {
+                        education.push({ school: next, degree: line, startDate: '', endDate: '', current: false, field: '' });
+                    }
+                }
+            }
         }
         
         console.log(`📊 Total educación encontrada: ${education.length}`);

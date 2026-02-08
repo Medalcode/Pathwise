@@ -1,0 +1,78 @@
+{
+  "skills": [
+    {
+      "id": "search-repo",
+      "name": "Search Repository",
+      "description": "Search text across the repository using git grep or ripgrep and return structured matches.",
+      "entry": "search-repo.js",
+      "permissions": ["filesystem", "git"],
+      "args": ["query"]
+    },
+    {
+      "id": "run-tests",
+      "name": "Run Tests",
+      "description": "Run the project's test suite and return a JSON summary (stdout, exitCode).",
+      "entry": "run-tests.js",
+      "permissions": ["process"],
+      "args": []
+    }
+    ,
+    {
+      "id": "run-lint",
+      "name": "Run Lint",
+      "description": "Run project linters (npm run lint or eslint) and return results.",
+      "entry": "run-lint.js",
+      "permissions": ["process"],
+      "args": []
+    },
+    {
+      "id": "test-unit",
+      "name": "Run Unit Tests",
+      "description": "Run unit tests (prefers npm test with unit filter) and return JSON summary.",
+      "entry": "test-unit.js",
+      "permissions": ["process"],
+      "args": []
+    },
+    {
+      "id": "test-integration",
+      "name": "Run Integration Tests",
+      "description": "Run integration tests (folder tests/integration) and return JSON summary.",
+      "entry": "test-integration.js",
+      "permissions": ["process"],
+      "args": []
+    },
+    {
+      "id": "npm-audit",
+      "name": "NPM Audit",
+      "description": "Run `npm audit --json` and return the vulnerability report.",
+      "entry": "npm-audit.js",
+      "permissions": ["process"],
+      "args": []
+    },
+    {
+      "id": "deploy-cloud-run",
+      "name": "Deploy Cloud Run",
+      "description": "Run the repository's deploy script (deploy-cloud-run.sh) and return output.",
+      "entry": "deploy-cloud-run.js",
+      "permissions": ["process"],
+      "args": []
+    },
+    {
+      "id": "start-dev",
+      "name": "Start Dev Server",
+      "description": "Start the development server (npm run dev) in background and return PID.",
+      "entry": "start-dev.js",
+      "permissions": ["process"],
+      "args": []
+    }
+    ,
+    {
+      "id": "code-quality",
+      "name": "Code Quality",
+      "description": "Run static-analysis tools to find deprecated code, unused deps, cycles and TODOs.",
+      "entry": "code-quality.js",
+      "permissions": ["filesystem", "process"],
+      "args": []
+    }
+  ]
+}
